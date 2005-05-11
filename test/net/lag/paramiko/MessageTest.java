@@ -162,5 +162,5 @@ public class MessageTest
           0x1b, 0x2c, 0x3d, 0x4e, (byte)0xf7 };
     
     private static final byte[] EXP4 =
-        { 0, 0, 0, 4, 7, 0, 0, 0, 23 }; 
+        { 0, 0, 0, 12, 7, 0, 0, 0, 23 }; 
 }

@@ -51,8 +51,10 @@ import javax.crypto.ShortBufferException;
         mClosed = false;
         mLog = new NullLog();
         mDumpPackets = false;
+        mKeepAliveInterval = 0;
         
         mWriteLock = new Object();
+        mReadBuffer = new byte[64];
     }
     
     public void
@@ -61,6 +63,80 @@ import javax.crypto.ShortBufferException;
         mLog = log;
     }
 
+    public void
+    setDumpPackets (boolean dump)
+    {
+        mDumpPackets = dump;
+    }
+    
+    public synchronized void
+    close ()
+    {
+        mClosed = true;
+    }
+    
+    public synchronized void
+    setKeepAlive (int interval, KeepAliveHandler handler)
+    {
+        mKeepAliveInterval = interval;
+        mKeepAliveHandler = handler;
+        mKeepAliveLast = System.currentTimeMillis();
+    }
+    
+    /**
+     * Return true if it's time to re-negotiate keys on this session.  This
+     * needs to be done after about every 1GB of traffic.
+     * 
+     * @return true if it's time to rekey
+     */
+    public synchronized boolean
+    needRekey ()
+    {
+        return mNeedRekey;
+    }
+    
+    public void
+    setOutboundCipher (Cipher cipher, int blockSize, Mac mac, int macSize)
+    {
+        synchronized (mWriteLock) {
+            mBlockEngineOut = cipher;
+            mBlockSizeOut = blockSize;
+            mMacEngineOut = mac;
+            mMacSizeOut = macSize;
+            
+            mSentBytes = 0;
+            mSentPackets = 0;
+            mNeedRekey = false;
+            
+            mMacBufferOut = new byte[32];
+        }
+    }
+    
+    // FIXME: how do i guarantee that nobody's in read() while this is happening?
+    public void
+    setInboundCipher (Cipher cipher, int blockSize, Mac mac, int macSize)
+    {
+        mBlockEngineIn = cipher;
+        mBlockSizeIn = blockSize;
+        mMacEngineIn = mac;
+        mMacSizeIn = macSize;
+     
+        mReceivedBytes = 0;
+        mReceivedPackets = 0;
+        mReceivedPacketsOverflow = 0;
+        mNeedRekey = false;
+        
+        mMacBufferIn = new byte[32];
+    }
+    
+    /**
+     * Write an SSH2 message to the stream.  The message will be packetized
+     * (padded up to the block size), and if the outbound cipher is on, the
+     * message will also be enciphered.
+     * 
+     * @param msg the message to send
+     * @throws IOException if an exception is thrown while writing data
+     */
     public void
     write (Message msg)
         throws IOException
@@ -108,6 +184,96 @@ import javax.crypto.ShortBufferException;
         }
     }
     
+    // only 1 thread will be here at one time
+    // return null on EOF
+    public Message
+    read ()
+        throws IOException
+    {
+        // [ab]use mMacBufferIn for reading the first block
+        if (read(mReadBuffer, 0, mBlockSizeIn) < 0) {
+            return null;
+        }
+        if (mBlockEngineIn != null) {
+            try {
+                mBlockEngineIn.update(mReadBuffer, 0, mBlockSizeIn, mReadBuffer, 0);
+            } catch (ShortBufferException x) {
+                throw new IOException("decode error: " + x);
+            }
+        }
+        if (mDumpPackets) {
+            mLog.dump("IN", mReadBuffer, 0, mBlockSizeIn);
+        }
+        int length = new Message(mReadBuffer).getInt();
+        int leftover = mBlockSizeIn - 5;
+        if ((length + 4) % mBlockSizeIn != 0) {
+            throw new IOException("Invalid packet blocking");
+        }
+        int padding = mReadBuffer[4];       // all cipher block sizes are >= 8
+        if ((padding < 0) || (padding > 32)) {
+            throw new IOException("invalid padding");
+        }
+
+        byte[] packet = new byte[length - 1];
+        System.arraycopy(mReadBuffer, 5, packet, 0, leftover);
+        if (read(packet, leftover, length - leftover - 1) < 0) {
+            return null;
+        }
+        if (mBlockEngineIn != null) {
+            try {
+                mBlockEngineIn.update(packet, leftover, length - leftover - 1, packet, leftover);
+            } catch (ShortBufferException x) {
+                throw new IOException("decode error: " + x);
+            }
+
+            // now, compute the mac
+            new Message(mMacBufferIn).putInt(mSequenceNumberIn);
+            mMacEngineIn.update(mMacBufferIn, 0, 4);
+            mMacEngineIn.update(mReadBuffer, 0, 5);
+            mMacEngineIn.update(packet, 0, length - 1);        
+            try {
+                mMacEngineIn.doFinal(mMacBufferIn, 0);
+            } catch (ShortBufferException x) {
+                throw new IOException("mac error: " + x);
+            }
+            if (read(mReadBuffer, 0, mMacSizeIn) < 0) {
+                return null;
+            }
+            
+            // i'm pretty mad that there's no more efficient way to do this. >:(
+            for (int i = 0; i < mMacSizeIn; i++) {
+                if (mReadBuffer[i] != mMacBufferIn[i]) {
+                    throw new IOException("mac mismatch");
+                }
+            }
+        }
+        if (mDumpPackets) {
+            mLog.dump("IN", packet, leftover, length - leftover - 1);
+        }
+
+        Message msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
+        mSequenceNumberIn++;
+        
+        // check for rekey
+        mReceivedBytes += length + mMacSizeIn + 4;
+        mReceivedPackets++;
+        if (needRekey()) {
+            // we've asked to rekey -- give them 20 packets to comply before dropping the connection
+            mReceivedPacketsOverflow++;
+            if (mReceivedPacketsOverflow >= 20) {
+                throw new IOException("rekey requests are being ignored");
+            }
+        } else if ((mReceivedPackets >= REKEY_PACKETS) || (mReceivedBytes >= REKEY_BYTES)) {
+            // only ask once
+            mLog.debug("Rekeying (hit " + mReceivedPackets + " packets, " +
+                       mReceivedBytes + " bytes received)");
+            mReceivedPacketsOverflow = 0;
+            triggerRekey();
+        }
+
+        return msg;
+    }
+    
     // do not return until the entire buffer is read, or EOF
     private int
     read (byte[] buffer, int offset, int length)
@@ -126,6 +292,10 @@ import javax.crypto.ShortBufferException;
                 }
             } catch (SocketTimeoutException x) {
                 // pass
+            }
+            
+            if (total == length) {
+                return total;
             }
 
             synchronized (this) {
@@ -171,7 +341,15 @@ import javax.crypto.ShortBufferException;
     private void
     checkKeepAlive ()
     {
-        // pass - FIXME
+        if ((mKeepAliveInterval == 0) || (mBlockEngineOut == null) || mNeedRekey) {
+            // wait till we're in a normal state
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now > mKeepAliveLast + mKeepAliveInterval) {
+            mKeepAliveHandler.keepAliveEvent();
+            mKeepAliveLast = now;
+        }
     }
     
     private synchronized void
@@ -199,6 +377,7 @@ import javax.crypto.ShortBufferException;
     private boolean mNeedRekey;
     
     private Object mWriteLock;
+    private byte[] mReadBuffer;     // used for reading the first block of a packet
     
     private int mBlockSizeOut = 8;
     private int mBlockSizeIn = 8;
@@ -215,5 +394,11 @@ import javax.crypto.ShortBufferException;
     
     private long mSentBytes;
     private long mSentPackets;
+    private long mReceivedBytes;
+    private long mReceivedPackets;
     private int mReceivedPacketsOverflow;
+    
+    private int mKeepAliveInterval;
+    private long mKeepAliveLast;
+    private KeepAliveHandler mKeepAliveHandler;
 }

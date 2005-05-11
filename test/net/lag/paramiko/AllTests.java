@@ -18,7 +18,7 @@ public class AllTests
         TestSuite ts = new TestSuite();
 
         ts.addTestSuite(MessageTest.class);
-        //ts.addTestSuite(WeirdNetTest.class);
+        ts.addTestSuite(PacketizerTest.class);
 
         return ts;
     }

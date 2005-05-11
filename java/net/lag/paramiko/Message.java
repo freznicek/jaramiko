@@ -39,19 +39,45 @@ public final class Message
     public
     Message ()
     {
-        mBuffer = new byte[DEFAULT_SIZE];
-        // leave space for packetization:
-        mStart = 5;
-        mPosition = 5;
+        // start at position 5 to leave space for packetization
+        init(new byte[DEFAULT_SIZE], 5, 0, 0);
     }
     
     public
     Message (byte[] buf)
     {
-        mBuffer = buf;
-        mPosition = 0;
+        init(buf, 0, buf.length, 0);
     }
     
+    /**
+     * Create a Message from an existing byte array, extending only for a
+     * subrange of the array, with a specific sequence number.  No data from
+     * beyond the given length will be read or written, but if an attempt is
+     * made, the internal buffer will be replaced with a newly-allocated
+     * array.  This method allows you to wrap a byte array into a Message,
+     * avoiding allocation in the normal case.
+     * 
+     * @param buf the byte array to wrap
+     * @param position the starting position of data in the array
+     * @param length the number of bytes to include in the Message
+     * @param sequence an arbitrary "sequence number" to track
+     */
+    public
+    Message (byte[] buf, int position, int length, int sequence)
+    {
+        init(buf, position, length, sequence);
+    }
+    
+    private void
+    init (byte[] buf, int position, int length, int sequence)
+    {
+        mBuffer = buf;
+        mStart = position;
+        mPosition = position;
+        mLength = length;
+        mSequenceNumber = sequence;
+    }
+
     public byte[]
     toByteArray ()
     {
@@ -74,6 +100,15 @@ public final class Message
     setPosition (int position)
     {
         mPosition = position + mStart;
+    }
+    
+    public int
+    getLength ()
+    {
+        if (mLength > 0) {
+            return mLength;
+        }
+        return mBuffer.length;
     }
     
     public void
@@ -253,7 +288,7 @@ public final class Message
         int oldpos = mPosition;
         int size = mPosition - mStart;
         mPosition = mStart - 5;
-        putInt(size);
+        putInt(size + padding + 1);
         putByte((byte) padding);
 
         mStart -= 5;
@@ -266,15 +301,20 @@ public final class Message
     private void
     ensureSpace (int n)
     {
-        if (mPosition + n > mBuffer.length) {
+        int max = mBuffer.length;
+        if ((mLength > 0) && (mLength + mStart < max)) {
+            max = mLength + mStart; 
+        }
+        if (mPosition + n > max) {
             // expand
-            int newlen = mBuffer.length * 4;
+            int newlen = max * 4;
             while (mPosition + n > newlen) {
                 newlen *= 4;
             }
             byte[] newbuf = new byte[newlen];
             System.arraycopy(mBuffer, 0, newbuf, 0, mPosition);
             mBuffer = newbuf;
+            mLength = 0;
         }
     }
 
@@ -282,6 +322,8 @@ public final class Message
     private byte[] mBuffer;
     private int mPosition = 0;
     private int mStart = 0;
+    private int mLength = 0;
+    private int mSequenceNumber = 0;
     
     // default size of the buffer, expanded as needed
     private static final int DEFAULT_SIZE = 64;
