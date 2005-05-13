@@ -11,48 +11,48 @@ package net.lag.paramiko;
  */
 /* package */ class MessageType
 {
-    public static final int DISCONNECT = 1;
-    public static final int IGNORE = 2;
-    public static final int UNIMPLEMENTED = 3;
-    public static final int DEBUG = 4;
-    public static final int SERVICE_REQUEST = 5;
-    public static final int SERVICE_ACCEPT = 6;
+    public static final byte DISCONNECT = 1;
+    public static final byte IGNORE = 2;
+    public static final byte UNIMPLEMENTED = 3;
+    public static final byte DEBUG = 4;
+    public static final byte SERVICE_REQUEST = 5;
+    public static final byte SERVICE_ACCEPT = 6;
     
-    public static final int KEX_INIT = 20;
-    public static final int NEW_KEYS = 21;
+    public static final byte KEX_INIT = 20;
+    public static final byte NEW_KEYS = 21;
     
-    public static final int KEX_0 = 30;
-    public static final int KEX_1 = 31;
-    public static final int KEX_2 = 32;
-    public static final int KEX_3 = 33;
-    public static final int KEX_4 = 34;
+    public static final byte KEX_0 = 30;
+    public static final byte KEX_1 = 31;
+    public static final byte KEX_2 = 32;
+    public static final byte KEX_3 = 33;
+    public static final byte KEX_4 = 34;
 
-    public static final int USERAUTH_REQUEST = 50;
-    public static final int USERAUTH_FAILURE = 51;
-    public static final int USERAUTH_SUCCESS = 52;
-    public static final int USERAUTH_BANNER = 53;
+    public static final byte USERAUTH_REQUEST = 50;
+    public static final byte USERAUTH_FAILURE = 51;
+    public static final byte USERAUTH_SUCCESS = 52;
+    public static final byte USERAUTH_BANNER = 53;
     
-    public static final int USERAUTH_PK_OK = 60;
+    public static final byte USERAUTH_PK_OK = 60;
     
-    public static final int GLOBAL_REQUEST = 80;
-    public static final int REQUEST_SUCCESS = 81;
-    public static final int REQUEST_FAILURE = 82;
+    public static final byte GLOBAL_REQUEST = 80;
+    public static final byte REQUEST_SUCCESS = 81;
+    public static final byte REQUEST_FAILURE = 82;
 
-    public static final int CHANNEL_OPEN = 90;
-    public static final int CHANNEL_OPEN_SUCCESS = 91;
-    public static final int CHANNEL_OPEN_FAILURE = 92;
-    public static final int CHANNEL_WINDOW_ADJUST = 93;
-    public static final int CHANNEL_DATA = 94;
-    public static final int CHANNEL_EXTENDED_DATA = 95;
-    public static final int CHANNEL_EOF = 96;
-    public static final int CHANNEL_CLOSE = 97;
-    public static final int CHANNEL_REQUEST = 98;
-    public static final int CHANNEL_SUCCESS = 99;
-    public static final int CHANNEL_FAILURE = 100;
+    public static final byte CHANNEL_OPEN = 90;
+    public static final byte CHANNEL_OPEN_SUCCESS = 91;
+    public static final byte CHANNEL_OPEN_FAILURE = 92;
+    public static final byte CHANNEL_WINDOW_ADJUST = 93;
+    public static final byte CHANNEL_DATA = 94;
+    public static final byte CHANNEL_EXTENDED_DATA = 95;
+    public static final byte CHANNEL_EOF = 96;
+    public static final byte CHANNEL_CLOSE = 97;
+    public static final byte CHANNEL_REQUEST = 98;
+    public static final byte CHANNEL_SUCCESS = 99;
+    public static final byte CHANNEL_FAILURE = 100;
     
     
     public static String
-    getDescription (int t)
+    getDescription (byte t)
     {
         switch (t) {
         case DISCONNECT:

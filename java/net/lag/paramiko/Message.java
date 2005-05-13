@@ -119,6 +119,14 @@ public final class Message
     }
     
     public void
+    putBytes (byte[] b)
+    {
+        ensureSpace(b.length);
+        System.arraycopy(b, 0, mBuffer, mPosition, b.length);
+        mPosition += b.length;
+    }
+    
+    public void
     putBoolean (boolean b)
     {
         putByte(b ? (byte)1 : (byte)0);
@@ -194,6 +202,16 @@ public final class Message
     {
         ensureSpace(1);
         return mBuffer[mPosition++];
+    }
+    
+    public byte[]
+    getBytes (int n)
+    {
+        ensureSpace(n);
+        byte[] out = new byte[n];
+        System.arraycopy(mBuffer, mPosition, out, 0, n);
+        mPosition += n;
+        return out;
     }
     
     public boolean

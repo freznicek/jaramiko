@@ -95,6 +95,36 @@ import javax.crypto.ShortBufferException;
         return mNeedRekey;
     }
     
+    // really inefficient, but only used for 1 line at the start of the session
+    public String
+    readline ()
+        throws IOException
+    {
+        StringBuffer line = new StringBuffer();
+        
+        while (true) {
+            int c = mInStream.read();
+            if (c < 0) {
+                return null;
+            }
+            // only ASCII is allowed here, so this is ok; calm down. :)
+            if ((char)c == '\n') {
+                if ((line.length() > 0) && (line.charAt(line.length() - 1) == '\r')) {
+                    line.setLength(line.length() - 1);
+                }
+                return line.toString();
+            }
+            line.append((char)c);
+        }
+    }
+    
+    public void
+    writeline (String s)
+        throws IOException
+    {
+        mOutStream.write(s.getBytes());
+    }
+    
     public void
     setOutboundCipher (Cipher cipher, int blockSize, Mac mac, int macSize)
     {
@@ -313,29 +343,6 @@ import javax.crypto.ShortBufferException;
     {
         // setSoTimeout() does not affect writes in java
         mOutStream.write(buffer, offset, length);
-    }
-    
-    // really inefficient, but only used for 1 line at the start of the session
-    private String
-    readline ()
-        throws IOException
-    {
-        StringBuffer line = new StringBuffer();
-        
-        while (true) {
-            int c = mInStream.read();
-            if (c < 0) {
-                return null;
-            }
-            // only ASCII is allowed here, so this is ok; calm down. :)
-            if ((char)c == '\n') {
-                if ((line.length() > 0) && (line.charAt(line.length() - 1) == '\r')) {
-                    line.setLength(line.length() - 1);
-                }
-                return line.toString();
-            }
-            line.append((char)c);
-        }
     }
     
     private void

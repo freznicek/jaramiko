@@ -35,6 +35,7 @@ public class MessageTest
         m.putInt(123789456);
         m.putString("q");
         m.putString("hello");
+        m.putBytes(new byte[] { 23, 9, 4 });
         m.putString(mKiloX);
 
         byte[] buf = m.toByteArray();
@@ -60,6 +61,7 @@ public class MessageTest
         assertEquals(123789456, m.getInt());
         assertEquals("q", m.getString());
         assertEquals("hello", m.getString());
+        assertTrue(Arrays.equals(new byte[] { 23, 9, 4 }, m.getBytes(3)));
         assertEquals(mKiloX, m.getString());
     }
     
@@ -145,8 +147,8 @@ public class MessageTest
     private static final byte[] EXP1 =
         { 0, 0, 0, 0x17, 7, 0x60, (byte)0xe0, (byte)0x90,
           0, 0, 0, 1, (byte)'q', 0, 0, 0, 5, (byte)'h',
-          (byte)'e', (byte)'l', (byte)'l', (byte)'o', 0, 0, 3,
-          (byte)0xe8 };
+          (byte)'e', (byte)'l', (byte)'l', (byte)'o', 23, 9, 4,
+          0, 0, 3, (byte)0xe8 };
     
     private static final byte[] EXP2 =
         { 1, 0, (byte)0xf3, 0, 0, 0, 0x10, (byte)'h', (byte)'u',
