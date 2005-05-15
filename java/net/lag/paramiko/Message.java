@@ -102,6 +102,12 @@ public final class Message
         mPosition = position + mStart;
     }
     
+    public void
+    rewind ()
+    {
+        mPosition = mStart;
+    }
+    
     public int
     getLength ()
     {
@@ -109,6 +115,12 @@ public final class Message
             return mLength;
         }
         return mBuffer.length;
+    }
+    
+    public int
+    getSequence ()
+    {
+        return mSequenceNumber;
     }
     
     public void
@@ -167,6 +179,21 @@ public final class Message
     }
     
     public void
+    putByteString (byte[] b, int offset, int length)
+    {
+        ensureSpace(4 + length);
+        putInt(length);
+        System.arraycopy(b, offset, mBuffer, mPosition, length);
+        mPosition += length;
+    }
+    
+    public void
+    putByteString (byte[] b)
+    {
+        putByteString(b, 0, b.length);
+    }
+    
+    public void
     putString (String s)
     {
         byte[] b;
@@ -175,10 +202,7 @@ public final class Message
         } catch (UnsupportedEncodingException x) {
             b = "<encoding error>".getBytes();
         }
-        ensureSpace(4 + b.length);
-        putInt(b.length);
-        System.arraycopy(b, 0, mBuffer, mPosition, b.length);
-        mPosition += b.length;
+        putByteString(b);
     }
     
     public void
@@ -256,14 +280,21 @@ public final class Message
         return new BigInteger(b);
     }
     
-    public String
-    getString ()
+    public byte[]
+    getByteString ()
     {
         int len = getInt();
         byte[] b = new byte[len];
         ensureSpace(len);
         System.arraycopy(mBuffer, mPosition, b, 0, len);
         mPosition += len;
+        return b;
+    }
+    
+    public String
+    getString ()
+    {
+        byte[] b = getByteString();
         try {
             return new String(b, "UTF-8");
         } catch (UnsupportedEncodingException x) {

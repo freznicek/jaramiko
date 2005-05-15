@@ -51,6 +51,7 @@ import javax.crypto.ShortBufferException;
         mClosed = false;
         mLog = new NullLog();
         mDumpPackets = false;
+        mInitCount = 0;
         mKeepAliveInterval = 0;
         
         mWriteLock = new Object();
@@ -133,10 +134,15 @@ import javax.crypto.ShortBufferException;
             mBlockSizeOut = blockSize;
             mMacEngineOut = mac;
             mMacSizeOut = macSize;
-            
             mSentBytes = 0;
             mSentPackets = 0;
-            mNeedRekey = false;
+            
+            // wait until the reset happens in both directions before clearing the rekey flag
+            mInitCount |= 1;
+            if (mInitCount == 3) {
+                mInitCount = 0;
+                mNeedRekey = false;
+            }
             
             mMacBufferOut = new byte[32];
         }
@@ -150,11 +156,16 @@ import javax.crypto.ShortBufferException;
         mBlockSizeIn = blockSize;
         mMacEngineIn = mac;
         mMacSizeIn = macSize;
-     
         mReceivedBytes = 0;
         mReceivedPackets = 0;
         mReceivedPacketsOverflow = 0;
-        mNeedRekey = false;
+        
+        // wait until the reset happens in both directions before clearing the rekey flag
+        mInitCount |= 2;
+        if (mInitCount == 3) {
+            mInitCount = 0;
+            mNeedRekey = false;
+        }
         
         mMacBufferIn = new byte[32];
     }
@@ -382,6 +393,7 @@ import javax.crypto.ShortBufferException;
     private boolean mClosed;
     private boolean mDumpPackets;
     private boolean mNeedRekey;
+    private int mInitCount;
     
     private Object mWriteLock;
     private byte[] mReadBuffer;     // used for reading the first block of a packet
