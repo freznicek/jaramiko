@@ -40,10 +40,34 @@ public class KexTest
             return m;
         }
         
+        protected void
+        buildFromBER (BigInteger[] ints)
+        {
+            // pass
+        }
+        
         public byte[]
         toByteArray ()
         {
             return "fake-key".getBytes();
+        }
+        
+        public boolean
+        canSign ()
+        {
+            return true;
+        }
+        
+        public int
+        getBits ()
+        {
+            return 0;
+        }
+        
+        public String
+        getSSHName ()
+        {
+            return "none";
         }
     }
     
