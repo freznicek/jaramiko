@@ -22,6 +22,7 @@ import java.math.BigInteger;
     public String getRemoteVersion ();
     public byte[] getLocalKexInit ();
     public byte[] getRemoteKexInit ();
+    public PKey getServerKey ();
     public void setKH (BigInteger k, byte[] h);
     public void verifyKey (byte[] hostKey, byte[] sig);
     public void activateOutbound () throws IOException;

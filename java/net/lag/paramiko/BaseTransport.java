@@ -95,30 +95,6 @@ public class BaseTransport
         }
     }
     
-    /* package */ final String
-    getLocalVersion ()
-    {
-        return mLocalVersion;
-    }
-    
-    /* package */ final String
-    getRemoteVersion ()
-    {
-        return mRemoteVersion;
-    }
-    
-    /* package */ final byte[]
-    getLocalKexInit ()
-    {
-        return mLocalKexInit;
-    }
-
-    /* package */ final byte[]
-    getRemoteKexInit ()
-    {
-        return mRemoteKexInit;
-    }
-    
     /* package */ final void
     setKH (BigInteger k, byte[] h)
     {
@@ -482,10 +458,11 @@ public class BaseTransport
         public boolean inServerMode () { return BaseTransport.this.inServerMode(); }  
         public void expectPacket (byte ptype) { BaseTransport.this.expectPacket(ptype); }
         public void sendMessage (Message m) throws IOException { BaseTransport.this.sendMessage(m); }
-        public String getLocalVersion () { return BaseTransport.this.getLocalVersion(); }
-        public String getRemoteVersion () { return BaseTransport.this.getRemoteVersion(); }
-        public byte[] getLocalKexInit () { return BaseTransport.this.getLocalKexInit(); }
-        public byte[] getRemoteKexInit () { return BaseTransport.this.getRemoteKexInit(); }
+        public String getLocalVersion () { return mLocalVersion; }
+        public String getRemoteVersion () { return mRemoteVersion; }
+        public byte[] getLocalKexInit () { return mLocalKexInit; }
+        public byte[] getRemoteKexInit () { return mRemoteKexInit; }
+        public PKey getServerKey () { return mServerKey; }
         public void setKH (BigInteger k, byte[] h) { BaseTransport.this.setKH(k, h); }
         public void verifyKey (byte[] hostKey, byte[] sig) { BaseTransport.this.verifyKey(hostKey, sig); }
         public void activateOutbound () throws IOException { BaseTransport.this.activateOutbound(); }
@@ -506,6 +483,7 @@ public class BaseTransport
     protected SecureRandom mRandom;
     protected Packetizer mPacketizer;
     protected Kex mKexEngine;
+    protected PKey mServerKey;
     
     // negotiation:
     protected String mAgreedKex;

@@ -90,8 +90,45 @@ public class KexGroup1
     // server mode
     private void
     handleKexDHInit (Message m)
+        throws IOException
     {
-        // FIXME
+        mE = m.getMPZ();
+        if ((mE.compareTo(BigInteger.ONE) < 0) || (mE.compareTo(P.subtract(BigInteger.ONE)) > 0)) {
+            throw new SSHException("Client kex 'e' is out of range");
+        }
+        BigInteger k = mE.modPow(mX, P);
+        PKey key = mTransport.getServerKey();
+        byte[] keyBytes = key.toByteArray();
+        
+        // okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
+        Message hm = new Message();
+        hm.putString(mTransport.getRemoteVersion());
+        hm.putString(mTransport.getLocalVersion());
+        hm.putByteString(mTransport.getRemoteKexInit());
+        hm.putByteString(mTransport.getLocalKexInit());
+        hm.putByteString(keyBytes);
+        hm.putMPZ(mE);
+        hm.putMPZ(mF);
+        hm.putMPZ(k);
+        
+        byte[] h = null;
+        try {
+            MessageDigest sha = MessageDigest.getInstance("SHA-1");
+            h = sha.digest(hm.toByteArray());
+            mTransport.setKH(k, h);
+        } catch (NoSuchAlgorithmException x) {
+            throw new SSHException("Unable to find SHA-1 algorithm in java");
+        }
+        
+        // sign it
+        byte[] sig = key.signSSHData(mRandom, h).toByteArray();
+        Message rm = new Message();
+        rm.putByte(KEXDH_REPLY);
+        rm.putByteString(keyBytes);
+        rm.putMPZ(mF);
+        rm.putByteString(sig);
+        mTransport.sendMessage(rm);
+        mTransport.activateOutbound();
     }
     
     // client mode
