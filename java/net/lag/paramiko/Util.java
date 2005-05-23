@@ -83,4 +83,23 @@ public class Util
         return out;
     }
 
+    public static final String
+    encodeHex (byte[] x, int off, int len)
+    {
+        StringBuffer out = new StringBuffer();
+        for (int i = 0; i < len; i++) {
+            String s = Integer.toHexString((int) x[off + i] & 0xff).toUpperCase();
+            if (s.length() < 2) {
+                out.append('0');
+            }
+            out.append(s);
+        }
+        return out.toString();
+    }
+    
+    public static final String
+    encodeHex (byte[] x)
+    {
+        return encodeHex(x, 0, x.length);
+    }
 }
