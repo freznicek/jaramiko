@@ -14,6 +14,7 @@ import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,8 +76,71 @@ public abstract class PKey
      * @param random a secure source of random bytes
      * @param data the data to sign
      * @return a {@link Message} representing the signature
+     * @throws SSHException if there is an error with underlying java crypto
+     *     libraries
      */
     public abstract Message signSSHData (SecureRandom random, byte[] data) throws SSHException;
+    
+    /**
+     * Verify an SSH2 signature against a blob of data using this public key.
+     * If the data appears to have been signed by this key, this method
+     * returns true.
+     * 
+     * @param data the data that was signed
+     * @param sig the message containing the signature
+     * @return true if the signature is valid
+     * @throws SSHException if there is an error with underlying java crypto
+     *     libraries
+     */
+    public abstract boolean verifySSHSignature (byte[] data, Message sig) throws SSHException;
+
+    /**
+     * Return an MD5 fingerprint of the public part of this key.  Nothing
+     * secret is revealed.  Effectively this is just the MD5 of the result
+     * of {@link toByteArray}.
+     * 
+     * @return a 16-byte MD5 fingerprint 
+     */
+    public byte[]
+    getFingerprint ()
+    {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            return md5.digest(toByteArray());
+        } catch (GeneralSecurityException x) {
+            throw new RuntimeException("Java is missing MD5 support!");
+        }
+    }
+
+    /**
+     * Return a base64 string containing the public part of this key.  Nothing
+     * secret is revealed.  This format is compatible with that used to store
+     * public key files or recognized host keys.
+     * 
+     * @return a base64 string containing the public part of the key
+     */
+    public String
+    getBase64 ()
+    {
+        return Base64.encodeBytes(toByteArray(), Base64.DONT_BREAK_LINES);
+    }
+    
+    /**
+     * A PKey compares equal to another PKey if the public parts of the key
+     * are equal.
+     */
+    public boolean
+    equals (Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (! (o instanceof PKey)) {
+            return false;
+        }
+        PKey other = (PKey) o;
+        return Arrays.equals(toByteArray(), other.toByteArray());
+    }
     
     /**
      * Initialize a key from an array of BigIntegers (decoded from a BER
@@ -87,6 +151,34 @@ public abstract class PKey
      */
     protected abstract void buildFromBER (BigInteger[] data) throws SSHException;
     
+    protected abstract void buildFromMessage (Message m) throws SSHException;
+    
+    
+    public static PKey
+    createFromData (byte[] data)
+        throws SSHException
+    {
+        return createFromMessage(new Message(data));
+    }
+    
+    public static PKey
+    createFromMessage (Message m)
+        throws SSHException
+    {
+        String name = m.getString();
+        Class keyClass = (Class) sNameMap.get(name);
+        if (keyClass == null) {
+            throw new SSHException("Unknown key type " + name);
+        }
+        PKey key = null;
+        try {
+            key = (PKey) keyClass.newInstance();
+        } catch (Exception x) {
+            throw new SSHException("Internal java error: " + x);
+        }
+        key.buildFromMessage(m);
+        return key;
+    }
     
     /**
      * Read a private key from a standard SSH2 key file (ASCII).  If the key
@@ -182,7 +274,7 @@ public abstract class PKey
      * @param bytes number of key bytes to generate
      * @return key data
      */
-    private static byte[]
+    public static byte[]
     generateKeyBytes (MessageDigest mac, byte[] salt, byte[] key, int bytes)
     {
         byte[] digest = null;
@@ -257,7 +349,7 @@ public abstract class PKey
     decodeBERSequence (byte[] data)
         throws SSHException
     {
-        if ((data.length < 6) || (data[0] != 30)) {
+        if ((data.length < 6) || (data[0] != 0x30)) {
             throw new SSHException("Invalid BER data");
         }
         int len = data[1], i = 2;
@@ -296,6 +388,7 @@ public abstract class PKey
             System.arraycopy(data, i, rawnum, 0, nlen);
             nums.add(new BigInteger(rawnum));
             len -= nlen;
+            i += nlen;
         }
         
         return (BigInteger[]) nums.toArray(new BigInteger[0]);
@@ -326,7 +419,10 @@ public abstract class PKey
     
     static {
         sNameMap.put("ssh-rsa", RSAKey.class);
+        sNameMap.put("ssh-dss", DSSKey.class);
+        
         sBannerMap.put("RSA", RSAKey.class);
+        sBannerMap.put("DSA", DSSKey.class);
         
         sCipherMap.put("DES-EDE3-CBC", new CipherDescription("DESede/CBC/NoPadding", 24, 8));
     }

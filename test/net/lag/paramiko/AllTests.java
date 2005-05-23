@@ -20,6 +20,7 @@ public class AllTests
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);
         ts.addTestSuite(KexTest.class);
+        ts.addTestSuite(PKeyTest.class);
 
         return ts;
     }

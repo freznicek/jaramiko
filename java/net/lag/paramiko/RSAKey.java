@@ -6,10 +6,17 @@ package net.lag.paramiko;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+
 
 /**
  * Standard RSA public-key signing and verification.  This wraps the java
@@ -79,19 +86,79 @@ public final class RSAKey
         }
     }
     
+    public boolean
+    verifySSHSignature (byte[] data, Message sig)
+        throws SSHException
+    {
+        try {
+            if (! sig.getString().equals("ssh-rsa")) {
+                return false;
+            }
+            byte[] sigData = sig.getByteString();
+
+            Signature s = Signature.getInstance("SHA1withRSA");
+            KeyFactory keyFac = KeyFactory.getInstance("RSA");
+            PublicKey key = keyFac.generatePublic(new RSAPublicKeySpec(mN, mE));
+            s.initVerify(key);
+            s.update(data);
+            return s.verify(sigData);
+        } catch (Exception x) {
+            throw new SSHException("Java publickey error: " + x);
+        }
+    }
+    
     protected void
     buildFromBER (BigInteger[] ints)
         throws SSHException
     {
-        if (ints.length < 5) {
+        if (ints.length < 6) {
             throw new SSHException("Not a valid RSA private key file (bad ber encoding)");
         }
-        mN = ints[0];
-        mE = ints[1];
-        mD = ints[2];
-        mP = ints[3];
-        mQ = ints[4];
-//        self.size = util.bit_length(self.n)
+        mN = ints[1];
+        mE = ints[2];
+        mD = ints[3];
+        mP = ints[4];
+        mQ = ints[5];
+    }
+    
+    protected void
+    buildFromMessage (Message m)
+        throws SSHException
+    {
+        mE = m.getMPZ();
+        mN = m.getMPZ();
+    }
+    
+    /**
+     * Theoretically generate a new RSA private/public key pair.  However,
+     * DON'T CALL THIS METHOD!  Java's key generation is broken and never
+     * finishes on my Mac, so I'm leaving this stuff stubbed out.
+     * 
+     * @param bits bit size of the key to generate
+     * @param random a source of random bytes
+     * @return a new RSA key
+     * @throws SSHException if there's an error within java's crypto library
+     */
+    public static RSAKey
+    generate (int bits, SecureRandom random)
+        throws SSHException
+    {
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(bits, random);
+            KeyPair kp = generator.generateKeyPair();
+            
+            RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
+            RSAPrivateKey priv = (RSAPrivateKey) kp.getPrivate();
+            RSAKey key = new RSAKey();
+            key.mE = pub.getPublicExponent();
+            key.mN = pub.getModulus();
+            key.mD = priv.getPrivateExponent();
+            // unfortunately, sun doesn't provide P and Q here.
+            return key;
+        } catch (Exception x) {
+            throw new SSHException("Java publickey error: " + x);
+        }
     }
     
 
