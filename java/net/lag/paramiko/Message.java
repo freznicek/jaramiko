@@ -131,11 +131,17 @@ public final class Message
     }
     
     public void
+    putBytes (byte[] b, int off, int len)
+    {
+        ensureSpace(len);
+        System.arraycopy(b, off, mBuffer, mPosition, len);
+        mPosition += len;
+    }
+    
+    public void
     putBytes (byte[] b)
     {
-        ensureSpace(b.length);
-        System.arraycopy(b, 0, mBuffer, mPosition, b.length);
-        mPosition += b.length;
+        putBytes(b, 0, b.length);
     }
     
     public void

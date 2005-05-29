@@ -323,10 +323,10 @@ public abstract class PKey
         
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
-            Cipher c = Cipher.getInstance(cdesc.javaName);
-            String algName = cdesc.javaName.split("/")[0];
+            Cipher c = Cipher.getInstance(cdesc.mJavaName);
+            String algName = cdesc.mJavaName.split("/")[0];
             AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
-            byte[] key = generateKeyBytes(md5, salt, password.getBytes(), cdesc.keySize);
+            byte[] key = generateKeyBytes(md5, salt, password.getBytes(), cdesc.mKeySize);
             param.init(new IvParameterSpec(salt));
             c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
             
@@ -334,7 +334,7 @@ public abstract class PKey
             c.doFinal(data, 0, data.length, out);
             return out;
         } catch (GeneralSecurityException x) {
-            throw new SSHException("Unable to initialize cipher '" + cdesc.javaName + "' due to internal java error: " + x);
+            throw new SSHException("Unable to initialize cipher '" + cdesc.mJavaName + "' due to internal java error: " + x);
         }
     }
 
@@ -394,24 +394,6 @@ public abstract class PKey
         return (BigInteger[]) nums.toArray(new BigInteger[0]);
     }
     
-    
-    /**
-     * Description of ciphers we understand when reading/writing private key
-     * files.
-     */
-    static private class CipherDescription
-    {
-        public String javaName;
-        public int keySize;         // bytes
-        public int blockSize;       // bytes
-        
-        public CipherDescription (String j, int k, int b)
-        {
-            javaName = j;
-            keySize = k;
-            blockSize = b;
-        }
-    }
     
     private static Map sNameMap = new HashMap();
     private static Map sBannerMap = new HashMap();

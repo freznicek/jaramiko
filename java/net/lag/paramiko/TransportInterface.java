@@ -24,6 +24,6 @@ import java.math.BigInteger;
     public byte[] getRemoteKexInit ();
     public PKey getServerKey ();
     public void setKH (BigInteger k, byte[] h);
-    public void verifyKey (byte[] hostKey, byte[] sig);
+    public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
     public void activateOutbound () throws IOException;
 }

@@ -10,10 +10,21 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author robey
@@ -38,6 +49,7 @@ public class BaseTransport
         // FIXME: set timeout on mInStream
         mPacketizer = new Packetizer(mInStream, mOutStream, mRandom);
         mExpectedPacket = 0;
+        mInitialKexDone = false;
         
         mLocalVersion = "SSH-" + PROTO_ID + "-" + CLIENT_ID;
         mRemoteVersion = null;
@@ -107,8 +119,90 @@ public class BaseTransport
     
     /* package */ final void
     verifyKey (byte[] hostKey, byte[] sig)
+        throws SSHException
     {
-        // FIXME
+        PKey key = PKey.createFromData(hostKey);
+        if (! key.verifySSHSignature(mH, new Message(sig))) {
+            throw new SSHException("Signature verification (" + key.getSSHName() + ") failed.");
+        }
+        mHostKey = key;
+    }
+    
+    /* Compute SSH2-style key bytes, using an "id" ('A' - 'F') and a pile of
+     * state common to this session.
+     */
+    /* package */ final byte[]
+    computeKey (byte id, int nbytes)
+    {
+        byte[] out = new byte[nbytes];
+        int sofar = 0;
+        MessageDigest sha = null;
+        try {
+            sha = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException x) {
+            throw new RuntimeException("Unable to find SHA1: internal java error: " + x);
+        }
+        
+        while (sofar < nbytes) {
+            Message m = new Message();
+            m.putMPZ(mK);
+            m.putBytes(mH);
+            if (sofar == 0) {
+                m.putByte(id);
+                m.putBytes(mSessionID);
+            } else {
+                m.putBytes(out, 0, sofar);
+            }
+            sha.reset();
+            sha.update(m.toByteArray());
+            byte[] digest = sha.digest();
+            if (sofar + digest.length > nbytes) {
+                System.arraycopy(digest, 0, out, sofar, nbytes - sofar);
+                sofar = nbytes;
+            } else {
+                System.arraycopy(digest, 0, out, sofar, digest.length);
+                sofar += digest.length;
+            }
+        }
+        return out;
+    }
+    
+    private final void
+    activateInbound ()
+        throws SSHException
+    {
+        try {
+            // this method shouldn't be so long, but java makes this really difficult and bureaucratic
+            CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedRemoteCipher);
+            Cipher outCipher = Cipher.getInstance(desc.mJavaName);
+            String algName = desc.mJavaName.split("/")[0];
+            AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+            byte[] key, iv;
+            if (mServerMode) {
+                key = computeKey((byte)'C', desc.mKeySize);
+                iv = computeKey((byte)'A', desc.mBlockSize);
+            } else {
+                key = computeKey((byte)'D', desc.mKeySize);
+                iv = computeKey((byte)'B', desc.mBlockSize);
+            }
+            param.init(new IvParameterSpec(iv));
+            outCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
+
+            MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedRemoteMac);
+            Mac outMac = Mac.getInstance(mdesc.mJavaName);
+            /* initial mac keys are done in the hash's natural size (not the
+             * potentially truncated transmission size)
+             */
+            if (mServerMode) {
+                key = computeKey((byte)'E', mdesc.mDigestSize);
+            } else {
+                key = computeKey((byte)'F', mdesc.mDigestSize);
+            }
+            outMac.init(new SecretKeySpec(key, desc.mJavaName));
+            mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
+        } catch (GeneralSecurityException x) {
+            throw new SSHException("Internal java error: " + x);
+        }
     }
     
     // switch on newly negotiated encryption parameters for outbound traffic
@@ -119,7 +213,45 @@ public class BaseTransport
         Message m = new Message();
         m.putByte(MessageType.NEW_KEYS);
         sendMessage(m);
-        // FIXME
+        
+        try {
+            // this method shouldn't be so long, but java makes this really difficult and bureaucratic
+            CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedLocalCipher);
+            Cipher outCipher = Cipher.getInstance(desc.mJavaName);
+            String algName = desc.mJavaName.split("/")[0];
+            AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+            byte[] key, iv;
+            if (mServerMode) {
+                key = computeKey((byte)'D', desc.mKeySize);
+                iv = computeKey((byte)'B', desc.mBlockSize);
+            } else {
+                key = computeKey((byte)'C', desc.mKeySize);
+                iv = computeKey((byte)'A', desc.mBlockSize);
+            }
+            param.init(new IvParameterSpec(iv));
+            outCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, algName), param);
+            
+            MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedLocalMac);
+            Mac outMac = Mac.getInstance(mdesc.mJavaName);
+            /* initial mac keys are done in the hash's natural size (not the
+             * potentially truncated transmission size)
+             */
+            if (mServerMode) {
+                key = computeKey((byte)'F', mdesc.mDigestSize);
+            } else {
+                key = computeKey((byte)'E', mdesc.mDigestSize);
+            }
+            outMac.init(new SecretKeySpec(key, desc.mJavaName));
+            mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
+            
+            if (! mPacketizer.needRekey()) {
+                mInKex = false;
+            }
+            // we always expect to receive NEW_KEYS now
+            mExpectedPacket = MessageType.NEW_KEYS;
+        } catch (GeneralSecurityException x) {
+            throw new SSHException("Internal java error: " + x);
+        }
     }
 
     
@@ -350,10 +482,29 @@ public class BaseTransport
     
     private void
     parseNewKeys ()
+        throws SSHException
     {
         mLog.debug("Switch to new keys...");
-        //activateInbound();
-        // FIXME...
+        activateInbound();
+        
+        // can also free a bunch of state here
+        mLocalKexInit = null;
+        mRemoteKexInit = null;
+        mKex = null;
+        mK = null;
+        
+        if (! mInitialKexDone) {
+            // this was the first key exchange
+            mInitialKexDone = true;
+        }
+        if (mCompletionEvent != null) {
+            mCompletionEvent.set();
+        }
+        // it's now okay to send data again (if this was a re-key)
+        if (! mPacketizer.needRekey()) {
+            mInKex = false;
+        }
+        mClearToSend.set();
     }
     
     private void
@@ -438,7 +589,16 @@ public class BaseTransport
         mRemoteKexInit[0] = MessageType.KEX_INIT;
         System.arraycopy(data, 0, mRemoteKexInit, 1, m.getPosition());
         
-        // FIXME start kex
+        Class kexClass = (Class) sKexMap.get(mAgreedKex);
+        if (kexClass == null) {
+            throw new SSHException("Oops!  Negotiated kex " + mAgreedKex + " which I don't implement");
+        }
+        try {
+            mKex = (Kex) kexClass.newInstance();
+        } catch (Exception x) {
+            throw new SSHException("Internal java error: " + x);
+        }
+        mKex.startKex(new BaseTransportInterface(), mRandom);
     }
     
     private void
@@ -464,13 +624,37 @@ public class BaseTransport
         public byte[] getRemoteKexInit () { return mRemoteKexInit; }
         public PKey getServerKey () { return mServerKey; }
         public void setKH (BigInteger k, byte[] h) { BaseTransport.this.setKH(k, h); }
-        public void verifyKey (byte[] hostKey, byte[] sig) { BaseTransport.this.verifyKey(hostKey, sig); }
+        public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException { BaseTransport.this.verifyKey(hostKey, sig); }
         public void activateOutbound () throws IOException { BaseTransport.this.activateOutbound(); }
     }
     
-    
+        
     private static final String PROTO_ID = "2.0";
     private static final String CLIENT_ID = "paramikoj_0.1";
+    
+    private static Map sCipherMap = new HashMap();
+    private static Map sMacMap = new HashMap();
+    private static Map sKeyMap = new HashMap();
+    private static Map sKexMap = new HashMap();
+    
+    static {
+        // mappings from SSH protocol names to java implementation details
+        sCipherMap.put("aes128-cbc", new CipherDescription("AES/CBC/NoPadding", 16, 16));
+        sCipherMap.put("blowfish-cbc", new CipherDescription("Blowfish/CBC/NoPadding", 16, 8));
+        sCipherMap.put("aes256-cbc", new CipherDescription("AES/CBC/NoPadding", 32, 16));
+        sCipherMap.put("3des-cbc", new CipherDescription("DESede/CBC/NoPadding", 24, 8));
+
+        sMacMap.put("hmac-sha1", new MacDescription("HmacSHA1", 20));
+        sMacMap.put("hmac-sha1-96", new MacDescription("HmacSHA1", 12));
+        sMacMap.put("hmac-md5", new MacDescription("HmacMD5", 16));
+        sMacMap.put("hmac-md5-96", new MacDescription("HmacMD5", 12));
+        
+        sKeyMap.put("ssh-rsa", RSAKey.class);
+        sKeyMap.put("ssh-dss", DSSKey.class);
+        
+        sKexMap.put("diffie-hellman-group1-sha1", KexGroup1.class);
+        //sKexMap.put("diffie-hellman-group-exchange-sha1", KexGex.class);
+    }
     
     private String[] mPreferredCiphers = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
     private String[] mPreferredMacs = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
@@ -484,6 +668,7 @@ public class BaseTransport
     protected Packetizer mPacketizer;
     protected Kex mKexEngine;
     protected PKey mServerKey;
+    protected PKey mHostKey;        // server key (in client mode)
     
     // negotiation:
     protected String mAgreedKex;
@@ -500,9 +685,11 @@ public class BaseTransport
     protected byte[] mRemoteKexInit;
     protected byte mExpectedPacket;
     private boolean mInKex;
+    private boolean mInitialKexDone;
     private byte[] mSessionID;
     private BigInteger mK;
     private byte[] mH;
+    private Kex mKex;
     
     protected boolean mActive;
     protected boolean mServerMode;
