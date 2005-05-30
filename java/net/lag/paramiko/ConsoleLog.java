@@ -36,9 +36,8 @@ public class ConsoleLog
     public void
     dump (String text, byte[] data, int offset, int length)
     {
-        System.err.println("DMP: " + text);
         for (int i = 0; i < length; i += 16) {
-            System.err.println("DMP: " + dumpHex(data, offset + i, length - i));
+            System.err.println("DMP: " + text + ": " + dumpHex(data, offset + i, length - i));
         }
     }
     

@@ -294,6 +294,7 @@ import javax.crypto.ShortBufferException;
 
         Message msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
         mSequenceNumberIn++;
+        mLog.debug("Read packet <" + MessageType.getDescription(packet[0]) + ">, length " + (length - padding - 1));
         
         // check for rekey
         mReceivedBytes += length + mMacSizeIn + 4;

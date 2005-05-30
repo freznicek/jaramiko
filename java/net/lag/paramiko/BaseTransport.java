@@ -1,4 +1,23 @@
 /*
+ * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ *
+ * This file is part of paramiko.
+ *
+ * Paramiko is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+ * 
+ * 
  * Created on May 11, 2005
  */
 
@@ -25,6 +44,7 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
 
 /**
  * @author robey
@@ -59,6 +79,13 @@ public class BaseTransport
     setLog (LogSink logger)
     {
         mLog = logger;
+        mPacketizer.setLog(logger);
+    }
+    
+    public void
+    setDumpPackets (boolean dump)
+    {
+        mPacketizer.setDumpPackets(dump);
     }
     
     public void
@@ -122,6 +149,7 @@ public class BaseTransport
         throws SSHException
     {
         PKey key = PKey.createFromData(hostKey);
+        mLog.debug("Server host key: " + Util.encodeHex(key.getFingerprint()));
         if (! key.verifySSHSignature(mH, new Message(sig))) {
             throw new SSHException("Signature verification (" + key.getSSHName() + ") failed.");
         }
@@ -445,7 +473,7 @@ public class BaseTransport
         switch (ptype) {
         case MessageType.NEW_KEYS:
             parseNewKeys();
-            break;
+            return true;
         case MessageType.GLOBAL_REQUEST:
             //parseGlobalRequest(m);
             break;
@@ -458,7 +486,7 @@ public class BaseTransport
         // FIXME...
         case MessageType.KEX_INIT:
             parseKexInit(m);
-            break;
+            return true;
         }
         return false;
     }
@@ -490,7 +518,7 @@ public class BaseTransport
         // can also free a bunch of state here
         mLocalKexInit = null;
         mRemoteKexInit = null;
-        mKex = null;
+        mKexEngine = null;
         mK = null;
         
         if (! mInitialKexDone) {
@@ -561,7 +589,6 @@ public class BaseTransport
         if ((mAgreedLocalCipher == null) || (mAgreedRemoteCipher == null)) {
             throw new SSHException("Incompatible SSH peer (no acceptable ciphers)");
         }
-        mLog.debug("Ciphers agreed: local=" + mAgreedLocalCipher + ", remote=" + mAgreedRemoteCipher);
         
         if (mServerMode) {
             mAgreedLocalMac = filter(serverMacAlgorithmList, Arrays.asList(mPreferredMacs));
@@ -585,20 +612,19 @@ public class BaseTransport
          * away those bytes because they aren't part of the hash.
          */
         byte[] data = m.toByteArray();
-        mRemoteKexInit = new byte[m.getPosition() + 1];
-        mRemoteKexInit[0] = MessageType.KEX_INIT;
-        System.arraycopy(data, 0, mRemoteKexInit, 1, m.getPosition());
+        mRemoteKexInit = new byte[m.getPosition()];
+        System.arraycopy(data, 0, mRemoteKexInit, 0, m.getPosition());
         
         Class kexClass = (Class) sKexMap.get(mAgreedKex);
         if (kexClass == null) {
             throw new SSHException("Oops!  Negotiated kex " + mAgreedKex + " which I don't implement");
         }
         try {
-            mKex = (Kex) kexClass.newInstance();
+            mKexEngine = (Kex) kexClass.newInstance();
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
-        mKex.startKex(new BaseTransportInterface(), mRandom);
+        mKexEngine.startKex(new BaseTransportInterface(), mRandom);
     }
     
     private void
@@ -689,7 +715,6 @@ public class BaseTransport
     private byte[] mSessionID;
     private BigInteger mK;
     private byte[] mH;
-    private Kex mKex;
     
     protected boolean mActive;
     protected boolean mServerMode;

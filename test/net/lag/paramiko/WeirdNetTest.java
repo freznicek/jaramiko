@@ -5,9 +5,7 @@
 package net.lag.paramiko;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.net.Socket;
 import junit.framework.*;
 
 
@@ -21,15 +19,17 @@ public class WeirdNetTest
     testWeird ()
         throws Exception
     {
-        ServerSocketChannel serv = ServerSocketChannel.open();
-        serv.socket().bind(new InetSocketAddress(9999));
+        Socket sock = new Socket();
+        sock.connect(new InetSocketAddress("localhost", 22));
         
-        SocketChannel sock = SocketChannel.open(new InetSocketAddress("127.0.0.1", 9999));
+        BaseTransport t = new BaseTransport(sock);
+        t.setLog(new ConsoleLog());
+        //t.setDumpPackets(true);
+        t.startClient(new Event());
         
-        System.err.println("-> begin");
-
-        ByteBuffer buf = ByteBuffer.allocate(1);
-        sock.socket().setSoTimeout(2000);
-        sock.read(buf);
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException x) { }
+        
     }
 }

@@ -22,6 +22,8 @@ public class AllTests
         ts.addTestSuite(KexTest.class);
         ts.addTestSuite(PKeyTest.class);
 
+        ts.addTestSuite(WeirdNetTest.class);
+        
         return ts;
     }
 }
