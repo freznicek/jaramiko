@@ -84,12 +84,15 @@ public final class Event
      * set, return immediately.  Otherwise, block until another thread calls
      * {@link set}, or until the timeout occurs.
      * 
+     * <p>The odd method name is to avoid conflict with a poorly-named java
+     * builtin method.
+     * 
      * @param timeout milliseconds to wait for the event to be set (0 = wait
      *     forever)
      * @throws InterruptedException if the thread was interrupted while waiting
      */
     public void
-    wait (int timeout)
+    waitFor (int timeout)
         throws InterruptedException
     {
         synchronized (mLock) {
