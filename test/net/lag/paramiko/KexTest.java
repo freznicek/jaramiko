@@ -31,7 +31,7 @@ public class KexTest
         m.putMPZ(BigInteger.valueOf(69));
         m.putString("fake-sig");
         m.rewind();
-        kex.parseNext(KexGroup1.KEXDH_REPLY, m);
+        kex.handleMessage(KexGroup1.KEXDH_REPLY, m);
         assertEquals(EXP1K, t.mK);
         assertTrue(Arrays.equals("fake-host-key".getBytes(), t.mVerifyKey));
         assertTrue(Arrays.equals("fake-sig".getBytes(), t.mVerifySig));
@@ -51,7 +51,7 @@ public class KexTest
         Message m = new Message();
         m.putMPZ(BigInteger.valueOf(69));
         m.rewind();
-        kex.parseNext(KexGroup1.KEXDH_INIT, m);
+        kex.handleMessage(KexGroup1.KEXDH_INIT, m);
         assertEquals(EXP1K, t.mK);
         assertTrue(Arrays.equals(EXP2H, t.mH));
         assertTrue(Arrays.equals(EXP2, t.mMessage.toByteArray()));

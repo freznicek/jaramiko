@@ -4,6 +4,7 @@
 
 package net.lag.paramiko;
 
+import java.io.IOException;
 import java.math.BigInteger;
 
 /**
@@ -25,6 +26,12 @@ public class FakeTransport
         mH = h;
     }
     
+    public void
+    saveException (IOException x)
+    {
+        // pass
+    }
+    	 
     public void
     activateOutbound ()
     {
@@ -78,6 +85,18 @@ public class FakeTransport
     getServerKey ()
     {
         return new FakeKey();
+    }
+    
+    public byte[]
+    getSessionID ()
+    {
+        return null;
+    }
+
+    public void
+    registerMessageHandler (byte ptype, MessageHandler handler)
+    {
+        // pass
     }
     
     

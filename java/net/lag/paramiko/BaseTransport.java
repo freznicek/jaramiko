@@ -73,6 +73,8 @@ public class BaseTransport
         
         mLocalVersion = "SSH-" + PROTO_ID + "-" + CLIENT_ID;
         mRemoteVersion = null;
+        
+        mMessageHandlers = new HashMap();
     }
     
     public void
@@ -103,6 +105,28 @@ public class BaseTransport
     }
     
     /**
+     * Return true if this session is active and has authenticated
+     * successfully.
+     * 
+     * @return true if this session is active and authenticated
+     */
+    public boolean
+    isAuthenticated ()
+    {
+        return mActive && (mAuthHandler != null) && mAuthHandler.isAuthenticated();
+    }
+    
+    public String[]
+    authPassword (String username, String password)
+        throws IOException
+    {
+        Event event = new Event();
+        mAuthHandler = new AuthHandler(new BaseTransportInterface(), mRandom, mLog);
+        mAuthHandler.authPassword(username, password, event);
+        return waitForAuthResponse(event);
+    }
+    
+    /**
      * Return true if this SSH session is operating in server mode; false if
      * operating in client mode.
      * 
@@ -119,9 +143,33 @@ public class BaseTransport
     
     
     /* package */ void
+    registerMessageHandler (byte ptype, MessageHandler handler)
+    {
+        mMessageHandlers.put(new Byte(ptype), handler);
+    }
+    
+    /* package */ void
     expectPacket (byte ptype)
     {
         mExpectedPacket = ptype;
+    }
+
+    /* package */ void
+    saveException (IOException x)
+    {
+        synchronized (this) {
+            mSavedException = x;
+        }
+    }
+    
+    /* package */ IOException
+    getException ()
+    {
+        synchronized (this) {
+            IOException x = mSavedException;
+            mSavedException = null;
+            return x;
+        }
     }
 
     /* package */ void
@@ -387,6 +435,37 @@ public class BaseTransport
         return null;
     }
     
+    private String[]
+    waitForAuthResponse (Event e)
+        throws IOException
+    {
+        while (! e.isSet()) {
+            try {
+                e.waitFor(100);
+            } catch (InterruptedException x) {
+                Thread.currentThread().interrupt();
+            }
+            if (! mActive) {
+                IOException x = getException();
+                if (x == null) {
+                    x = new SSHException("Authentication failed.");
+                }
+                throw x;
+            }
+        }
+        
+        if (! mAuthHandler.isAuthenticated()) {
+            IOException x = getException();
+            if (x == null) {
+                x = new SSHException("Authentication failed.");
+            } else if (x instanceof PartialAuthentication) {
+                return ((PartialAuthentication) x).getAllowedTypes();
+            }
+            throw x;
+        }
+        return null;
+    }
+    
     private void
     privateRun ()
     {
@@ -427,10 +506,6 @@ public class BaseTransport
                                                ", got " + MessageType.getDescription(ptype));
                     }
                     mExpectedPacket = 0;
-                    if ((ptype >= 30) && (ptype <= 39)) {
-                        mKexEngine.parseNext(ptype, m);
-                        continue;
-                    }
                 }
                 
                 if (! parsePacket(ptype, m)) {
@@ -444,8 +519,10 @@ public class BaseTransport
         } catch (SSHException x) {
             mLog.error("Exception: " + x);
             logStackTrace(x);
+            saveException(x);
         } catch (IOException x) {
             mLog.error("I/O exception in transport thread: " + x);
+            saveException(x);
         }
         
         // FIXME
@@ -470,6 +547,11 @@ public class BaseTransport
     parsePacket (byte ptype, Message m)
         throws IOException
     {
+        MessageHandler handler = (MessageHandler) mMessageHandlers.get(new Byte(ptype));
+        if (handler != null) {
+            return handler.handleMessage(ptype, m);
+        }
+        
         switch (ptype) {
         case MessageType.NEW_KEYS:
             parseNewKeys();
@@ -641,8 +723,10 @@ public class BaseTransport
     private class BaseTransportInterface
         implements TransportInterface
     {
+        public byte[] getSessionID () { return BaseTransport.this.mSessionID; }
         public boolean inServerMode () { return BaseTransport.this.inServerMode(); }  
         public void expectPacket (byte ptype) { BaseTransport.this.expectPacket(ptype); }
+        public void saveException (IOException x) { BaseTransport.this.saveException(x); }
         public void sendMessage (Message m) throws IOException { BaseTransport.this.sendMessage(m); }
         public String getLocalVersion () { return mLocalVersion; }
         public String getRemoteVersion () { return mRemoteVersion; }
@@ -651,6 +735,7 @@ public class BaseTransport
         public PKey getServerKey () { return mServerKey; }
         public void setKH (BigInteger k, byte[] h) { BaseTransport.this.setKH(k, h); }
         public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException { BaseTransport.this.verifyKey(hostKey, sig); }
+        public void registerMessageHandler (byte ptype, MessageHandler handler) { BaseTransport.this.registerMessageHandler(ptype, handler); }
         public void activateOutbound () throws IOException { BaseTransport.this.activateOutbound(); }
     }
     
@@ -721,4 +806,7 @@ public class BaseTransport
     protected Event mCompletionEvent;
     protected Event mClearToSend;
     protected LogSink mLog;
+    private IOException mSavedException;
+    private AuthHandler mAuthHandler;
+    private Map mMessageHandlers;       // Map<byte, MessageHandler>
 }

@@ -15,8 +15,10 @@ import java.math.BigInteger;
  */
 /* package */ interface TransportInterface
 {
+    public byte[] getSessionID();
     public boolean inServerMode ();    
     public void expectPacket (byte ptype);
+    public void saveException (IOException x);
     public void sendMessage (Message m) throws IOException;
     public String getLocalVersion ();
     public String getRemoteVersion ();
@@ -25,5 +27,6 @@ import java.math.BigInteger;
     public PKey getServerKey ();
     public void setKH (BigInteger k, byte[] h);
     public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
+    public void registerMessageHandler (byte ptype, MessageHandler handler);
     public void activateOutbound () throws IOException;
 }

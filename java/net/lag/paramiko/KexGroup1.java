@@ -36,6 +36,7 @@ public class KexGroup1
         if (mTransport.inServerMode()) {
             // compute f = g^x mod p, but don't send it yet
             mF = G.modPow(mX, P);
+            mTransport.registerMessageHandler(KEXDH_INIT, this);
             mTransport.expectPacket(KEXDH_INIT);
             return;
         }
@@ -45,19 +46,20 @@ public class KexGroup1
         m.putByte(KEXDH_INIT);
         m.putMPZ(mE);
         mTransport.sendMessage(m);
+        mTransport.registerMessageHandler(KEXDH_REPLY, this);
         mTransport.expectPacket(KEXDH_REPLY);
     }
     
-    public void
-    parseNext (byte ptype, Message m)
+    public boolean
+    handleMessage (byte ptype, Message m)
         throws IOException
     {
         if (mTransport.inServerMode() && (ptype == KEXDH_INIT)) {
             handleKexDHInit(m);
-            return;
+            return true;
         } else if (! mTransport.inServerMode() && (ptype == KEXDH_REPLY)) {
             handleKexDHReply(m);
-            return;
+            return true;
         }
         throw new SSHException("KexGroup1 asked to handle packet type " + MessageType.getDescription(ptype));
     }

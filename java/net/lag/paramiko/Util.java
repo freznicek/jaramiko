@@ -102,4 +102,17 @@ public class Util
     {
         return encodeHex(x, 0, x.length);
     }
+    
+    public static final String
+    join (String[] list, String glue)
+    {
+        StringBuffer out = new StringBuffer();
+        for (int i = 0; i < list.length; i++) {
+            if (i > 0) {
+                out.append(glue);
+            }
+            out.append(list[i]);
+        }
+        return out.toString();
+    }
 }

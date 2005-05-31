@@ -13,8 +13,8 @@ import java.security.SecureRandom;
  * @author robey
  */
 /* package */ interface Kex
+    extends MessageHandler
 {
     public String getName ();
     public void startKex (TransportInterface t, SecureRandom r) throws IOException;
-    public void parseNext (byte ptype, Message m) throws IOException;
 }
