@@ -322,14 +322,19 @@ public final class Message
      * 
      * @param random a source of secure random bytes (used for padding)
      * @param blockSize the block size to pad up to
+     * @param encrypting true if this packet will be encrypted (used for
+     *     optimizing the use of entropy)
      */
     public void
-    packetize (SecureRandom random, int blockSize)
+    packetize (SecureRandom random, int blockSize, boolean encrypting)
     {
         // pad up at least 4 bytes, to nearest block-size (usually 8)
         int padding = 3 + blockSize - ((mPosition - mStart + 8) % blockSize);
         byte[] pad = new byte[padding];
-        random.nextBytes(pad);
+        if (encrypting) {
+            // leave the padding as zero bytes unless we're encrypting
+            random.nextBytes(pad);
+        }
 
         if (mStart < 5) {
             // push everything forward 5 bytes, so we have room for a header

@@ -132,7 +132,7 @@ public class MessageTest
     {
         Message m = new Message();
         m.putInt(23);
-        m.packetize(new SecureRandom(), 8);
+        m.packetize(new SecureRandom(), 8, true);
         
         byte[] buf = m.toByteArray();
         assertEquals(16, m.getPosition());

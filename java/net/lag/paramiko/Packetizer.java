@@ -54,6 +54,9 @@ import javax.crypto.ShortBufferException;
         mInitCount = 0;
         mKeepAliveInterval = 0;
         
+        mSequenceNumberOut = 0;
+        mSequenceNumberIn = 0;
+        
         mWriteLock = new Object();
         mReadBuffer = new byte[64];
     }
@@ -182,7 +185,7 @@ import javax.crypto.ShortBufferException;
     write (Message msg)
         throws IOException
     {
-        msg.packetize(mRandom, mBlockSizeOut);
+        msg.packetize(mRandom, mBlockSizeOut, (mBlockEngineOut != null));
         byte[] packet = msg.toByteArray();
         int length = msg.getPosition();
         mLog.debug("Write packet <" + MessageType.getDescription(packet[5]) + ">, length " + length);
@@ -192,12 +195,6 @@ import javax.crypto.ShortBufferException;
         
         synchronized (mWriteLock) {
             if (mBlockEngineOut != null) {
-                try {
-                    mBlockEngineOut.update(packet, 0, length, packet, 0);
-                } catch (ShortBufferException x) {
-                    throw new IOException("encipher error: " + x);
-                }
-
                 new Message(mMacBufferOut).putInt(mSequenceNumberOut);
                 mMacEngineOut.update(mMacBufferOut, 0, 4);
                 mMacEngineOut.update(packet, 0, length);
@@ -205,6 +202,12 @@ import javax.crypto.ShortBufferException;
                     mMacEngineOut.doFinal(mMacBufferOut, 0);
                 } catch (ShortBufferException x) {
                     throw new IOException("mac error: " + x);
+                }
+
+                try {
+                    mBlockEngineOut.update(packet, 0, length, packet, 0);
+                } catch (ShortBufferException x) {
+                    throw new IOException("encipher error: " + x);
                 }
             }
             
