@@ -270,12 +270,12 @@ public class BaseTransport
              * potentially truncated transmission size)
              */
             if (mServerMode) {
-                key = computeKey((byte)'E', mdesc.mDigestSize);
+                key = computeKey((byte)'E', mdesc.mNaturalSize);
             } else {
-                key = computeKey((byte)'F', mdesc.mDigestSize);
+                key = computeKey((byte)'F', mdesc.mNaturalSize);
             }
-            outMac.init(new SecretKeySpec(key, desc.mJavaName));
-            mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
+            outMac.init(new SecretKeySpec(key, mdesc.mJavaName));
+            mPacketizer.setInboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
         } catch (GeneralSecurityException x) {
             throw new SSHException("Internal java error: " + x);
         }
@@ -313,11 +313,11 @@ public class BaseTransport
              * potentially truncated transmission size)
              */
             if (mServerMode) {
-                key = computeKey((byte)'F', mdesc.mDigestSize);
+                key = computeKey((byte)'F', mdesc.mNaturalSize);
             } else {
-                key = computeKey((byte)'E', mdesc.mDigestSize);
+                key = computeKey((byte)'E', mdesc.mNaturalSize);
             }
-            outMac.init(new SecretKeySpec(key, desc.mJavaName));
+            outMac.init(new SecretKeySpec(key, mdesc.mJavaName));
             mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
             
             if (! mPacketizer.needRekey()) {
@@ -494,7 +494,7 @@ public class BaseTransport
                     parseDisconnect(m);
                     mActive = false;
                     mPacketizer.close();
-                    break;
+                    continue;
                 case MessageType.DEBUG:
                     parseDebug(m);
                     continue;
@@ -541,6 +541,7 @@ public class BaseTransport
         try {
             mSocket.close();
         } catch (IOException x) { }
+        mLog.debug("Feeder thread terminating.");
     }
     
     private boolean
@@ -755,10 +756,10 @@ public class BaseTransport
         sCipherMap.put("aes256-cbc", new CipherDescription("AES/CBC/NoPadding", 32, 16));
         sCipherMap.put("3des-cbc", new CipherDescription("DESede/CBC/NoPadding", 24, 8));
 
-        sMacMap.put("hmac-sha1", new MacDescription("HmacSHA1", 20));
-        sMacMap.put("hmac-sha1-96", new MacDescription("HmacSHA1", 12));
-        sMacMap.put("hmac-md5", new MacDescription("HmacMD5", 16));
-        sMacMap.put("hmac-md5-96", new MacDescription("HmacMD5", 12));
+        sMacMap.put("hmac-sha1", new MacDescription("HmacSHA1", 20, 20));
+        sMacMap.put("hmac-sha1-96", new MacDescription("HmacSHA1", 12, 20));
+        sMacMap.put("hmac-md5", new MacDescription("HmacMD5", 16, 16));
+        sMacMap.put("hmac-md5-96", new MacDescription("HmacMD5", 12, 16));
         
         sKeyMap.put("ssh-rsa", RSAKey.class);
         sKeyMap.put("ssh-dss", DSSKey.class);

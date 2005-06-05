@@ -13,12 +13,14 @@ package net.lag.paramiko;
 /* package */ final class MacDescription
 {
     public
-    MacDescription (String name, int size)
+    MacDescription (String name, int size, int naturalSize)
     {
         mJavaName = name;
         mDigestSize = size;
+        mNaturalSize = naturalSize;
     }
     
     public String mJavaName;
     public int mDigestSize;     // bytes
+    public int mNaturalSize;    // bytes
 }
