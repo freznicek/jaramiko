@@ -345,7 +345,7 @@ public abstract class PKey
      * @param data a byte array to decode
      * @return an array of BigIntegers representing the key data
      */
-    private static BigInteger[]
+    protected static BigInteger[]
     decodeBERSequence (byte[] data)
         throws SSHException
     {

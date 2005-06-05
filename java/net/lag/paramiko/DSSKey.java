@@ -14,6 +14,8 @@ import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
 
 /**
+ * Implementation of DSS public/private key algorithm for SSH2.
+ * 
  * @author robey
  */
 public class DSSKey
@@ -63,10 +65,23 @@ public class DSSKey
             PrivateKey key = keyFac.generatePrivate(new DSAPrivateKeySpec(mX, mP, mQ, mG));
             s.initSign(key, random);
             s.update(data);
+            byte[] sig = s.sign();
+            
+            /* decode java's odd signature format:
+             * java returns a ber sequence containing (r, s) but ssh2 expects
+             * a 40-byte buffer containing the 20 bytes of r followed by the
+             * 20 bytes of s, with no sign extension.
+             */
+            BigInteger[] rs = decodeBERSequence(sig);
+            byte[] rb = rs[0].toByteArray();
+            byte[] sb = rs[1].toByteArray();
+            sig = new byte[40];
+            System.arraycopy(rb, rb.length - 20, sig, 0, 20);
+            System.arraycopy(sb, sb.length - 20, sig, 20, 20);
             
             Message m = new Message();
             m.putString(getSSHName());
-            m.putByteString(s.sign());
+            m.putByteString(sig);
             return m;
         } catch (Exception x) {
             throw new SSHException("Java publickey error: " + x);
@@ -83,12 +98,32 @@ public class DSSKey
             }
             byte[] sigData = sig.getByteString();
 
+            if (sigData.length != 40) {
+                throw new SSHException("DSS signature must be exactly 40 bytes! (is: " + sigData.length + ")");
+            }
+            /* build up a fake ber sequence containing r and s.  this is
+             * terrible to behold but i didn't feel like implementing the
+             * ber encoding algorithm just to workaround one tiny bit of
+             * oddness with java's API.
+             */
+            byte[] argh = new byte[48];
+            argh[0] = 0x30;
+            argh[1] = 46;
+            argh[2] = 2;
+            argh[3] = 21;
+            argh[4] = 0;
+            System.arraycopy(sigData, 0, argh, 5, 20);
+            argh[25] = 2;
+            argh[26] = 21;
+            argh[27] = 0;
+            System.arraycopy(sigData, 20, argh, 28, 20);
+            
             Signature s = Signature.getInstance("SHA1withDSA");
             KeyFactory keyFac = KeyFactory.getInstance("DSA");
             PublicKey key = keyFac.generatePublic(new DSAPublicKeySpec(mY, mP, mQ, mG));
             s.initVerify(key);
             s.update(data);
-            return s.verify(sigData);
+            return s.verify(argh);
         } catch (Exception x) {
             throw new SSHException("Java publickey error: " + x);
         }
