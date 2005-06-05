@@ -20,16 +20,22 @@ public class WeirdNetTest
         throws Exception
     {
         Socket sock = new Socket();
-        sock.connect(new InetSocketAddress("localhost", 22));
+        sock.connect(new InetSocketAddress("localhost", 2200));
         
         BaseTransport t = new BaseTransport(sock);
         t.setLog(new ConsoleLog());
-        //t.setDumpPackets(true);
-        t.startClient(new Event());
+        t.setDumpPackets(true);
+        Event e = new Event();
+        t.startClient(e);
         
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException x) { }
+        System.err.println("waiting for event...");
+        e.waitFor(10000);
+        if (! e.isSet()) {
+            System.err.println("never set. :(");
+        } else {
+            System.err.println("OK, connected!");
+            t.authPassword("robey", "foo");
+        }
         
     }
 }

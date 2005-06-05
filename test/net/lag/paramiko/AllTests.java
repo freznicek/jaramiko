@@ -12,6 +12,7 @@ import junit.framework.*;
  */
 public class AllTests
 {
+
     public static Test
     suite ()
     {
@@ -21,6 +22,7 @@ public class AllTests
         ts.addTestSuite(PacketizerTest.class);
         ts.addTestSuite(KexTest.class);
         ts.addTestSuite(PKeyTest.class);
+        ts.addTestSuite(TransportTest.class);
 
         ts.addTestSuite(WeirdNetTest.class);
         
