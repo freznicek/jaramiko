@@ -96,7 +96,7 @@ public final class Event
         throws InterruptedException
     {
         synchronized (mLock) {
-            while (! mSet) {
+            if (! mSet) {
                 mLock.wait(timeout);
             }
             return;
