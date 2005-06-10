@@ -89,12 +89,42 @@ public class BaseTransport
     {
         mPacketizer.setDumpPackets(dump);
     }
-    
+
+    /**
+     * Negotiate a new SSH2 session as a client.  This is the first step after
+     * creating a new Transport.  A separate thread is created for protocol
+     * negotiation, and this method blocks (up to a specified timeout) to find
+     * out if it was successful.  If negotiation failed, an exception will be
+     * thrown.
+     *
+     * <p>If a host key is passed in, host key checking will be done and an
+     * exception will be thrown if the server's host key doesn't match.  If the
+     * host key is <code>null</code>, no host key checking is done, and you
+     * must do it yourself using {@link #getRemoteServerKey}.
+     * 
+     * <p>After a successful negotiation, you will usually want to
+     * authenticate, calling {@link #authPassword} or {@link #authPrivateKey}.
+     * Then you may call {@link #openSession} or {@link #openChannel} to get
+     * a {@link Channel} for data transfer.
+     * 
+     * @param hostkey the host key expected from the server, or <code>null</code>
+     *     to skip host key checking
+     * @param timeout_ms maximum time (in milliseconds) to wait for negotiation
+     *     to finish; <code>-1</code> to wait indefinitely
+     * @throws SSHException if the SSH2 negotiation fails or the host key
+     *     supplied by the server is incorrect
+     * @throws IOException if there was an I/O exception on the socket
+     */
     public void
-    startClient (Event e)
+    startClient (PKey hostkey, int timeout_ms)
+        throws IOException
     {
-        e.clear();
-        mCompletionEvent = e;
+        if (hostkey != null) {
+            // we only want this particular key then
+            mPreferredKeys = new String[] { hostkey.getSSHName() };
+        }
+        
+        mCompletionEvent = new Event();
         mServerMode = false;
         mActive = true;
         new Thread(new Runnable() {
@@ -102,6 +132,30 @@ public class BaseTransport
                 privateRun();
             }
         }).start();
+
+        if (! waitForEvent(mCompletionEvent, timeout_ms)) {
+            throw new SSHException("Timeout.");
+        }
+        if (! mActive) {
+            IOException x = getException();
+            if (x != null) {
+                throw x;
+            } else {
+                throw new SSHException("Negotiation failed.");
+            }
+        }
+        
+        // check the host key
+        if (hostkey != null) {
+            PKey skey = getRemoteServerKey();
+            if (! skey.equals(hostkey)) {
+                mLog.debug("Bad host key from server");
+                mLog.debug("Expected: " + hostkey.getSSHName() + ": " + Util.encodeHex(hostkey.getFingerprint()));
+                mLog.debug("Got     : " + skey.getSSHName() + ": " + Util.encodeHex(skey.getFingerprint()));
+                throw new SSHException("Bad host key from server");
+            }
+            mLog.debug("Host key verified (" + skey.getSSHName() + ")");
+        }
     }
     
     /**
@@ -116,14 +170,67 @@ public class BaseTransport
         return mActive && (mAuthHandler != null) && mAuthHandler.isAuthenticated();
     }
     
+    /**
+     * Authenticate to the SSH2 server using a password.  The username and
+     * password are sent over an encrypted link.
+     * 
+     * <p>This method blocks until authentication succeeds or fails.  On
+     * failure, an exception is raised.  Otherwise, the method simply returns.
+     * If the server requires multi-step authentication (which is very rare),
+     * this method will return a list of auth types permissible for the next
+     * step.  Otherwise, in the normal case, an empty list is returned.
+     * 
+     * @param username the username to authenticate as
+     * @param password the password to authenticate with
+     * @param timeout_ms how long to wait for a response (in milliseconds);
+     *     <code>-1</code> to wait forever
+     * @return a list of auth types permissible for the next step of
+     *     authentication (normally empty, meaning authentication is complete)
+     * @throws BadAuthenticationType if password authentication isn't allowed
+     *     by the server for this user
+     * @throws SSHException if the authentication failed
+     * @throws IOException if an I/O exception occurred at the socket layer
+     */
     public String[]
-    authPassword (String username, String password)
+    authPassword (String username, String password, int timeout_ms)
         throws IOException
     {
         Event event = new Event();
         mAuthHandler = new AuthHandler(new BaseTransportInterface(), mRandom, mLog);
         mAuthHandler.authPassword(username, password, event);
-        return waitForAuthResponse(event);
+        return waitForAuthResponse(event, timeout_ms);
+    }
+    
+    /**
+     * Authenticate to the SSH2 server using a private key.  The key is used to
+     * sign data from the server, so it must be a key capable of signing (not
+     * just a public key).
+     * 
+     * <p>This method blocks until the authentication succeeds or fails.  On
+     * failure, an exception is raised.  Otherwise, the method simply returns.
+     * If the server requires multi-step authentication (which is very rare),
+     * this method will return a list of auth types permissible for the next
+     * step.  Otherwise, in the nromal case, an empty list is returned.
+     * 
+     * @param username the username to authenticate as
+     * @param key the private key to authenticate with
+     * @param timeout_ms how long to wait for a response (in milliseconds);
+     *     <code>-1</code> to wait forever
+     * @return a list of auth types permissible for the next step of
+     *     authentication (normally empty, meaning authentication is complete)
+     * @throws BadAuthenticationType if private key authentication isn't
+     *     allowed by the server for this user
+     * @throws SSHException if the authentication failed
+     * @throws IOException if an I/O exception occurred at the socket layer
+     */
+    public String[]
+    authPrivateKey (String username, PKey key, int timeout_ms)
+        throws IOException
+    {
+        Event event = new Event();
+        mAuthHandler = new AuthHandler(new BaseTransportInterface(), mRandom, mLog);
+        mAuthHandler.authPrivateKey(username, key, event);
+        return waitForAuthResponse(event, timeout_ms);
     }
     
     /**
@@ -136,6 +243,22 @@ public class BaseTransport
     inServerMode ()
     {
         return mServerMode;
+    }
+    
+    /**
+     * Return the host key of the server (in client mode).
+     * 
+     * @return the public key of the remote server
+     * @throws SSHException if no session is currently active
+     */
+    public PKey
+    getRemoteServerKey ()
+        throws SSHException
+    {
+        if (!mActive || !mInitialKexDone) {
+            throw new SSHException("No existing session");
+        }
+        return mHostKey;
     }
     
     
@@ -435,23 +558,60 @@ public class BaseTransport
         return null;
     }
     
-    private String[]
-    waitForAuthResponse (Event e)
-        throws IOException
+    /**
+     * Wait for an event to trigger, up to an optional timeout.  If the
+     * transport goes inactive (dead), it will return prematurely within the
+     * next tenth of a second.
+     * It will also return prematurely if the thread is interrupted.
+     *  
+     * @param e the event to wait on
+     * @param timeout_ms maximum time to wait (in milliseconds); -1 to wait
+     *     forever
+     * @return true if the event was triggered or the transport died; false if
+     *     the timeout occurred or the thread was interrupted
+     */
+    private boolean
+    waitForEvent (Event e, int timeout_ms)
     {
+        long deadline = System.currentTimeMillis() + timeout_ms;
         while (! e.isSet()) {
             try {
-                e.waitFor(100);
-            } catch (InterruptedException x) {
-                Thread.currentThread().interrupt();
-            }
-            if (! mActive) {
-                IOException x = getException();
-                if (x == null) {
-                    x = new SSHException("Authentication failed.");
+                int span = (timeout_ms >= 0) ? (int)(deadline - System.currentTimeMillis()) : 100;
+                if (span < 0) {
+                    return false;
                 }
-                throw x;
+                if (span > 100) {
+                    span = 100;
+                }
+                if (span > 0) {
+                    e.waitFor(span);
+                }
+            } catch (InterruptedException x) {
+                // just remember it
+                Thread.currentThread().interrupt();
+                return false;
             }
+
+            if (! mActive) {
+                return true;
+            }
+        }
+        return true;
+    }
+    
+    private String[]
+    waitForAuthResponse (Event e, int timeout_ms)
+        throws IOException
+    {
+        if (! waitForEvent(e, timeout_ms)) {
+            throw new SSHException("Timeout.");
+        }
+        if (! mActive) {
+            IOException x = getException();
+            if (x == null) {
+                x = new SSHException("Authentication failed.");
+            }
+            throw x;
         }
         
         if (! mAuthHandler.isAuthenticated()) {
