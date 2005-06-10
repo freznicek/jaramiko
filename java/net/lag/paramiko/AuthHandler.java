@@ -42,6 +42,19 @@ import java.util.List;
         }
     }
     
+    public void
+    authPrivateKey (String username, PKey key, Event event)
+        throws IOException
+    {
+        synchronized (this) {
+            mAuthEvent = event;
+            mAuthMethod = "publickey";
+            mUsername = username;
+            mPrivateKey = key;
+            requestAuth();
+        }
+    }
+    
     public boolean
     handleMessage (byte ptype, Message m)
         throws IOException
