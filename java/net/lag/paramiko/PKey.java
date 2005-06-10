@@ -155,6 +155,13 @@ public abstract class PKey
     
     
     public static PKey
+    createFromBase64 (String s)
+        throws SSHException
+    {
+        return createFromData(Base64.decode(s));
+    }
+    
+    public static PKey
     createFromData (byte[] data)
         throws SSHException
     {
