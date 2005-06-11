@@ -227,6 +227,44 @@ public final class Message
         putString(out.toString());
     }
     
+    /**
+     * Given a list of encodable types, iterate the list and add each item
+     * as if the appropriate <code>put*</code> call was made.  This is useful
+     * if you may be receiving an arbitrary list of objects from an outside
+     * source.
+     * 
+     * <p>If any object in the list can't be encoded, an
+     * IllegalArgumentException will be thrown.  Encodable object types are:
+     * <code>Byte</code>, <code>Boolean</code>, <code>Integer</code>,
+     * <code>Long</code>, <code>BigInteger</code>, and <code>byte[]</code>.
+     * 
+     * @param l the list of objects to add to this Message
+     */
+    public void
+    putAll (List l)
+    {
+        for (Iterator i = l.iterator(); i.hasNext(); ) {
+            Object obj = i.next();
+            if (obj instanceof String) {
+                putString((String) obj);
+            } else if (obj instanceof Byte) {
+                putByte(((Byte) obj).byteValue());
+            } else if (obj instanceof Boolean) {
+                putBoolean(((Boolean) obj).booleanValue());
+            } else if (obj instanceof Integer) {
+                putInt(((Integer) obj).intValue());
+            } else if (obj instanceof Long) {
+                putInt64(((Long) obj).longValue());
+            } else if (obj instanceof BigInteger) {
+                putMPZ((BigInteger) obj);
+            } else if (obj instanceof byte[]) {
+                putByteString((byte[]) obj);
+            } else {
+                throw new IllegalArgumentException("Unknown encoding type: " + obj.getClass().getName());
+            }
+        }
+    }
+    
     public byte
     getByte ()
     {

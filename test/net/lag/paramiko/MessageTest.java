@@ -6,6 +6,7 @@ package net.lag.paramiko;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import junit.framework.TestCase;
@@ -128,6 +129,27 @@ public class MessageTest
     }
     
     public void
+    testEncodeAll ()
+    {
+        Message m = new Message();
+        List l = new ArrayList();
+        l.add(new Integer(63));
+        l.add(new Boolean(false));
+        l.add(new String("knoxville"));
+        l.add(new Byte((byte) -1));
+        l.add(new byte[] { 4, 10, 50 });
+        l.add(new Long(56000));
+        l.add(BigInteger.valueOf(-1));
+        m.putAll(l);
+        
+        byte[] buf = m.toByteArray();
+        assertEquals(EXP5.length, m.getPosition());
+        byte[] answer = new byte[EXP5.length];
+        System.arraycopy(buf, 0, answer, 0, EXP5.length);
+        assertTrue(Arrays.equals(answer, EXP5));
+    }
+    
+    public void
     testPacketize ()
     {
         Message m = new Message();
@@ -164,5 +186,10 @@ public class MessageTest
           0x1b, 0x2c, 0x3d, 0x4e, (byte)0xf7 };
     
     private static final byte[] EXP4 =
-        { 0, 0, 0, 12, 7, 0, 0, 0, 23 }; 
+        { 0, 0, 0, 12, 7, 0, 0, 0, 23 };
+    
+    private static final byte[] EXP5 =
+        { 0, 0, 0, 63, 0, 0, 0, 0, 9, 107, 110, 111, 120, 118, 105, 108, 108,
+          101, (byte)-1, 0, 0, 0, 3, 4, 10, 50, 0, 0, 0, 0, 0, 0, (byte)218,
+          (byte)192, 0, 0, 0, 1, (byte)-1 };
 }
