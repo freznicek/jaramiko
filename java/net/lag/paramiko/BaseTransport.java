@@ -261,6 +261,77 @@ public class BaseTransport
         return mHostKey;
     }
     
+    /**
+     * Turn on/off keepalive packets (default is off).  If this is set, after
+     * <code>interval</code> milliseconds without sending any data over the
+     * connection, a "keepalive" packet will be sent (and ignored by the
+     * remote host).  This can be useful to keep connections alive over a
+     * NAT, for example.
+     * 
+     * @param interval_ms milliseconds to wait before sending a keepalive
+     *     packet (or 0 to disable keepalives)
+     */
+    public void
+    setKeepAlive (int interval_ms)
+    {
+        mPacketizer.setKeepAlive(interval_ms, new KeepAliveHandler () {
+            public void keepAliveEvent () {
+                try {
+                    sendGlobalRequest("keepalive@lag.net", null, -1);
+                } catch (IOException x) {
+                    // pass
+                }
+            }
+        });
+    }
+    
+    /**
+     * Make a global request to the remote host.  These are normally
+     * extensions to the SSH2 protocol.
+     * 
+     * <p>If <code>timeout_ms</code> is greater than zero, a response is
+     * requested from the server, and this method will wait up to the timeout
+     * for a response.  The response will be returned as an SSH2
+     * {@link Message}.
+     * 
+     * <p>If <code>timeout_ms</code> is zero (or -1), no response is
+     * requested, and the method returns <code>null</code> immediately.
+     * 
+     * @param requestName name of the request to make
+     * @param parameters an optional list of objects to attach to the request
+     *     (see {@link Message#putAll} for a list of objects that can be
+     *     attached); <code>null</code> to attach nothing
+     * @param timeout_ms 0 to request no response; otherwise the maximum time
+     *     to wait for a response from the server
+     * @return the server's response, or <code>null</code> if the timeout was
+     *     hit or no response was requested
+     * @throws IOException if an I/O exception occurred on the socket
+     */
+    public Message
+    sendGlobalRequest (String requestName, List parameters, int timeout_ms)
+        throws IOException
+    {
+        if (timeout_ms > 0) {
+            mCompletionEvent = new Event();
+        }
+        Message m = new Message();
+        m.putByte(MessageType.GLOBAL_REQUEST);
+        m.putString(requestName);
+        m.putBoolean(timeout_ms > 0);
+        if (parameters != null) {
+            m.putAll(parameters);
+        }
+        mLog.debug("Sending global request '" + requestName + "'");
+        sendUserMessage(m, timeout_ms);
+        if (timeout_ms <= 0) {
+            return null;
+        }
+        if (! waitForEvent(mCompletionEvent, timeout_ms)) {
+            return null;
+        }
+        return mGlobalResponse;
+    }
+    
     
     // -----  package
     
@@ -451,6 +522,25 @@ public class BaseTransport
         } catch (GeneralSecurityException x) {
             throw new SSHException("Internal java error: " + x);
         }
+    }
+    
+    /**
+     * Send a message, but if we're in key (re)negotation, block until that's
+     * finished.  This is used for user-initiated requests.
+     * 
+     * @param m the message to send
+     * @param timeout_ms maximum time (in milliseconds) to wait for the
+     *     key exchange to finish, if it's ongoing
+     * @throws IOException if there's an I/O exception on the socket
+     */
+    /* package */ void
+    sendUserMessage (Message m, int timeout_ms)
+        throws IOException
+    {
+        if (! waitForEvent(mClearToSend, timeout_ms)) {
+            return;
+        }
+        sendMessage(m);
     }
 
     
@@ -721,10 +811,10 @@ public class BaseTransport
             //parseGlobalRequest(m);
             break;
         case MessageType.REQUEST_SUCCESS:
-            //parseRequestSuccess(m);
+            parseRequestSuccess(m);
             break;
         case MessageType.REQUEST_FAILURE:
-            //parseRequestFailure(m);
+            parseRequestFailure(m);
             break;
         // FIXME...
         case MessageType.KEX_INIT:
@@ -871,6 +961,28 @@ public class BaseTransport
     }
     
     private void
+    parseRequestSuccess (Message m)
+        throws IOException
+    {
+        mLog.debug("Global request successful.");
+        mGlobalResponse = m;
+        if (mCompletionEvent != null) {
+            mCompletionEvent.set();
+        }
+    }        
+    
+    private void
+    parseRequestFailure (Message m)
+        throws IOException
+    {
+        mLog.debug("Global request denied.");
+        mGlobalResponse = null;
+        if (mCompletionEvent != null) {
+            mCompletionEvent.set();
+        }
+    }
+    
+    private void
     logStackTrace (Exception x)
     {
         String[] s = Util.getStackTrace(x);
@@ -969,5 +1081,6 @@ public class BaseTransport
     protected LogSink mLog;
     private IOException mSavedException;
     private AuthHandler mAuthHandler;
+    private Message mGlobalResponse;
     private Map mMessageHandlers;       // Map<byte, MessageHandler>
 }
