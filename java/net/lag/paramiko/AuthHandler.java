@@ -55,6 +55,13 @@ import java.util.List;
         }
     }
     
+    // called if the transport dies prematurely
+    public void
+    abort ()
+    {
+        mAuthEvent.set();
+    }
+    
     public boolean
     handleMessage (byte ptype, Message m)
         throws IOException

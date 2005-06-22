@@ -66,6 +66,9 @@ public class BaseTransport
         mOutStream = mSocket.getOutputStream();
         mRandom = new SecureRandom();
         
+        mChannels = new Channel[16];
+        mChannelEvents = new Event[16];
+        
         // FIXME: set timeout on mInStream
         mPacketizer = new Packetizer(mInStream, mOutStream, mRandom);
         mExpectedPacket = 0;
@@ -332,6 +335,60 @@ public class BaseTransport
         return mGlobalResponse;
     }
     
+    public Channel
+    openChannel (String kind, List parameters, int timeout_ms)
+        throws IOException
+    {
+        if (! mActive) {
+            throw new SSHException("No existing session.");
+        }
+        
+        Event e = null;
+        int chanid = 0;
+        synchronized (mLock) {
+            chanid = getNextChannel();
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_OPEN);
+            m.putString(kind);
+            m.putInt(chanid);
+            m.putInt(mWindowSize);
+            m.putInt(mMaxPacketSize);
+            if (parameters != null) {
+                m.putAll(parameters);
+            }
+            
+            Channel c = new Channel(chanid);
+            mChannels[chanid] = c;
+            e = new Event();
+            mChannelEvents[chanid] = e;
+            c.setTransport(new BaseTransportInterface(), mLog);
+            c.setWindow(mWindowSize, mMaxPacketSize);
+            
+            sendUserMessage(m, timeout_ms);
+        }
+        
+        if (! waitForEvent(e, timeout_ms)) {
+            IOException x = getException();
+            if (x == null) {
+                x = new SSHException("Unable to open channel.");
+            }
+            throw x;
+        }
+        
+        synchronized (mLock) {
+            Channel c = mChannels[chanid];
+            if (c == null) {
+                IOException x = getException();
+                if (x == null) {
+                    x = new SSHException("Unable to open channel.");
+                }
+                throw x;
+            }
+            return c;
+        }
+    }
+    
     
     // -----  package
     
@@ -351,7 +408,7 @@ public class BaseTransport
     /* package */ void
     saveException (IOException x)
     {
-        synchronized (this) {
+        synchronized (mLock) {
             mSavedException = x;
         }
     }
@@ -359,7 +416,7 @@ public class BaseTransport
     /* package */ IOException
     getException ()
     {
-        synchronized (this) {
+        synchronized (mLock) {
             IOException x = mSavedException;
             mSavedException = null;
             return x;
@@ -775,18 +832,28 @@ public class BaseTransport
             saveException(x);
         }
         
-        // FIXME
-        // for chan in self.channels.values(): chan.unlink()
+        for (int i = 0; i < mChannels.length; i++) {
+            if (mChannels[i] != null) {
+                mChannels[i].unlink();
+            }
+        }
+
         if (mActive) {
             mActive = false;
             mPacketizer.close();
             if (mCompletionEvent != null) {
                 mCompletionEvent.set();
             }
-            //if (mAuthEvent != null) {
-             //   mAuthEvent.set();
-           // }
-            // for event in self.cahnnel_events.values(): event.set()
+            
+            if (mAuthHandler != null) {
+                mAuthHandler.abort();
+            }
+            
+            for (int i = 0; i < mChannelEvents.length; i++) {
+                if (mChannelEvents[i] != null) {
+                    mChannelEvents[i].set();
+                }
+            }
         }
         try {
             mSocket.close();
@@ -812,11 +879,19 @@ public class BaseTransport
             break;
         case MessageType.REQUEST_SUCCESS:
             parseRequestSuccess(m);
-            break;
+            return true;
         case MessageType.REQUEST_FAILURE:
             parseRequestFailure(m);
-            break;
-        // FIXME...
+            return true;
+        case MessageType.CHANNEL_OPEN_SUCCESS:
+            parseChannelOpenSuccess(m);
+            return true;
+        case MessageType.CHANNEL_OPEN_FAILURE:
+            parseChannelOpenFailure(m);
+            return true;
+        case MessageType.CHANNEL_OPEN:
+            parseChannelOpen(m);
+            return true;
         case MessageType.KEX_INIT:
             parseKexInit(m);
             return true;
@@ -981,6 +1056,146 @@ public class BaseTransport
             mCompletionEvent.set();
         }
     }
+
+    private void
+    parseChannelOpenSuccess (Message m)
+    {
+        int chanID = m.getInt();
+        int serverChanID = m.getInt();
+        int serverWindowSize = m.getInt();
+        int serverMaxPacketSize = m.getInt();
+        
+        synchronized (mLock) {
+            Channel c = mChannels[chanID];
+            if (c == null) {
+                mLog.warning("Success for unrequested channel! [??]");
+                return;
+            }
+            c.setRemoteChannel(serverChanID, serverWindowSize, serverMaxPacketSize);
+            mLog.notice("Secsh channel " + chanID + " opened.");
+            if (mChannelEvents[chanID] != null) {
+                mChannelEvents[chanID].set();
+                mChannelEvents[chanID] = null;
+            }
+        }
+    }
+    
+    private void
+    parseChannelOpenFailure (Message m)
+    {
+        int chanID = m.getInt();
+        int reason = m.getInt();
+        String reasonStr = m.getString();
+        String lang = m.getString();
+        String reasonText = "(unknown code)";
+        if ((reason > 0) && (reason < CONNECTION_FAILED_CODE.length)) {
+            reasonText = CONNECTION_FAILED_CODE[reason];
+        }
+        mLog.notice("Secsh channel " + chanID + " open FAILED: " + reasonStr + ": " + reasonText);
+        
+        synchronized (mLock) {
+            mChannels[chanID] = null;
+            if (mChannelEvents[chanID] != null) {
+                mChannelEvents[chanID].set();
+                mChannelEvents[chanID] = null;
+            }
+        }
+    }
+    
+    private void
+    parseChannelOpen (Message m)
+        throws IOException
+    {
+        String kind = m.getString();
+        int reason = ChannelError.SUCCESS;
+        int chanID = m.getInt();
+        int initialWindowSize = m.getInt();
+        int maxPacketSize = m.getInt();
+        
+        boolean reject = false;
+        int myChanID = 0;
+        Channel c = null;
+        
+        if (! mServerMode) {
+            mLog.debug("Rejecting '" + kind + "' channel request from server.");
+            reject = true;
+            reason = ChannelError.ADMINISTRATIVELY_PROHIBITED;
+        } else {
+            synchronized (mLock) {
+                myChanID = getNextChannel();
+                c = new Channel(myChanID);
+                mChannels[myChanID] = c;
+            }
+            
+            // FIXME: server mode
+            reason = ChannelError.SUCCESS;       // mServerObject.checkChannelRequest(kind, myChanID)
+            if (reason != ChannelError.SUCCESS) {
+                mLog.debug("Rejecting '" + kind + "' channel request from client.");
+                reject = true;
+            }
+        }
+        
+        if (reject) {
+            if (c != null) {
+                synchronized (mLock) {
+                    mChannels[myChanID] = null;
+                }
+            }
+            
+            Message mx = new Message();
+            mx.putByte(MessageType.CHANNEL_OPEN_FAILURE);
+            mx.putInt(chanID);
+            mx.putInt(reason);
+            mx.putString("");
+            mx.putString("en");
+            sendMessage(mx);
+            return;
+        }
+        
+        synchronized (mLock) {
+            c.setTransport(new BaseTransportInterface(), mLog);
+            c.setWindow(mWindowSize, mMaxPacketSize);
+            c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
+        }
+        
+        Message mx = new Message();
+        mx.putByte(MessageType.CHANNEL_OPEN_SUCCESS);
+        mx.putInt(chanID);
+        mx.putInt(myChanID);
+        mx.putInt(mWindowSize);
+        mx.putInt(mMaxPacketSize);
+        sendMessage(mx);
+        
+        mLog.notice("Secsh channel " + myChanID + " opened.");
+
+        synchronized (mLock) {
+            // FIXME
+            //self.server_accepts.append(chan)
+            //self.server_accept_cv.notify()
+        }
+    }
+    
+    // you are already holding mLock
+    private int
+    getNextChannel ()
+    {
+        for (int i = 0; i < mChannels.length; i++) {
+            if (mChannels[i] == null) {
+                return i;
+            }
+        }
+        
+        // expand mChannels
+        int old = mChannels.length;
+        Channel[] nc = new Channel[old * 2];
+        System.arraycopy(mChannels, 0, nc, 0, old);
+        mChannels = nc;
+        Event[] ne = new Event[old * 2];
+        System.arraycopy(mChannelEvents, 0, ne, 0, old);
+        mChannelEvents = ne;
+        
+        return old;
+    }
     
     private void
     logStackTrace (Exception x)
@@ -1010,11 +1225,20 @@ public class BaseTransport
         public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException { BaseTransport.this.verifyKey(hostKey, sig); }
         public void registerMessageHandler (byte ptype, MessageHandler handler) { BaseTransport.this.registerMessageHandler(ptype, handler); }
         public void activateOutbound () throws IOException { BaseTransport.this.activateOutbound(); }
+        public void unlinkChannel (int chanID) { synchronized (mLock) { mChannels[chanID] = null; } }
     }
     
         
     private static final String PROTO_ID = "2.0";
     private static final String CLIENT_ID = "paramikoj_0.1";
+    
+    private static final String[] CONNECTION_FAILED_CODE = {
+        "",
+        "Administratively prohibited",
+        "Connect failed",
+        "Unknown channel type",
+        "Resource shortage",
+    };
     
     private static Map sCipherMap = new HashMap();
     private static Map sMacMap = new HashMap();
@@ -1044,6 +1268,8 @@ public class BaseTransport
     private String[] mPreferredMacs = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
     private String[] mPreferredKeys = { "ssh-rsa", "ssh-dss" };
     private String[] mPreferredKex = { "diffie-hellman-group1-sha1", "diffie-hellman-group-exchange-sha1" };
+    private int mWindowSize = 65536; 
+    private int mMaxPacketSize = 32768;
     
     protected Socket mSocket;
     protected InputStream mInStream;
@@ -1073,6 +1299,11 @@ public class BaseTransport
     private byte[] mSessionID;
     private BigInteger mK;
     private byte[] mH;
+    private Object mLock = new Object();
+    
+    // channels:
+    private Channel[] mChannels;
+    private Event[] mChannelEvents;
     
     protected boolean mActive;
     protected boolean mServerMode;

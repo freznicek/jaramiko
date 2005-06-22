@@ -99,6 +99,12 @@ public class FakeTransport
         // pass
     }
     
+    public void
+    unlinkChannel (int chanID)
+    {
+        // pass
+    }
+    
     
     public Message mMessage;
     public byte mExpect;

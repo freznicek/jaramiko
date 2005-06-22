@@ -29,4 +29,5 @@ import java.math.BigInteger;
     public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
     public void registerMessageHandler (byte ptype, MessageHandler handler);
     public void activateOutbound () throws IOException;
+    public void unlinkChannel (int chanID);
 }

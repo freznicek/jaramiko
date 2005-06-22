@@ -26,9 +26,10 @@ public class WeirdNetTest
         BaseTransport t = new BaseTransport(sock);
         t.setLog(new ConsoleLog());
         t.setDumpPackets(true);
-        PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("/home/robey/.ssh/id_rsa"), null);
+        PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("/Users/robey/.ssh/id_rsa"), null);
         t.startClient(PKey.createFromBase64(TAVI_HOST_KEY), 5000);
         t.authPrivateKey("robey", key, 5000);
+        t.openChannel("session", null, 5000);
     }
     
     private static String TAVI_HOST_KEY =
