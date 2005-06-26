@@ -20,6 +20,12 @@ public class FakeTransport
     }
     
     public void
+    sendUserMessage (Message m, int timeout_ms)
+    {
+        mUserMessage = m;
+    }
+    
+    public void
     setKH (BigInteger k, byte[] h)
     {
         mK = k;
@@ -107,6 +113,7 @@ public class FakeTransport
     
     
     public Message mMessage;
+    public Message mUserMessage;
     public byte mExpect;
     public BigInteger mK;
     public byte[] mH;

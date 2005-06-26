@@ -870,6 +870,20 @@ public class BaseTransport
             return handler.handleMessage(ptype, m);
         }
         
+        if ((ptype >= MessageType.CHANNEL_WINDOW_ADJUST) && (ptype <= MessageType.CHANNEL_FAILURE)) {
+            int chanID = m.getInt();
+            Channel c = null;
+            if (chanID < mChannels.length) {
+                c = mChannels[chanID];
+            }
+            if (c != null) {
+                return c.handleMessage(ptype, m);
+            } else {
+                mLog.error("Channel request for unknown channel " + chanID);
+                throw new SSHException("Channel request for unknown channel");
+            }
+        }
+        
         switch (ptype) {
         case MessageType.NEW_KEYS:
             parseNewKeys();
@@ -1216,6 +1230,7 @@ public class BaseTransport
         public void expectPacket (byte ptype) { BaseTransport.this.expectPacket(ptype); }
         public void saveException (IOException x) { BaseTransport.this.saveException(x); }
         public void sendMessage (Message m) throws IOException { BaseTransport.this.sendMessage(m); }
+        public void sendUserMessage (Message m, int timeout_ms) throws IOException { BaseTransport.this.sendUserMessage(m, timeout_ms); }
         public String getLocalVersion () { return mLocalVersion; }
         public String getRemoteVersion () { return mRemoteVersion; }
         public byte[] getLocalKexInit () { return mLocalKexInit; }

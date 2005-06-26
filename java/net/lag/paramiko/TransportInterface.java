@@ -20,6 +20,7 @@ import java.math.BigInteger;
     public void expectPacket (byte ptype);
     public void saveException (IOException x);
     public void sendMessage (Message m) throws IOException;
+    public void sendUserMessage (Message m, int timeout_ms) throws IOException;
     public String getLocalVersion ();
     public String getRemoteVersion ();
     public byte[] getLocalKexInit ();
