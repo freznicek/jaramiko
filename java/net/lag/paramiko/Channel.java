@@ -28,6 +28,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketTimeoutException;
 
+/*
+ * locking order:  mInBufferLock, mInStderrBufferLock, mLock
+ * 
+ * mInBufferLock protects: mInBuffer, mInBufferLen
+ * mInStderrBufferLock protects: mInStderrBuffer, mInStderrBufferLen
+ * mOutBufferLock protects: mOutWindowSize, outbound packets
+ * mLock protects: mActive, mClosed, mEOFReceived, mEOFSent, mCombineStderr
+ */
 
 /**
  * @author robey
@@ -89,7 +97,13 @@ public class Channel
             synchronized (mInBufferLock) {
                 if (mInBufferLen == 0) {
                     int timeout = mTimeout;
-                    while ((mInBufferLen == 0) && ! mClosed && ! mEOFReceived) {
+                    while (mInBufferLen == 0) {
+                        synchronized (mLock) {
+                            if (mClosed || mEOFReceived) {
+                                break;
+                            }
+                        }
+                        
                         long then = System.currentTimeMillis();
                         try {
                             mInBufferLock.wait(timeout);
@@ -101,11 +115,14 @@ public class Channel
                             }
                         }
                     }
-                    if (mEOFReceived) {
-                        return 0;
-                    }
-                    if (mClosed) {
-                        throw new IOException("Stream closed.");
+                    
+                    synchronized (mLock) {
+                        if (mEOFReceived) {
+                            return 0;
+                        }
+                        if (mClosed) {
+                            throw new IOException("Stream closed.");
+                        }
                     }
                 }
                 
@@ -146,7 +163,7 @@ public class Channel
     
         public int
         read ()
-        throws IOException
+            throws IOException
         {
             byte[] b = new byte[1];
             if (read(b, 0, 1) < 1) {
@@ -157,12 +174,18 @@ public class Channel
     
         public int
         read (byte[] buf, int off, int len)
-        throws IOException
+            throws IOException
         {
             synchronized (mInStderrBufferLock) {
                 if (mInStderrBufferLen == 0) {
                     int timeout = mTimeout;
-                    while ((mInStderrBufferLen == 0) && ! mClosed && ! mEOFReceived) {
+                    while (mInStderrBufferLen == 0) {
+                        synchronized (mLock) {
+                            if (mClosed || mEOFReceived) {
+                                break;
+                            }
+                        }
+
                         long then = System.currentTimeMillis();
                         try {
                             mInStderrBufferLock.wait(timeout);
@@ -174,11 +197,14 @@ public class Channel
                             }
                         }
                     }
-                    if (mEOFReceived) {
-                        return 0;
-                    }
-                    if (mClosed) {
-                        throw new IOException("Stream closed.");
+                    
+                    synchronized (mLock) {
+                        if (mEOFReceived) {
+                            return 0;
+                        }
+                        if (mClosed) {
+                            throw new IOException("Stream closed.");
+                        }
                     }
                 }
                 
@@ -205,7 +231,7 @@ public class Channel
         }
     }
     
-    public class ChannelOutputStream
+    private class ChannelOutputStream
         extends OutputStream
     {
         public void
@@ -248,7 +274,7 @@ public class Channel
         }
     }
     
-    public class ChannelStderrOutputStream
+    private class ChannelStderrOutputStream
         extends OutputStream
     {
         public void
@@ -311,32 +337,35 @@ public class Channel
     getPTY (String term, int width, int height, int timeout_ms)
         throws IOException
     {
-        if (mClosed || mEOFReceived || mEOFSent || !mActive) {
-            throw new SSHException("Channel is not open");
-        }
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || !mActive) {
+                throw new SSHException("Channel is not open");
+            }
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("pty-req");
+            m.putBoolean(true);
+            m.putString(term);
+            m.putInt(width);
+            m.putInt(height);
+            // pixel height, width (usually useless)
+            m.putInt(0);
+            m.putInt(0);
+            m.putString("");
+            
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
         
-        Message m = new Message();
-        m.putByte(MessageType.CHANNEL_REQUEST);
-        m.putInt(mRemoteChanID);
-        m.putString("pty-req");
-        m.putBoolean(true);
-        m.putString(term);
-        m.putInt(width);
-        m.putInt(height);
-        // pixel height, width (usually useless)
-        m.putInt(0);
-        m.putInt(0);
-        m.putString("");
-        
-        mEvent.clear();
-        mTransport.sendUserMessage(m, timeout_ms);
-        if (! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+            if (! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+            if (! mActive) {
+                return false;
+            }
+            return true;
         }
-        if (! mActive) {
-            return false;
-        }
-        return true;
     }
     
     /**
@@ -356,25 +385,27 @@ public class Channel
     invokeShell (int timeout_ms)
         throws IOException
     {
-        if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
-            throw new SSHException("Channel is not open");
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
+                throw new SSHException("Channel is not open");
+            }
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("shell");
+            m.putBoolean(true);
+            
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
+            if (! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+            if (! mActive) {
+                return false;
+            }
+            return true;
         }
-        
-        Message m = new Message();
-        m.putByte(MessageType.CHANNEL_REQUEST);
-        m.putInt(mRemoteChanID);
-        m.putString("shell");
-        m.putBoolean(true);
-        
-        mEvent.clear();
-        mTransport.sendUserMessage(m, timeout_ms);
-        if (! waitForEvent(mEvent, timeout_ms)) {
-            return false;
-        }
-        if (! mActive) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -414,12 +445,110 @@ public class Channel
         }
     }
     
+    /**
+     * Return an InputStream for reading data from this channel.  If
+     * {@link #setCombineStderr} has been turned on, the stream will contain
+     * a combination of data from the primary stream. and from any out-of-band
+     * "stderr" stream.  Otherwise, the "stderr" stream must be fetched
+     * separately using {@link #getStderrInputStream}.
+     * 
+     * @return the InputStream for reading from this channel
+     */
     public InputStream
     getInputStream ()
     {
         return new ChannelInputStream();
     }
     
+    /**
+     * Return an InputStream for reading data from the "stderr" stream of
+     * this channel.  If {@link #setCombineStderr} has been turned on, or
+     * you are using a pty, no data will ever arrive over this stream.
+     * 
+     * @return the InputStream for reading data from the "stderr" stream of
+     *     this channel
+     */
+    public InputStream
+    getStderrInputStream ()
+    {
+        return new ChannelStderrInputStream();
+    }
+    
+    /**
+     * Return an OutputStream for writing data into this channel.
+     * 
+     * @return the OutputStream for writing to this channel
+     */
+    public OutputStream
+    getOutputStream ()
+    {
+        return new ChannelOutputStream();
+    }
+    
+    /**
+     * Return an OutputStream for writing data into the "stderr" stream of
+     * this channel.  Normally this is only useful in server mode, when the
+     * client did not request a pty.
+     * 
+     * @return the OutputStream for writing to the "stderr" stream of this
+     *     channel
+     */
+    public OutputStream
+    getStderrOutputStream ()
+    {
+        return new ChannelStderrOutputStream();
+    }
+    
+    /**
+     * Set whether stderr should be combined into stdout on this channel.
+     * The default is false, but in some cases it may be convenient to have
+     * both streams combined.
+     * 
+     * <p>If this is false, and {@link #execCommand} is called (or
+     * {@link #invokeShell} with no pty), output to stderr will not show up
+     * through the normal {@link #getInputStream} stream; instead, you must
+     * use {@link #getStderrInputStream} to get stderr output.
+     * 
+     * <p>If this is true, data will never show up on {@link #getStderrInputStream},
+     * but instead will be combined in the single normal input stream.
+     * 
+     * @param combine true if stdout and stderr input should be combined
+     * @return the previous setting
+     */
+    public boolean
+    setCombineStderr (boolean combine)
+    {
+        byte[] data = null;
+        boolean old = false;
+        
+        synchronized (mInBufferLock) {
+            synchronized (mInStderrBufferLock) {
+                synchronized (mLock) {
+                    old = mCombineStderr;
+                    mCombineStderr = combine;
+                }
+                
+                if (combine && ! old && (mInStderrBufferLen > 0)) {
+                    // copy old stderr buffer into the primary buffer
+                    data = new byte[mInStderrBufferLen];
+                    System.arraycopy(mInStderrBuffer, 0, data, 0, mInStderrBufferLen);
+                    mInStderrBufferLen = 0;
+                }
+            }
+        }
+        
+        if (data != null) {
+            feed(data);
+        }
+        return old;
+    }
+    
+    /**
+     * Close the channel.  All future read/write operations on the channel
+     * will fail.  The remote end will receive no more data (after queued data
+     * is flushed).  Channels are automatically closed when their
+     * {@link Transport} is closed.
+     */
     public void
     close ()
     {
@@ -508,11 +637,11 @@ public class Channel
     unlink ()
     {
         // server connection could die before we become active: still signal the close!
-        if (mClosed) {
-            return;
-        }
-        
         synchronized (mLock) {
+            if (mClosed) {
+                return;
+            }
+
             setClosed();
             mTransport.unlinkChannel(mChanID);
         }
@@ -599,21 +728,23 @@ public class Channel
     private void
     checkAddWindow (int nbytes)
     {
-        if (mClosed || mEOFReceived || !mActive) {
-            return;
-        }
-        mInWindowSoFar += nbytes;
-        if (mInWindowSoFar > mInWindowThreshold) {
-            Message m = new Message();
-            m.putByte(MessageType.CHANNEL_WINDOW_ADJUST);
-            m.putInt(mRemoteChanID);
-            m.putInt(mInWindowSoFar);
-            try {
-                mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
-            } catch (IOException x) {
-                mLog.debug("I/O Exception while sending window adjustment");
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || !mActive) {
+                return;
             }
-            mInWindowSoFar = 0;
+            mInWindowSoFar += nbytes;
+            if (mInWindowSoFar > mInWindowThreshold) {
+                Message m = new Message();
+                m.putByte(MessageType.CHANNEL_WINDOW_ADJUST);
+                m.putInt(mRemoteChanID);
+                m.putInt(mInWindowSoFar);
+                try {
+                    mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
+                } catch (IOException x) {
+                    mLog.debug("I/O Exception while sending window adjustment");
+                }
+                mInWindowSoFar = 0;
+            }
         }
     }
     
@@ -631,17 +762,23 @@ public class Channel
     waitForSendWindow (int size)
     {
         while (mOutWindowSize == 0) {
-            if (mClosed || mEOFSent) {
-                return 0;
+            synchronized (mLock) {
+                if (mClosed || mEOFSent) {
+                    return 0;
+                }
             }
+            
             try {
                 mOutBufferLock.wait();
             } catch (InterruptedException x) { }
         }
         
-        if (mClosed || mEOFSent) {
-            return 0;
+        synchronized (mLock) {
+            if (mClosed || mEOFSent) {
+                return 0;
+            }
         }
+        
         if (mOutWindowSize < size) {
             size = mOutWindowSize;
         }
