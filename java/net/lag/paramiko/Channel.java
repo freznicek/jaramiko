@@ -307,6 +307,44 @@ public class Channel
             return true;
         }
     }
+    
+    /**
+     * Execute a command on the server.  If the server allows it, the channel
+     * will then be directly connected to the stdin, stdout, and stderr of
+     * the command being executed.
+     * 
+     * @param command a shell command to execute
+     * @param timeout_ms time (in milliseconds) to wait for a response
+     * @return true if the operation succeeded; false if not
+     * @throws IOException if an exception occurred while making the request
+     */
+    public boolean
+    execCommand (String command, int timeout_ms)
+        throws IOException
+    {
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
+                throw new SSHException("Channel is not open");
+            }
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("exec");
+            m.putBoolean(true);
+            m.putString(command);
+            
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
+            if (! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+            if (! mActive) {
+                return false;
+            }
+            return true;
+        }
+    }
 
     /**
      * Set a timeout on read operations.  If <code>timeout_ms</code> is zero,

@@ -116,7 +116,7 @@ public abstract class PKey
     /**
      * Return an MD5 fingerprint of the public part of this key.  Nothing
      * secret is revealed.  Effectively this is just the MD5 of the result
-     * of {@link toByteArray}.
+     * of {@link #toByteArray}.
      * 
      * @return a 16-byte MD5 fingerprint 
      */

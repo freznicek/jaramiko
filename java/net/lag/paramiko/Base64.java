@@ -273,7 +273,6 @@ public class Base64
      *
      * @param source The data to convert
      * @param options Specified options
-     * @see Base64#GZIP
      * @see Base64#DONT_BREAK_LINES
      * @since 2.0
      */
@@ -317,7 +316,6 @@ public class Base64
      * @param off Offset in array where conversion should begin
      * @param len Length of data to convert
      * @param options Specified options
-     * @see Base64#GZIP
      * @see Base64#DONT_BREAK_LINES
      * @since 2.0
      */

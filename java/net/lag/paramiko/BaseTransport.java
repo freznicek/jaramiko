@@ -335,6 +335,25 @@ public class BaseTransport
         return mGlobalResponse;
     }
     
+    /**
+     * Request a new channel to the server.  {@link Channel}s are socket-like
+     * objects used for the actual transfer of data across an SSH session.
+     * You may only request a channel after negotiating encryption (using
+     * {@link #startClient}) and authenticating.
+     * 
+     * <p>For most cases, you should call {@link #openSession} instead.  This
+     * is a more advanced interface.
+     * 
+     * @param kind the kind of channel requested (usually <code>"session"</code>,
+     *     <code>"forwarded-tcpip"</code>, or <code>"direct-tcpip"</code>)
+     * @param parameters any parameters required by the channel request type
+     *     (may be null)
+     * @param timeout_ms time (in milliseconds) to wait for the operation to
+     *     complete
+     * @return a new {@link Channel} on success
+     * @throws IOException if there was an error making the request, or it was
+     *     rejected by the server
+     */
     public Channel
     openChannel (String kind, List parameters, int timeout_ms)
         throws IOException
@@ -387,6 +406,23 @@ public class BaseTransport
             }
             return c;
         }
+    }
+    
+    /**
+     * Request a new channel to the server, of type <code>"session"</code>.
+     * This is just an alias for <code>openChannel("session", null, timeout_ms)</code>.
+     * 
+     * @param timeout_ms time (in milliseconds) to wait for the request to
+     *     compelte
+     * @return a new {@link Channel} on success
+     * @throws IOException if an exception occurs while sending the request,
+     *     or the request is rejected
+     */
+    public Channel
+    openSession (int timeout_ms)
+        throws IOException
+    {
+        return openChannel("session", null, timeout_ms);
     }
     
     

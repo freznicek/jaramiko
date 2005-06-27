@@ -42,8 +42,8 @@ public final class Event
     }
     
     /**
-     * Clear the event flag.  Subsequently, threads calling {@link wait} will
-     * block until {@link set} is called again.
+     * Clear the event flag.  Subsequently, threads calling {@link #waitFor} will
+     * block until {@link #set} is called again.
      */
     public void
     clear ()
@@ -55,7 +55,7 @@ public final class Event
     
     /**
      * Set the event flag.  All threads waiting on this event will be awakened.
-     * Subsequently, threads that call {@link wait} will return immediately. 
+     * Subsequently, threads that call {@link #waitFor} will return immediately. 
      */
     public void
     set ()
@@ -82,7 +82,7 @@ public final class Event
     /**
      * Block until the event flag becomes set.  If the event flag is already
      * set, return immediately.  Otherwise, block until another thread calls
-     * {@link set}, or until the timeout occurs.
+     * {@link #set}, or until the timeout occurs.
      * 
      * <p>The odd method name is to avoid conflict with a poorly-named java
      * builtin method.
