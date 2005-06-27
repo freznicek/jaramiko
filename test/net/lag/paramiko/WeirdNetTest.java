@@ -37,6 +37,7 @@ public class WeirdNetTest
         
         InputStream is = c.getInputStream();
         c.setTimeout(5000);
+        c.getOutputStream().write("echo hello\n".getBytes());
         while (true) {
             byte[] b = new byte[1024];
             int n = is.read(b);
