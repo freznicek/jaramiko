@@ -29,10 +29,8 @@ import java.io.OutputStream;
 import java.net.SocketTimeoutException;
 
 /*
- * locking order:  mInBufferLock, mInStderrBufferLock, mLock
+ * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
  * 
- * mInBufferLock protects: mInBuffer, mInBufferLen
- * mInStderrBufferLock protects: mInStderrBuffer, mInStderrBufferLen
  * mOutBufferLock protects: mOutWindowSize, outbound packets
  * mLock protects: mActive, mClosed, mEOFReceived, mEOFSent, mCombineStderr
  */
@@ -55,12 +53,10 @@ public class Channel
         mEvent = new Event();
         // ...
         
-        mInBuffer = new byte[64];
-        mInBufferLen = 0;
-        mInBufferLock = new Object();
-        mInStderrBuffer = new byte[64];
-        mInStderrBufferLen = 0;
-        mInStderrBufferLock = new Object();
+        mInStream = new ChannelInputStream();
+        mStderrInStream = new ChannelInputStream();
+        mOutStream = new ChannelOutputStream(false);
+        mStderrOutStream = new ChannelOutputStream(true);
         mOutBufferLock = new Object();
         
         mStatusEvent = new Event();
@@ -71,11 +67,19 @@ public class Channel
     private class ChannelInputStream
         extends InputStream
     {
+        public
+        ChannelInputStream ()
+        {
+            mBuffer = new byte[64];
+            mBufferLen = 0;
+            mBufferLock = new Object();
+        }
+       
         public int
         available ()
         {
-            synchronized (mInBufferLock) {
-                return mInBufferLen;
+            synchronized (mBufferLock) {
+                return mBufferLen;
             }
         }
         
@@ -94,10 +98,10 @@ public class Channel
         read (byte[] buf, int off, int len)
             throws IOException
         {
-            synchronized (mInBufferLock) {
-                if (mInBufferLen == 0) {
+            synchronized (mBufferLock) {
+                if (mBufferLen == 0) {
                     int timeout = mTimeout;
-                    while (mInBufferLen == 0) {
+                    while (mBufferLen == 0) {
                         synchronized (mLock) {
                             if (mClosed || mEOFReceived) {
                                 break;
@@ -106,7 +110,7 @@ public class Channel
                         
                         long then = System.currentTimeMillis();
                         try {
-                            mInBufferLock.wait(timeout);
+                            mBufferLock.wait(timeout);
                         } catch (InterruptedException x) { }
                         if (mTimeout > 0) {
                             timeout -= System.currentTimeMillis() - then;
@@ -127,16 +131,16 @@ public class Channel
                 }
                 
                 // something in the buffer
-                if (mInBufferLen <= len) {
-                    System.arraycopy(mInBuffer, 0, buf, off, mInBufferLen);
-                    len = mInBufferLen;
-                    mInBufferLen = 0;
+                if (mBufferLen <= len) {
+                    System.arraycopy(mBuffer, 0, buf, off, mBufferLen);
+                    len = mBufferLen;
+                    mBufferLen = 0;
                     checkAddWindow(len);
                     return len;
                 } else {
-                    System.arraycopy(mInBuffer, 0, buf, off, len);
-                    System.arraycopy(mInBuffer, len, mInBuffer, 0, mInBufferLen - len);
-                    mInBufferLen -= len;
+                    System.arraycopy(mBuffer, 0, buf, off, len);
+                    System.arraycopy(mBuffer, len, mBuffer, 0, mBufferLen - len);
+                    mBufferLen -= len;
                     checkAddWindow(len);
                     return len;
                 }
@@ -148,92 +152,23 @@ public class Channel
         {
             Channel.this.close();
         }
+        
+        
+        private byte[] mBuffer;
+        private int mBufferLen;
+        private Object mBufferLock;
     }
     
-    private class ChannelStderrInputStream
-        extends InputStream
-    {
-        public int
-        available ()
-        {
-            synchronized (mInStderrBufferLock) {
-                return mInStderrBufferLen;
-            }
-        }
-    
-        public int
-        read ()
-            throws IOException
-        {
-            byte[] b = new byte[1];
-            if (read(b, 0, 1) < 1) {
-                return -1;
-            }
-            return (int) b[0] & 0xff;
-        }
-    
-        public int
-        read (byte[] buf, int off, int len)
-            throws IOException
-        {
-            synchronized (mInStderrBufferLock) {
-                if (mInStderrBufferLen == 0) {
-                    int timeout = mTimeout;
-                    while (mInStderrBufferLen == 0) {
-                        synchronized (mLock) {
-                            if (mClosed || mEOFReceived) {
-                                break;
-                            }
-                        }
-
-                        long then = System.currentTimeMillis();
-                        try {
-                            mInStderrBufferLock.wait(timeout);
-                        } catch (InterruptedException x) { }
-                        if (mTimeout > 0) {
-                            timeout -= System.currentTimeMillis() - then;
-                            if (timeout <= 0) {
-                                throw new SocketTimeoutException();
-                            }
-                        }
-                    }
-                    
-                    synchronized (mLock) {
-                        if (mEOFReceived) {
-                            return 0;
-                        }
-                        if (mClosed) {
-                            throw new IOException("Stream closed.");
-                        }
-                    }
-                }
-                
-                // something in the buffer
-                if (mInStderrBufferLen <= len) {
-                    System.arraycopy(mInStderrBuffer, 0, buf, off, mInStderrBufferLen);
-                    mInStderrBufferLen = 0;
-                    checkAddWindow(mInStderrBufferLen);
-                    return mInStderrBufferLen;
-                } else {
-                    System.arraycopy(mInStderrBuffer, 0, buf, off, len);
-                    System.arraycopy(mInStderrBuffer, len, mInStderrBuffer, 0, mInStderrBufferLen - len);
-                    mInStderrBufferLen -= len;
-                    checkAddWindow(len);
-                    return len;
-                }
-            }
-        }
-
-        public void
-        close ()
-        {
-            Channel.this.close();
-        }
-    }
     
     private class ChannelOutputStream
         extends OutputStream
     {
+        public
+        ChannelOutputStream (boolean stderr)
+        {
+            mStderr = stderr;
+        }
+        
         public void
         write (int c)
             throws IOException
@@ -256,8 +191,14 @@ public class Channel
                     }
                     
                     Message m = new Message();
-                    m.putByte(MessageType.CHANNEL_DATA);
-                    m.putInt(mRemoteChanID);
+                    if (mStderr) {
+                        m.putByte(MessageType.CHANNEL_EXTENDED_DATA);
+                        m.putInt(mRemoteChanID);
+                        m.putInt(1);
+                    } else {
+                        m.putByte(MessageType.CHANNEL_DATA);
+                        m.putInt(mRemoteChanID);
+                    }
                     m.putByteString(buf, off, n);
                     mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
                     
@@ -272,53 +213,12 @@ public class Channel
         {
             Channel.this.close();
         }
+        
+        
+        private boolean mStderr;
     }
     
-    private class ChannelStderrOutputStream
-        extends OutputStream
-    {
-        public void
-        write (int c)
-        throws IOException
-        {
-            byte[] b = new byte[1];
-            b[0] = (byte) c;
-            write(b, 0, 1);
-        }
-    
-        public void
-        write (byte[] buf, int off, int len)
-            throws IOException
-        {
-            synchronized (mOutBufferLock) {
-                while (len > 0) {
-                    int n = waitForSendWindow(len);
-                    if (n == 0) {
-                        // closed, or EOF
-                        throw new IOException("Stream is closed.");
-                    }
-                    
-                    Message m = new Message();
-                    m.putByte(MessageType.CHANNEL_EXTENDED_DATA);
-                    m.putInt(mRemoteChanID);
-                    m.putInt(1);
-                    m.putByteString(buf, off, n);
-                    mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
-                    
-                    off += n;
-                    len -= n;
-                }
-            }
-        }
-    
-        public void
-        close ()
-        {
-            Channel.this.close();
-        }
-    }
-    
-    
+        
     /**
      * Request a pseudo-terminal from the server.  This is usually used right
      * after creating a client channel, to ask the server to provide some
@@ -424,11 +324,14 @@ public class Channel
     public void
     setTimeout (int timeout_ms)
     {
-        synchronized (mInBufferLock) {
-            if (timeout_ms < 0) {
-                timeout_ms = 0;
+        if (timeout_ms < 0) {
+            timeout_ms = 0;
+        }
+
+        synchronized (mInStream.mBufferLock) {
+            synchronized (mStderrInStream.mBufferLock) {
+                mTimeout = timeout_ms;
             }
-            mTimeout = timeout_ms;
         }
     }
     
@@ -440,8 +343,10 @@ public class Channel
     public int
     getTimeout ()
     {
-        synchronized (mInBufferLock) {
-            return mTimeout;
+        synchronized (mInStream.mBufferLock) {
+            synchronized (mStderrInStream.mBufferLock) {
+                return mTimeout;
+            }
         }
     }
     
@@ -457,7 +362,7 @@ public class Channel
     public InputStream
     getInputStream ()
     {
-        return new ChannelInputStream();
+        return mInStream;
     }
     
     /**
@@ -471,7 +376,7 @@ public class Channel
     public InputStream
     getStderrInputStream ()
     {
-        return new ChannelStderrInputStream();
+        return mStderrInStream;
     }
     
     /**
@@ -482,7 +387,7 @@ public class Channel
     public OutputStream
     getOutputStream ()
     {
-        return new ChannelOutputStream();
+        return mOutStream;
     }
     
     /**
@@ -496,7 +401,7 @@ public class Channel
     public OutputStream
     getStderrOutputStream ()
     {
-        return new ChannelStderrOutputStream();
+        return mStderrOutStream;
     }
     
     /**
@@ -521,24 +426,24 @@ public class Channel
         byte[] data = null;
         boolean old = false;
         
-        synchronized (mInBufferLock) {
-            synchronized (mInStderrBufferLock) {
+        synchronized (mInStream.mBufferLock) {
+            synchronized (mStderrInStream.mBufferLock) {
                 synchronized (mLock) {
                     old = mCombineStderr;
                     mCombineStderr = combine;
                 }
                 
-                if (combine && ! old && (mInStderrBufferLen > 0)) {
+                if (combine && ! old && (mStderrInStream.mBufferLen > 0)) {
                     // copy old stderr buffer into the primary buffer
-                    data = new byte[mInStderrBufferLen];
-                    System.arraycopy(mInStderrBuffer, 0, data, 0, mInStderrBufferLen);
-                    mInStderrBufferLen = 0;
+                    data = new byte[mStderrInStream.mBufferLen];
+                    System.arraycopy(mStderrInStream.mBuffer, 0, data, 0, mStderrInStream.mBufferLen);
+                    mStderrInStream.mBufferLen = 0;
                 }
             }
         }
         
         if (data != null) {
-            feed(data);
+            feed(mInStream, data);
         }
         return old;
     }
@@ -654,11 +559,11 @@ public class Channel
     setClosed ()
     {
         mClosed = true;
-        synchronized (mInBufferLock) {
-            mInBufferLock.notifyAll();
+        synchronized (mInStream.mBufferLock) {
+            mInStream.mBufferLock.notifyAll();
         }
-        synchronized (mInStderrBufferLock) {
-            mInStderrBufferLock.notifyAll();
+        synchronized (mStderrInStream.mBufferLock) {
+            mStderrInStream.mBufferLock.notifyAll();
         }
         synchronized (mOutBufferLock) {
             mOutBufferLock.notifyAll();
@@ -790,32 +695,17 @@ public class Channel
     }
     
     private void
-    feed (byte[] data)
+    feed (ChannelInputStream is, byte[] data)
     {
-        synchronized (mInBufferLock) {
-            while (mInBufferLen + data.length > mInBuffer.length) {
-                byte[] newbuf = new byte[4 * mInBuffer.length];
-                System.arraycopy(mInBuffer, 0, newbuf, 0, mInBufferLen);
-                mInBuffer = newbuf;
+        synchronized (is.mBufferLock) {
+            while (is.mBufferLen + data.length > is.mBuffer.length) {
+                byte[] newbuf = new byte[4 * is.mBuffer.length];
+                System.arraycopy(is.mBuffer, 0, newbuf, 0, is.mBufferLen);
+                is.mBuffer = newbuf;
             }
-            System.arraycopy(data, 0, mInBuffer, mInBufferLen, data.length);
-            mInBufferLen += data.length;
-            mInBufferLock.notifyAll();
-        }
-    }
-    
-    private void
-    feedStderr (byte[] data)
-    {
-        synchronized (mInStderrBufferLock) {
-            while (mInStderrBufferLen + data.length > mInStderrBuffer.length) {
-                byte[] newbuf = new byte[4 * mInStderrBuffer.length];
-                System.arraycopy(mInStderrBuffer, 0, newbuf, 0, mInStderrBufferLen);
-                mInStderrBuffer = newbuf;
-            }
-            System.arraycopy(data, 0, mInStderrBuffer, mInStderrBufferLen, data.length);
-            mInStderrBufferLen += data.length;
-            mInStderrBufferLock.notifyAll();
+            System.arraycopy(data, 0, is.mBuffer, is.mBufferLen, data.length);
+            is.mBufferLen += data.length;
+            is.mBufferLock.notifyAll();
         }
     }
     
@@ -833,7 +723,7 @@ public class Channel
     private boolean
     handleData (Message m)
     {
-        feed(m.getByteString());
+        feed(mInStream, m.getByteString());
         return true;
     }
     
@@ -848,9 +738,9 @@ public class Channel
         }
         
         if (mCombineStderr) {
-            feed(data);
+            feed(mInStream, data);
         } else {
-            feedStderr(data);
+            feed(mStderrInStream, data);
         }
         
         return true;
@@ -862,11 +752,11 @@ public class Channel
         synchronized (mLock) {
             if (! mEOFReceived) {
                 mEOFReceived = true;
-                synchronized (mInBufferLock) {
-                    mInBufferLock.notifyAll();
+                synchronized (mInStream.mBufferLock) {
+                    mInStream.mBufferLock.notifyAll();
                 }
-                synchronized (mInStderrBufferLock) {
-                    mInStderrBufferLock.notifyAll();
+                synchronized (mStderrInStream.mBufferLock) {
+                    mStderrInStream.mBufferLock.notifyAll();
                 }
             }
         }
@@ -952,12 +842,10 @@ public class Channel
     private int mOutWindowSize;
     private int mOutMaxPacketSize;
     
-    private byte[] mInBuffer;
-    private int mInBufferLen;
-    private Object mInBufferLock;
-    private byte[] mInStderrBuffer;
-    private int mInStderrBufferLen;
-    private Object mInStderrBufferLock;
+    private ChannelInputStream mInStream;
+    private ChannelInputStream mStderrInStream;
+    private ChannelOutputStream mOutStream;
+    private ChannelOutputStream mStderrOutStream;
     private Object mOutBufferLock;
     
     private int mExitStatus = -1;
