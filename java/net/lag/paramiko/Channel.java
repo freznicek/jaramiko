@@ -36,34 +36,23 @@ import java.net.SocketTimeoutException;
  */
 
 /**
+ * A secure tunnel across an SSH {@link Transport}.  A Channel is meant to
+ * behave like a socket.  It has an InputStream and OutputStream, and may have
+ * an input timeout set on it, just like a java socket.
+ * 
+ * Because SSH2 has a windowing kind of flow control, if you stop reading data
+ * from a Channel and its buffer fills up, the server will be unable to send
+ * you any more data until you read some of it.  (This won't affect other
+ * channels on the same transport -- all channels on a single transport are
+ * flow-controlled independently.)  Similarly, if the server isn't reading
+ * data you send, calls to <code>write()</code> on the OutputStream may block.
+ * This is exactly like a normal network socket behaves, so it shouldn't be
+ * too surprising.
+ * 
  * @author robey
  */
 public class Channel
-    implements MessageHandler
 {
-    /* package */
-    Channel (int chanid)
-    {
-        mChanID = chanid;
-        mActive = false;
-        mClosed = false;
-        mEOFReceived = false;
-        mEOFSent = false;
-        mLock = new Object();
-        mEvent = new Event();
-        // ...
-        
-        mInStream = new ChannelInputStream();
-        mStderrInStream = new ChannelInputStream();
-        mOutStream = new ChannelOutputStream(false);
-        mStderrOutStream = new ChannelOutputStream(true);
-        mOutBufferLock = new Object();
-        
-        mStatusEvent = new Event();
-        mTimeout = 0;   // infinite, in java-speek
-    }
-
-    
     private class ChannelInputStream
         extends InputStream
     {
@@ -218,7 +207,28 @@ public class Channel
         private boolean mStderr;
     }
     
+
+    /* package */
+    Channel (int chanid)
+    {
+        mChanID = chanid;
+        mActive = false;
+        mClosed = false;
+        mEOFReceived = false;
+        mEOFSent = false;
+        mLock = new Object();
+        mEvent = new Event();
         
+        mInStream = new ChannelInputStream();
+        mStderrInStream = new ChannelInputStream();
+        mOutStream = new ChannelOutputStream(false);
+        mStderrOutStream = new ChannelOutputStream(true);
+        mOutBufferLock = new Object();
+        
+        mStatusEvent = new Event();
+        mTimeout = 0;   // infinite, in java-speek
+    }
+
     /**
      * Request a pseudo-terminal from the server.  This is usually used right
      * after creating a client channel, to ask the server to provide some
@@ -229,7 +239,8 @@ public class Channel
      * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
      * @param width width (in characters) of the terminal screen
      * @param height height (in characters) of the terminal screen
-     * @param timeout_ms time (in milliseconds) to wait for a response
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -277,7 +288,8 @@ public class Channel
      * the shell will operate through the pty, and the channel will be
      * connected to the stdin and stdout of the pty.
      * 
-     * @param timeout_ms time (in milliseconds) to wait for a response
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -314,7 +326,8 @@ public class Channel
      * the command being executed.
      * 
      * @param command a shell command to execute
-     * @param timeout_ms time (in milliseconds) to wait for a response
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -346,6 +359,140 @@ public class Channel
         }
     }
 
+    /**
+     * Request a subsystem on the server (for example, <code>"sftp"</code>).
+     * If the server allows it, the channel will then be directly connected
+     * to the requested subsystem.
+     * 
+     * @param subsystem name of the subsystem being requested
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever
+     * @return true if the operation succeeded, false if not
+     * @throws IOException if an exception occurred while making the request
+     */
+    public boolean
+    invokeSubsystem (String subsystem, int timeout_ms)
+        throws IOException
+    {
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
+                throw new SSHException("Channel is not open");
+            }
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("subsystem");
+            m.putBoolean(true);
+            m.putString(subsystem);
+            
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
+            if (! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+            if (! mActive) {
+                return false;
+            }
+            return true;
+        }
+    }
+    
+    /**
+     * Resize the pseudo-terminal.  This can be used to change the width and
+     * height of the terminal emulation created by a previous {@link #getPTY}
+     * call.
+     * 
+     * @param width new width (in characters) of the terminal
+     * @param height new height (in characters) of the terminal
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever
+     * @return true if the operation succeeded, false if not
+     * @throws IOException if an exception occurred while making the request
+     */
+    public boolean
+    resizePTY (int width, int height, int timeout_ms)
+        throws IOException
+    {
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
+                throw new SSHException("Channel is not open");
+            }
+            
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("window-change");
+            m.putBoolean(true);
+            m.putInt(width);
+            m.putInt(height);
+            m.putInt(0);
+            m.putInt(0);
+            
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
+            if (! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+            if (! mActive) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Return the exit status from the process on the server.  This is mostly
+     * useful for retrieving the results of an {@link #execCommand}.  If the
+     * command hasn't finished yet, this method will wait up to <code>timeout_ms</code>
+     * for it to complete.  If no exit status is sent within the timeout, an
+     * {@link SSHException} will be thrown.
+     * 
+     * @param timeout_ms time (in milliseconds) to wait for the exit status
+     *     to be sent; -1 to wait forever
+     * @return the exit status
+     * @throws SSHException if no exit status was sent before the timeout, or
+     *     the channel was closed
+     */
+    public int
+    getExitStatus (int timeout_ms)
+        throws SSHException
+    {
+        if (! waitForEvent(mStatusEvent, timeout_ms)) {
+            throw new SSHException("Timeout fetching exit status");
+        }
+        if (! mActive) {
+            throw new SSHException("Channel is closed");
+        }
+        return mExitStatus;
+    }
+    
+    /**
+     * Send the exit status of an executed command to the client.  (This
+     * really only makes sense in server mode.)  Many clients expect to get
+     * some sort of status code back from an executed command after it
+     * completes.
+     * 
+     * @param status the exit code of the process
+     * @throws IOException if an exception occurred while sending the status
+     *     code
+     */
+    public void
+    sendExitStatus (int status)
+        throws IOException
+    {
+        synchronized (mLock) {
+            // in many cases, the channel will not still be open here.  that's fine.
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString("exit-status");
+            m.putBoolean(false);
+            m.putInt(status);
+            mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
+        }
+    }
+        
     /**
      * Set a timeout on read operations.  If <code>timeout_ms</code> is zero,
      * no timeout is set, and reads from this channel will block until there
@@ -518,7 +665,53 @@ public class Channel
         }
     }
     
-    public boolean
+    /**
+     * Shutdown the receiving side of this socket, closing the stream in the
+     * incoming direction.  After this call, future reads on this channel
+     * will fail instantly.
+     */
+    public void
+    shutdownRead ()
+        throws IOException
+    {
+        // fake it
+        synchronized (mLock) {
+            mEOFReceived = true;
+        }
+    }
+    
+    /**
+     * Shutdown the sending side of this socket, closing the stream in the
+     * outgoing direction.  After this call, future writes on this channel
+     * will fail instantly.
+     * 
+     * @throws IOException if an exception occurred
+     */
+    public void
+    shutdownWrite ()
+        throws IOException
+    {
+        synchronized (mLock) {
+            sendEOF();
+        }
+    }
+    
+    /**
+     * Return the ID # for this channel.  The channel ID is unique across
+     * a {@link Transport} and usually a small number.  It's also the number
+     * passed to {@link ServerInterface#checkChannelRequest} when determining
+     * whether to accept a channel request in server mode.
+     * 
+     * @return the channel ID
+     */
+    public int
+    getID ()
+    {
+        return mChanID;
+    }
+    
+    
+    /* package */ boolean
     handleMessage (byte ptype, Message m)
         throws IOException
     {
@@ -544,8 +737,6 @@ public class Channel
         }
     }
     
-    
-
     /* package */ void
     setTransport (TransportInterface t, LogSink log)
     {
@@ -827,8 +1018,49 @@ public class Channel
         } else if (key.equals("xon-xoff")) {
             // ignore
             ok = true;
+        } else if (key.equals("pty-req")) {
+            String term = m.getString();
+            int width = m.getInt();
+            int height = m.getInt();
+            int pixelWidth = m.getInt();
+            int pixelHeight = m.getInt();
+            String modes = m.getString();
+            if (mServer != null) {
+                ok = mServer.checkChannelPTYRequest(this, term, width, height, pixelWidth, pixelHeight, modes);
+            } else {
+                ok = false;
+            }
+        } else if (key.equals("shell")) {
+            if (mServer != null) {
+                ok = mServer.checkChannelShellRequest(this);
+            } else {
+                ok = false;
+            }
+        } else if (key.equals("exec")) {
+            String command = m.getString();
+            if (mServer != null) {
+                ok = mServer.checkChannelExecRequest(this, command);
+            } else {
+                ok = false;
+            }
+        } else if (key.equals("subsystem")) {
+            String name = m.getString();
+            if (mServer != null) {
+                ok = mServer.checkChannelSubsystemRequest(this, name);
+            } else {
+                ok = false;
+            }
+        } else if (key.equals("window-change")) {
+            int width = m.getInt();
+            int height = m.getInt();
+            int pixelWidth = m.getInt();
+            int pixelHeight = m.getInt();
+            if (mServer != null) {
+                ok = mServer.checkChannelWindowChangeRequest(this, width, height, pixelWidth, pixelHeight);
+            } else {
+                ok = false;
+            }
         } else {
-            // FIXME: lots of server events here
             mLog.debug("Unhandled channel request '" + key + "'");
             ok = false;
         }
@@ -871,6 +1103,7 @@ public class Channel
     private Event mEvent;
     private TransportInterface mTransport;
     private LogSink mLog;
+    private ServerInterface mServer;
     
     private int mInWindowSize;
     private int mInMaxPacketSize;
