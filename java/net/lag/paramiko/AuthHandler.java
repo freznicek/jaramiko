@@ -33,19 +33,34 @@ import java.util.List;
 /* package */ class AuthHandler
     implements MessageHandler
 {
-    public
+    /* package */
     AuthHandler (TransportInterface t, SecureRandom random, LogSink log)
     {
         mTransport = t;
         mRandom = random;
         mLog = log;
         mAuthenticated = false;
+        mFailCount = 0;
+    }
+    
+    /* package */ void
+    useServerMode (ServerInterface server)
+    {
+        mServer = server;
+        mTransport.registerMessageHandler(MessageType.SERVICE_REQUEST, this);
+        mTransport.registerMessageHandler(MessageType.USERAUTH_REQUEST, this);
     }
     
     public boolean
     isAuthenticated ()
     {
         return mAuthenticated;
+    }
+    
+    public String
+    getUsername ()
+    {
+        return mUsername;
     }
     
     public void
@@ -86,6 +101,9 @@ import java.util.List;
         throws IOException
     {
         switch (ptype) {
+        case MessageType.SERVICE_REQUEST:
+            parseServiceRequest(m);
+            return true;
         case MessageType.SERVICE_ACCEPT:
             parseServiceAccept(m);
             return true;
@@ -97,6 +115,9 @@ import java.util.List;
             return true;
         case MessageType.USERAUTH_SUCCESS:
             parseAuthSuccess(m);
+            return true;
+        case MessageType.USERAUTH_REQUEST:
+            parseAuthRequest(m);
             return true;
         }
         return true;
@@ -207,11 +228,167 @@ import java.util.List;
     }
     
     
+    //  server mode
+    
+    
+    private void
+    disconnectServiceNotAvailable ()
+        throws IOException
+    {
+        Message m = new Message();
+        m.putByte(MessageType.DISCONNECT);
+        m.putInt(DISCONNECT_SERVICE_NOT_AVAILABLE);
+        m.putString("Service not available");
+        m.putString("en");
+        mTransport.sendMessage(m);
+        mTransport.close();
+    }
+    
+    private void
+    disconnectNoMoreAuth ()
+        throws IOException
+    {
+        Message m = new Message();
+        m.putByte(MessageType.DISCONNECT);
+        m.putInt(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE);
+        m.putString("No more auth methods available");
+        m.putString("en");
+        mTransport.sendMessage(m);
+        mTransport.close();
+    }
+
+    private void
+    parseServiceRequest (Message m)
+        throws IOException
+    {
+        String service = m.getString();
+        if (service.equals("ssh-userauth")) {
+            Message mx = new Message();
+            mx.putByte(MessageType.SERVICE_ACCEPT);
+            mx.putString(service);
+            mTransport.sendMessage(mx);
+            return;
+        }
+        // dunno this one
+        disconnectServiceNotAvailable();
+    }
+    
+    private void
+    parseAuthRequest (Message m)
+        throws IOException
+    {
+        if (mAuthenticated) {
+            // ignore
+            return;
+        }
+        
+        String username = m.getString();
+        String service = m.getString();
+        String method = m.getString();
+        mLog.debug("Auth request (type=" + method + ") service=" + service + ", username=" + username);
+        
+        if (! service.equals("ssh-connection")) {
+            disconnectServiceNotAvailable();
+            return;
+        }
+        if ((mUsername != null) && ! mUsername.equals(username)) {
+            mLog.warning("Auth rejected because the client attempted to change username in mid-flight");
+            disconnectNoMoreAuth();
+            return;
+        }
+        mUsername = username;
+        
+        int result = AuthError.FAILED;
+        if (method.equals("none")) {
+            result = mServer.checkAuthNone(username);
+        } else if (method.equals("password")) {
+            boolean changeReq = m.getBoolean();
+            String password = m.getString();
+            if (changeReq) {
+                /* always treated as a failure, since we don't support
+                 * changing passwords, but collect the list of valid auth
+                 * types from the callback anyway
+                 */
+                mLog.debug("Auth request to change passwords (rejected)");
+                String newPassword = m.getString();
+                result = AuthError.FAILED;
+            } else {
+                result = mServer.checkAuthPassword(username, password);
+            }
+        } else if (method.equals("publickey")) {
+            boolean sigAttached = m.getBoolean();
+            String keyType = m.getString();
+            byte[] keyBlob = m.getByteString();
+            PKey key = null;
+            try {
+                key = PKey.createFromMessage(new Message(keyBlob));
+            } catch (SSHException x) {
+                mLog.notice("Auth rejected: public key: " + x);
+                disconnectNoMoreAuth();
+                return;
+            }
+            
+            // first check if this key is okay... if not, we can skip verifying it
+            result = mServer.checkAuthPublicKey(username, key);
+            if (result != AuthError.FAILED) {
+                // okay, verify it
+                if (! sigAttached) {
+                    /* client was just asking if this key was acceptable,
+                     * before bothering to sign anything.  say it's okay.
+                     */
+                    Message mx = new Message();
+                    mx.putByte(MessageType.USERAUTH_PK_OK);
+                    mx.putString(keyType);
+                    mx.putByteString(keyBlob);
+                    mTransport.sendMessage(mx);
+                    return;
+                }
+                Message sig = new Message(m.getByteString());
+                byte[] blob = getSessionBlob(key, service, username);
+                if (! key.verifySSHSignature(blob, sig)) {
+                    mLog.notice("Auth rejected: invalid signature");
+                    result = AuthError.FAILED;
+                }
+            }
+        } else {
+            result = mServer.checkAuthNone(username);
+        }
+        
+        // okay, send result
+        Message mx = new Message();
+        if (result == AuthError.SUCCESS) {
+            mLog.notice("Auth granted (" + method + ")");
+            mx.putByte(MessageType.USERAUTH_SUCCESS);
+            mAuthenticated = true;
+        } else {
+            mLog.notice("Auth rejected (" + method + ")");
+            mx.putByte(MessageType.USERAUTH_FAILURE);
+            mx.putString(mServer.getAllowedAuths(username));
+            if (result == AuthError.PARTIAL_SUCCESS) {
+                mx.putBoolean(true);
+            } else {
+                mx.putBoolean(false);
+                mFailCount++;
+            }
+        }
+        mTransport.sendMessage(mx);
+        if (mFailCount >= 10) {
+            disconnectNoMoreAuth();
+        }
+    }
+    
+    
+    private static final int DISCONNECT_SERVICE_NOT_AVAILABLE = 7;
+    private static final int DISCONNECT_AUTH_CANCELLED_BY_USER = 13;
+    private static final int DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14;
+    
     private TransportInterface mTransport;
     private SecureRandom mRandom;
     private LogSink mLog;
+    private ServerInterface mServer;
     private Event mAuthEvent;
     private boolean mAuthenticated;
+    private int mFailCount;
     
     // auth info
     private String mAuthMethod;

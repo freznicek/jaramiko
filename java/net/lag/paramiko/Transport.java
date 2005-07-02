@@ -34,6 +34,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,10 +50,10 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * @author robey
  */
-public class BaseTransport
+public class Transport
 {
     public
-    BaseTransport (Socket socket)
+    Transport (Socket socket)
         throws IOException
     {
         mActive = false;
@@ -65,6 +66,7 @@ public class BaseTransport
         mInStream = mSocket.getInputStream();
         mOutStream = mSocket.getOutputStream();
         mRandom = new SecureRandom();
+        mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX);
         
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
@@ -78,6 +80,10 @@ public class BaseTransport
         mRemoteVersion = null;
         
         mMessageHandlers = new HashMap();
+        
+        mServerAcceptLock = new Object();
+        mServerAccepts = new ArrayList();
+        mServerKeyMap = new HashMap();
     }
     
     public void
@@ -91,6 +97,20 @@ public class BaseTransport
     setDumpPackets (boolean dump)
     {
         mPacketizer.setDumpPackets(dump);
+    }
+    
+    /**
+     * Return a {@link SecurityOptions} object which can be used to tweak the
+     * encryption algorithms this transport will permit, and the order of
+     * preference for them.  The preferred algorithms for encryption,
+     * digest (hash), public key, and key exchange can be modified this way.
+     * 
+     * @return this Transport's SecurityOptions object
+     */
+    public SecurityOptions
+    getSecurityOptions ()
+    {
+        return mSecurityOptions;
     }
 
     /**
@@ -124,7 +144,7 @@ public class BaseTransport
     {
         if (hostkey != null) {
             // we only want this particular key then
-            mPreferredKeys = new String[] { hostkey.getSSHName() };
+            mSecurityOptions.setKeys(Arrays.asList(new String[] { hostkey.getSSHName() }));
         }
         
         mCompletionEvent = new Event();
@@ -201,6 +221,22 @@ public class BaseTransport
     }
     
     /**
+     * Return the username this connection is authenticated for.  If the
+     * session is not authenticated (or authentication failed), this method
+     * returns null.
+     * 
+     * @return the username that was authenticated, or null
+     */
+    public String
+    getUsername ()
+    {
+        if (! mActive || (mAuthHandler == null)) {
+            return null;
+        }
+        return mAuthHandler.getUsername();
+    }
+    
+    /**
      * Authenticate to the SSH2 server using a password.  The username and
      * password are sent over an encrypted link.
      * 
@@ -226,7 +262,7 @@ public class BaseTransport
         throws IOException
     {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(new BaseTransportInterface(), mRandom, mLog);
+        mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
         mAuthHandler.authPassword(username, password, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -258,7 +294,7 @@ public class BaseTransport
         throws IOException
     {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(new BaseTransportInterface(), mRandom, mLog);
+        mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
         mAuthHandler.authPrivateKey(username, key, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -292,6 +328,40 @@ public class BaseTransport
     }
     
     /**
+     * Add a host key to the list of keys used for server mode.  When behaving
+     * as a server, the host key is used to sign certain packets during the
+     * SSH2 negotiation, so that the client can trust that we are who we say
+     * we are.  Because this is used for signing, the key must contain private
+     * key info, not just the public half.  Only one key of each type (RSA or
+     * DSS) is kept.
+     * 
+     * @param key the host key to add
+     */
+    public void
+    addServerKey (PKey key)
+    {
+        mServerKeyMap.put(key.getSSHName(), key);
+    }
+    
+    /**
+     * Return the active host key, in server mode.  After negotiating with the
+     * client, this method will return the negotiated host key.  If only one
+     * type of host key was set with {@link addServerKey}, that's the only key
+     * that will ever be returned.  But in cases where you have set more than
+     * one type of host key (for example, an RSA key and a DSS key), the key
+     * type will be negotiated by the client, and this method will return the
+     * key of the type agreed on.  If the host key has not been negotiated
+     * yet, null is returned.  In client mode, the behavior is undefined.
+     * 
+     * @return the host key being used for this session
+     */
+    public PKey
+    getServerKey ()
+    {
+        return mServerKey;
+    }
+    
+    /**
      * Turn on/off keepalive packets (default is off).  If this is set, after
      * <code>interval</code> milliseconds without sending any data over the
      * connection, a "keepalive" packet will be sent (and ignored by the
@@ -313,6 +383,37 @@ public class BaseTransport
                 }
             }
         });
+    }
+    
+    /**
+     * Send a junk packet across the encrypted link.  This is sometimes used
+     * to add "noise" to a connection to confuse would-be attackers.  It can
+     * also be used as a keep-alive for long lived connections traversing
+     * firewalls.
+     * 
+     * <p>If <code>bytes</code> is 0, a random number of bytes from 10 to 41
+     * will be attached.
+     * 
+     * @param bytes the number of random bytes to send in the payload of the
+     *     ignored packet
+     * @param timeout_ms time (in milliseconds) to wait for the request
+     * @throws IOException if an exception occurs while sending the request
+     */
+    public void
+    sendIgnore (int bytes, int timeout_ms)
+        throws IOException
+    {
+        Message m = new Message();
+        m.putByte(MessageType.IGNORE);
+        if (bytes <= 0) {
+            byte[] b = new byte[1];
+            mRandom.nextBytes(b);
+            bytes = (b[0] % 32) + 10;
+        }
+        byte[] data = new byte[bytes];
+        mRandom.nextBytes(data);
+        m.putBytes(data);
+        sendUserMessage(m, timeout_ms);
     }
     
     /**
@@ -408,7 +509,7 @@ public class BaseTransport
             mChannels[chanid] = c;
             e = new Event();
             mChannelEvents[chanid] = e;
-            c.setTransport(new BaseTransportInterface(), mLog);
+            c.setTransport(new MyTransportInterface(), mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             
             sendUserMessage(m, timeout_ms);
@@ -450,6 +551,53 @@ public class BaseTransport
         throws IOException
     {
         return openChannel("session", null, timeout_ms);
+    }
+    
+    /**
+     * Return the next channel opened by the client over this transport, in
+     * server mode.  If no channel is opened before the given timeout, null
+     * is returned.
+     * 
+     * @param timeout_ms time (in milliseconds) to wait for a channel, or 0
+     *     to wait forever
+     * @return a new Channel opened b the client
+     */
+    public Channel
+    accept (int timeout_ms)
+    {
+        synchronized (mServerAcceptLock) {
+            if (mServerAccepts.size() > 0) {
+                return (Channel) mServerAccepts.remove(0);
+            }
+            
+            try {
+                mServerAcceptLock.wait(timeout_ms);
+            } catch (InterruptedException x) {
+                Thread.currentThread().interrupt();
+            }
+            
+            if (mServerAccepts.size() > 0) {
+                return (Channel) mServerAccepts.remove(0);
+            }
+            return null;
+        }
+    }
+    
+    /**
+     * Close this session, and any open channels.
+     */
+    public void
+    close ()
+    {
+        synchronized (mLock) {
+            mActive = false;
+            mPacketizer.close();
+            for (int i = 0; i < mChannels.length; i++) {
+                if (mChannels[i] != null) {
+                    mChannels[i].unlink();
+                }
+            }
+        }
     }
     
     
@@ -725,10 +873,6 @@ public class BaseTransport
         throws IOException
     {
         mClearToSend.clear();
-        String[] availableServerKeys = mPreferredKeys;
-        if (mServerMode) {
-            // FIXME check for modulus pack
-        }
         
         byte[] rand = new byte[16];
         mRandom.nextBytes(rand);
@@ -736,12 +880,12 @@ public class BaseTransport
         Message m = new Message();
         m.putByte(MessageType.KEX_INIT);
         m.putBytes(rand);
-        m.putList(Arrays.asList(mPreferredKex));
-        m.putList(Arrays.asList(availableServerKeys));
-        m.putList(Arrays.asList(mPreferredCiphers));
-        m.putList(Arrays.asList(mPreferredCiphers));
-        m.putList(Arrays.asList(mPreferredMacs));
-        m.putList(Arrays.asList(mPreferredMacs));
+        m.putList(mSecurityOptions.getKex());
+        m.putList(mSecurityOptions.getKeys());
+        m.putList(mSecurityOptions.getCiphers());
+        m.putList(mSecurityOptions.getCiphers());
+        m.putList(mSecurityOptions.getMacs());
+        m.putList(mSecurityOptions.getMacs());
         m.putString("none");
         m.putString("none");
         m.putString("");
@@ -856,6 +1000,9 @@ public class BaseTransport
                     sendKexInit();
                 }
                 Message m = mPacketizer.read();
+                if (m == null) {
+                    break;
+                }
                 byte ptype = m.getByte();
                 switch (ptype) {
                 case MessageType.IGNORE:
@@ -1006,6 +1153,11 @@ public class BaseTransport
         mKexEngine = null;
         mK = null;
         
+        if (mServerMode && (mAuthHandler == null)) {
+            // create auth handler for server mode
+            mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
+            mAuthHandler.useServerMode(mServer);
+        }
         if (! mInitialKexDone) {
             // this was the first key exchange
             mInitialKexDone = true;
@@ -1075,35 +1227,40 @@ public class BaseTransport
             (filter(supportedCompressions, serverCompressAlgorithmList) == null)) {
             throw new SSHException("Incompatible SSH peer");
         }
-        mAgreedKex = mServerMode ? filter(kexAlgorithmList, Arrays.asList(mPreferredKex)) :
-            filter(Arrays.asList(mPreferredKex), kexAlgorithmList);
+        mAgreedKex = mServerMode ? filter(kexAlgorithmList, mSecurityOptions.getKex()) :
+            filter(mSecurityOptions.getKex(), kexAlgorithmList);
         if (mAgreedKex == null) {
             throw new SSHException("Incompatible SSH peer (no acceptable kex algorithm)");
         }
-        // FIXME: in server mode, remember to filter out keys that we don't actually have on hand 
-        mAgreedServerKey = mServerMode ? filter(serverKeyAlgorithmList, Arrays.asList(mPreferredKeys)) :
-            filter(Arrays.asList(mPreferredKeys), serverKeyAlgorithmList);
+        mAgreedServerKey = mServerMode ? filter(serverKeyAlgorithmList, mSecurityOptions.getKeys()) :
+            filter(mSecurityOptions.getKeys(), serverKeyAlgorithmList);
         if (mAgreedServerKey == null) {
             throw new SSHException("Incompatible SSH peer (no acceptable host key)");
         }
+        if (mServerMode) {
+            mServerKey = (PKey) mServerKeyMap.get(mAgreedServerKey);
+            if (mServerKey == null) {
+                throw new SSHException("Incompatible SSH peer (can't match requested host key type");
+            }
+        }
 
         if (mServerMode) {
-            mAgreedLocalCipher = filter(serverEncryptAlgorithmList, Arrays.asList(mPreferredCiphers));
-            mAgreedRemoteCipher = filter(clientEncryptAlgorithmList, Arrays.asList(mPreferredCiphers));
+            mAgreedLocalCipher = filter(serverEncryptAlgorithmList, mSecurityOptions.getCiphers());
+            mAgreedRemoteCipher = filter(clientEncryptAlgorithmList, mSecurityOptions.getCiphers());
         } else {
-            mAgreedLocalCipher = filter(Arrays.asList(mPreferredCiphers), clientEncryptAlgorithmList);
-            mAgreedRemoteCipher = filter(Arrays.asList(mPreferredCiphers), serverEncryptAlgorithmList);
+            mAgreedLocalCipher = filter(mSecurityOptions.getCiphers(), clientEncryptAlgorithmList);
+            mAgreedRemoteCipher = filter(mSecurityOptions.getCiphers(), serverEncryptAlgorithmList);
         }
         if ((mAgreedLocalCipher == null) || (mAgreedRemoteCipher == null)) {
             throw new SSHException("Incompatible SSH peer (no acceptable ciphers)");
         }
         
         if (mServerMode) {
-            mAgreedLocalMac = filter(serverMacAlgorithmList, Arrays.asList(mPreferredMacs));
-            mAgreedRemoteMac = filter(clientMacAlgorithmList, Arrays.asList(mPreferredMacs));
+            mAgreedLocalMac = filter(serverMacAlgorithmList, mSecurityOptions.getMacs());
+            mAgreedRemoteMac = filter(clientMacAlgorithmList, mSecurityOptions.getMacs());
         } else {
-            mAgreedLocalMac = filter(Arrays.asList(mPreferredMacs), clientMacAlgorithmList);
-            mAgreedRemoteMac = filter(Arrays.asList(mPreferredMacs), serverMacAlgorithmList);
+            mAgreedLocalMac = filter(mSecurityOptions.getMacs(), clientMacAlgorithmList);
+            mAgreedRemoteMac = filter(mSecurityOptions.getMacs(), serverMacAlgorithmList);
         }
         if ((mAgreedLocalMac == null) || (mAgreedRemoteMac == null)) {
             throw new SSHException("Incompatible SSH peer (no accpetable macs)");
@@ -1132,7 +1289,7 @@ public class BaseTransport
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
-        mKexEngine.startKex(new BaseTransportInterface(), mRandom);
+        mKexEngine.startKex(new MyTransportInterface(), mRandom);
     }
     
     private void
@@ -1227,8 +1384,7 @@ public class BaseTransport
                 mChannels[myChanID] = c;
             }
             
-            // FIXME: server mode
-            reason = ChannelError.SUCCESS;       // mServerObject.checkChannelRequest(kind, myChanID)
+            reason = mServer.checkChannelRequest(kind, myChanID);
             if (reason != ChannelError.SUCCESS) {
                 mLog.debug("Rejecting '" + kind + "' channel request from client.");
                 reject = true;
@@ -1253,7 +1409,7 @@ public class BaseTransport
         }
         
         synchronized (mLock) {
-            c.setTransport(new BaseTransportInterface(), mLog);
+            c.setTransport(new MyTransportInterface(), mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
         }
@@ -1268,10 +1424,9 @@ public class BaseTransport
         
         mLog.notice("Secsh channel " + myChanID + " opened.");
 
-        synchronized (mLock) {
-            // FIXME
-            //self.server_accepts.append(chan)
-            //self.server_accept_cv.notify()
+        synchronized (mServerAcceptLock) {
+            mServerAccepts.add(c);
+            mServerAcceptLock.notify();
         }
     }
     
@@ -1308,25 +1463,26 @@ public class BaseTransport
     
     
     // ahhh java...  weird hoops to implement an interface only within this package
-    private class BaseTransportInterface
+    private class MyTransportInterface
         implements TransportInterface
     {
-        public byte[] getSessionID () { return BaseTransport.this.mSessionID; }
-        public boolean inServerMode () { return BaseTransport.this.inServerMode(); }  
-        public void expectPacket (byte ptype) { BaseTransport.this.expectPacket(ptype); }
-        public void saveException (IOException x) { BaseTransport.this.saveException(x); }
-        public void sendMessage (Message m) throws IOException { BaseTransport.this.sendMessage(m); }
-        public void sendUserMessage (Message m, int timeout_ms) throws IOException { BaseTransport.this.sendUserMessage(m, timeout_ms); }
+        public byte[] getSessionID () { return Transport.this.mSessionID; }
+        public boolean inServerMode () { return Transport.this.inServerMode(); }  
+        public void expectPacket (byte ptype) { Transport.this.expectPacket(ptype); }
+        public void saveException (IOException x) { Transport.this.saveException(x); }
+        public void sendMessage (Message m) throws IOException { Transport.this.sendMessage(m); }
+        public void sendUserMessage (Message m, int timeout_ms) throws IOException { Transport.this.sendUserMessage(m, timeout_ms); }
         public String getLocalVersion () { return mLocalVersion; }
         public String getRemoteVersion () { return mRemoteVersion; }
         public byte[] getLocalKexInit () { return mLocalKexInit; }
         public byte[] getRemoteKexInit () { return mRemoteKexInit; }
         public PKey getServerKey () { return mServerKey; }
-        public void setKH (BigInteger k, byte[] h) { BaseTransport.this.setKH(k, h); }
-        public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException { BaseTransport.this.verifyKey(hostKey, sig); }
-        public void registerMessageHandler (byte ptype, MessageHandler handler) { BaseTransport.this.registerMessageHandler(ptype, handler); }
-        public void activateOutbound () throws IOException { BaseTransport.this.activateOutbound(); }
+        public void setKH (BigInteger k, byte[] h) { Transport.this.setKH(k, h); }
+        public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException { Transport.this.verifyKey(hostKey, sig); }
+        public void registerMessageHandler (byte ptype, MessageHandler handler) { Transport.this.registerMessageHandler(ptype, handler); }
+        public void activateOutbound () throws IOException { Transport.this.activateOutbound(); }
         public void unlinkChannel (int chanID) { synchronized (mLock) { mChannels[chanID] = null; } }
+        public void close () { Transport.this.close(); }
     }
     
         
@@ -1362,13 +1518,14 @@ public class BaseTransport
         sKeyMap.put("ssh-dss", DSSKey.class);
         
         sKexMap.put("diffie-hellman-group1-sha1", KexGroup1.class);
-        //sKexMap.put("diffie-hellman-group-exchange-sha1", KexGex.class);
     }
     
-    private String[] mPreferredCiphers = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
-    private String[] mPreferredMacs = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
-    private String[] mPreferredKeys = { "ssh-rsa", "ssh-dss" };
-    private String[] mPreferredKex = { "diffie-hellman-group1-sha1", "diffie-hellman-group-exchange-sha1" };
+    private final String[] KNOWN_CIPHERS = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
+    private final String[] KNOWN_MACS = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
+    private final String[] KNOWN_KEYS = { "ssh-rsa", "ssh-dss" };
+    private final String[] KNOWN_KEX = { "diffie-hellman-group1-sha1" };
+    
+
     private int mWindowSize = 65536; 
     private int mMaxPacketSize = 32768;
     
@@ -1376,11 +1533,15 @@ public class BaseTransport
     protected InputStream mInStream;
     protected OutputStream mOutStream;
     protected SecureRandom mRandom;
+    private SecurityOptions mSecurityOptions;
     protected Packetizer mPacketizer;
     protected Kex mKexEngine;
-    protected PKey mServerKey;
+    protected Map mServerKeyMap;    // Map<String, PKey> of available keys
+    protected PKey mServerKey;      // server key (in server mode)
     protected PKey mHostKey;        // server key (in client mode)
     protected ServerInterface mServer;
+    private Object mServerAcceptLock;
+    private List mServerAccepts;
     
     // negotiation:
     protected String mAgreedKex;

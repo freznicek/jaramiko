@@ -39,6 +39,86 @@ import java.util.List;
 public interface ServerInterface
 {
     /**
+     * Determine if a channel request of the given type will be granted, and
+     * return one of the {@link ChannelError} codes.  This method is called
+     * in server mode when the client requests a channel, after authentication
+     * is complete.
+     * 
+     * <p>The <code>chanID</code> parameter is a small number that uniquely
+     * identifies the channel within a {@link Transport}.  A {@link Channel}
+     * object is not created unless this method returns
+     * {@link ChannelError.SUCCESS} -- once a {@link Channel} object is
+     * created, you can call {@link Channel#getID} to retrieve the channel
+     * ID.
+     * 
+     * @param kind the kind of channel the client would like to open
+     *     (usually <code>"session"</code>)
+     * @param chanID ID of the channel
+     * @return a success or failure code from {@link ChannelError}
+     */
+    public int
+    checkChannelRequest (String kind, int chanID);
+    
+    /**
+     * Return a list of authentication methods supported by the server.
+     * This list is sent to clients attempting to authenticate, to inform
+     * them of authentication methods that might be successful.
+     * 
+     * <p>The "list" is actually a string of comma-separated names of types
+     * of authentication.  Possible values are:
+     * <ul>
+     * <li> <code>"password"</code>
+     * <li> <code>"publickey"</code>
+     * <li> <code>"none"</code>
+     * </ul>
+     * 
+     * @param username the username requesting authentication
+     * @return a comma-separated list of authentication types
+     */
+    public String
+    getAllowedAuths (String username);
+
+    /**
+     * Determine if a client may open channels with no (further)
+     * authentication.  The return code should be one of those listed in
+     * {@link AuthError}.   
+     * 
+     * @param username the username of the client
+     * @return an AuthError code
+     */
+    public int
+    checkAuthNone (String username);
+    
+    /**
+     * Determine if a given username and password supplied by the client is
+     * acceptable for use in authentication.  The return code should be one
+     * of those listed in {@link AuthError}.
+     * 
+     * @param username the username of the client
+     * @param password the password given by the client
+     * @return an AuthError code
+     */
+    public int
+    checkAuthPassword (String username, String password);
+    
+    /**
+     * Determine if a given key supplied by the client is suitable for use in
+     * authentication.  The return code should be one of those listed in
+     * {@link AuthError}.
+     * 
+     * <p>Note that you don't have to actually verify any key signature here.
+     * If this method returns {@link AuthError.SUCCESS}, paramiko will do the
+     * signature verification, and only accept the key if the signature is
+     * valid.
+     * 
+     * @param username the username of the client
+     * @param key the key object provided by the client
+     * @return an AuthError code
+     */
+    public int
+    checkAuthPublicKey (String username, PKey key);
+    
+    /**
      * Handle a global request of the given kind.  This method is called
      * in server mode and client mode, whenever the remote host makes a global
      * request.  If there are any arguments to the request, they will be in

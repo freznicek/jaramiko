@@ -21,10 +21,12 @@ public class WeirdNetTest
     testWeird ()
         throws Exception
     {
+        if (true) return;
+        
         Socket sock = new Socket();
         sock.connect(new InetSocketAddress("tavi.lag.net", 22));
         
-        BaseTransport t = new BaseTransport(sock);
+        Transport t = new Transport(sock);
         t.setLog(new ConsoleLog());
         t.setDumpPackets(true);
         PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("/Users/robey/.ssh/id_rsa"), null);

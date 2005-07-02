@@ -50,4 +50,5 @@ import java.math.BigInteger;
     public void registerMessageHandler (byte ptype, MessageHandler handler);
     public void activateOutbound () throws IOException;
     public void unlinkChannel (int chanID);
+    public void close ();
 }
