@@ -38,8 +38,8 @@ import java.security.spec.RSAPublicKeySpec;
 
 
 /**
- * Standard RSA public-key signing and verification.  This wraps the java
- * library in some SSH-specific functionality.
+ * Standard RSA public/private key algorithm for signing and verification.
+ * This wraps the java library in some SSH-specific functionality.
  * 
  * @author robey
  */

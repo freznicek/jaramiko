@@ -3,3 +3,5 @@ Things I didn't port from paramiko:
 * kex-gex aka group-exchange kex
 	would require porting the list of primes
 * sftp client/server support
+
+* why is java's RSA key generation broken? :(

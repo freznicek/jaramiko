@@ -36,7 +36,7 @@ import java.util.List;
  * 
  * <p>Changing the contents and/or order of these fields affects the
  * underlying {@link Transport}, but only if you change them before starting
- * the session).  If you try to add an algorithm that paramiko doesn't
+ * the session.  If you try to add an algorithm that paramiko doesn't
  * recognize, an IllegalArgumentException will be thrown.
  * 
  * @author robey

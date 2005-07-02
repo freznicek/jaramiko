@@ -32,10 +32,17 @@ import java.util.List;
 
 
 /**
+ * SSH2's basic protocol unit, a byte stream that can encode ints, longs,
+ * strings, booleans, bytes, and BigIntegers.  This class can build or parse
+ * such streams.
+ * 
  * @author robey
  */
 public final class Message
 {
+    /**
+     * Create a new empty Message, suitable for writing.
+     */
     public
     Message ()
     {
@@ -43,6 +50,13 @@ public final class Message
         init(new byte[DEFAULT_SIZE], 5, 0, 0);
     }
     
+    /**
+     * Create a Message from a byte stream, suitable for reading.  This is
+     * equivalent to
+     * {@link #Message(byte[],int,int,int) Message(buf, 0, buf.length, 0)}. 
+     * 
+     * @param buf the bytes of the Message
+     */
     public
     Message (byte[] buf)
     {
@@ -78,6 +92,11 @@ public final class Message
         mSequenceNumber = sequence;
     }
 
+    /**
+     * Return the byte stream format of this message.
+     * 
+     * @return the bytes of this message
+     */
     public byte[]
     toByteArray ()
     {
@@ -90,24 +109,44 @@ public final class Message
         return out;
     }
     
+    /**
+     * Return the current position within the byte stream (for reading or
+     * writing).  This is either the number of bytes read or written so far.
+     * 
+     * @return current position
+     */
     public int
     getPosition ()
     {
         return mPosition - mStart;
     }
     
+    /**
+     * Move the current position within the byte stream.
+     * 
+     * @param position new position
+     */
     public void
     setPosition (int position)
     {
         mPosition = position + mStart;
     }
     
+    /**
+     * Rewind the byte stream to the beginning, effectively setting the
+     * position to zero.
+     */
     public void
     rewind ()
     {
         mPosition = mStart;
     }
-    
+
+    /**
+     * Return the current length of the byte stream.
+     * 
+     * @return length
+     */
     public int
     getLength ()
     {
@@ -117,12 +156,24 @@ public final class Message
         return mBuffer.length;
     }
     
+    /**
+     * Return the sequence number of this Message.  A sequence number will
+     * only be set if it was specified in the constructor, which typically
+     * means only for incoming Messages.
+     * 
+     * @return sequence number
+     */
     public int
     getSequence ()
     {
         return mSequenceNumber;
     }
     
+    /**
+     * Write a byte to the Message.
+     * 
+     * @param b byte
+     */
     public void
     putByte (byte b)
     {
@@ -363,7 +414,7 @@ public final class Message
      * @param encrypting true if this packet will be encrypted (used for
      *     optimizing the use of entropy)
      */
-    public void
+    /* package */ void
     packetize (SecureRandom random, int blockSize, boolean encrypting)
     {
         // pad up at least 4 bytes, to nearest block-size (usually 8)

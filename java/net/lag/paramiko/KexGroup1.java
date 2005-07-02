@@ -16,7 +16,7 @@ import java.util.Arrays;
  * 
  * @author robey
  */
-public class KexGroup1
+/* package */ class KexGroup1
     implements Kex
 {
     public String

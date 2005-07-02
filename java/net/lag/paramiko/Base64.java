@@ -49,7 +49,7 @@ package net.lag.paramiko;
  * @author rob@iharder.net
  * @version 2.1
  */
-public class Base64
+/* package */ class Base64
 {
     
 /* ********  P U B L I C   F I E L D S  ******** */   

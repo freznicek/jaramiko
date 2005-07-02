@@ -27,12 +27,11 @@ import java.util.List;
 
 
 /**
- * This class defines an interface for controlling the behavior of paramiko
- * in server mode.
+ * Interface for controlling the behavior of paramiko in server mode.
  * 
- * Methods on this class are called from paramiko's primary thread, so you
- * shouldn't do too much work in them.  (Certainly nothing that blocks or
- * sleeps.)
+ * <p>Methods on this class are called from paramiko's primary thread, so you
+ * shouldn't do too much work in them (certainly nothing that blocks or
+ * sleeps).
  * 
  * @author robey
  */
@@ -47,7 +46,7 @@ public interface ServerInterface
      * <p>The <code>chanID</code> parameter is a small number that uniquely
      * identifies the channel within a {@link Transport}.  A {@link Channel}
      * object is not created unless this method returns
-     * {@link ChannelError.SUCCESS} -- once a {@link Channel} object is
+     * {@link ChannelError#SUCCESS} -- once a {@link Channel} object is
      * created, you can call {@link Channel#getID} to retrieve the channel
      * ID.
      * 
@@ -107,7 +106,7 @@ public interface ServerInterface
      * {@link AuthError}.
      * 
      * <p>Note that you don't have to actually verify any key signature here.
-     * If this method returns {@link AuthError.SUCCESS}, paramiko will do the
+     * If this method returns {@link AuthError#SUCCESS}, paramiko will do the
      * signature verification, and only accept the key if the signature is
      * valid.
      * 

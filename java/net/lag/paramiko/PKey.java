@@ -170,9 +170,24 @@ public abstract class PKey
      */
     protected abstract void buildFromBER (BigInteger[] data) throws SSHException;
     
+    /**
+     * Initialize a key from an SSH Message.
+     * 
+     * @param m the key Message
+     * @throws SSHException if the Message is corrupted
+     */
     protected abstract void buildFromMessage (Message m) throws SSHException;
     
     
+    /**
+     * Return a public key from base64 data.  The base64 encoding of a key
+     * is SSH-specific and only contains the public key.  It can be fetched
+     * from an existing key via {@link PKey#getBase64}.
+     * 
+     * @param s the string containing the base64 data
+     * @return a public key ({@link RSAKey} or {@link DSSKey})
+     * @throws SSHException if the base64 data is corrupted
+     */
     public static PKey
     createFromBase64 (String s)
         throws SSHException
@@ -180,6 +195,15 @@ public abstract class PKey
         return createFromData(Base64.decode(s));
     }
     
+    /**
+     * Return a public key from an SSH byte stream (an undecoded
+     * {@link Message}).  Only the public key is encoded or extracted, so only
+     * the public key is returned.
+     * 
+     * @param data the key data
+     * @return a public key ({@link RSAKey} or {@link DSSKey})
+     * @throws SSHException if the data is corrupted
+     */
     public static PKey
     createFromData (byte[] data)
         throws SSHException
@@ -187,6 +211,14 @@ public abstract class PKey
         return createFromMessage(new Message(data));
     }
     
+    /**
+     * Return a public key from an SSH {@link Message}.  Only the public key
+     * is encoded or extracted, so only the public key is returned.
+     *  
+     * @param m the Message
+     * @return a public key ({@link RSAKey} or {@link DSSKey})
+     * @throws SSHException if the Message is corrupted
+     */
     public static PKey
     createFromMessage (Message m)
         throws SSHException
@@ -218,7 +250,7 @@ public abstract class PKey
      * 
      * @param is the stream to read the key file from
      * @param password (null-ok) a password to use if the file is encrypted
-     * @return a new PKey instance
+     * @return a new PKey instance ({@link RSAKey} or {@link DSSKey})
      * @throws IOException if there was an error reading or decrypting the
      *     key file
      */

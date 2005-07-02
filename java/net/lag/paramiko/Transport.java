@@ -48,10 +48,26 @@ import javax.crypto.spec.SecretKeySpec;
 
 
 /**
+ * An SSH Transport attaches to a socket, negotiates an encrypted session,
+ * authenticates, and then creates stream tunnels, called {@link Channel}s, across
+ * the session.  Multiple channels can be multiplexed across a single session
+ * (and often are, in the case of port forwardings).  A Transport can operate
+ * in either client or server mode.
+ * 
  * @author robey
  */
 public class Transport
 {
+    /**
+     * Create a new SSH session over an existing socket.  This only
+     * initializes the Transport object; it doesn't begin negotiating the
+     * SSH ession yet.  Use {@link #startClient} to begin a client session,
+     * or {@link #startServer} to begin a server session.
+     * 
+     * @param socket the (previously connected) socket to use for this session 
+     * @throws IOException if there's an error fetching the input/output
+     *     streams from the socket
+     */
     public
     Transport (Socket socket)
         throws IOException
@@ -71,7 +87,7 @@ public class Transport
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
         
-        // FIXME: set timeout on mInStream
+        // FIXME: set timeout on mSocket (or should we leave that to the app?)
         mPacketizer = new Packetizer(mInStream, mOutStream, mRandom);
         mExpectedPacket = 0;
         mInitialKexDone = false;
@@ -86,6 +102,12 @@ public class Transport
         mServerKeyMap = new HashMap();
     }
     
+    /**
+     * Set the logging mechanism for this Transport.  By default, log messages
+     * are sent to a {@link NullLog} object.
+     * 
+     * @param logger the new logger to use
+     */
     public void
     setLog (LogSink logger)
     {
@@ -93,6 +115,13 @@ public class Transport
         mPacketizer.setLog(logger);
     }
     
+    /**
+     * Set whether packet contents should be logged as they arrive or depart.
+     * Normally you only want this on for serious debugging; the log traffic
+     * would otherwise be huge.
+     * 
+     * @param dump true if packet contents should be logged; false if not
+     */
     public void
     setDumpPackets (boolean dump)
     {
@@ -346,7 +375,7 @@ public class Transport
     /**
      * Return the active host key, in server mode.  After negotiating with the
      * client, this method will return the negotiated host key.  If only one
-     * type of host key was set with {@link addServerKey}, that's the only key
+     * type of host key was set with {@link #addServerKey}, that's the only key
      * that will ever be returned.  But in cases where you have set more than
      * one type of host key (for example, an RSA key and a DSS key), the key
      * type will be negotiated by the client, and this method will return the
@@ -809,6 +838,12 @@ public class Transport
             return;
         }
         sendMessage(m);
+    }
+    
+    /* package */ boolean
+    isActive ()
+    {
+        return mActive;
     }
 
     
@@ -1529,34 +1564,34 @@ public class Transport
     private int mWindowSize = 65536; 
     private int mMaxPacketSize = 32768;
     
-    protected Socket mSocket;
-    protected InputStream mInStream;
-    protected OutputStream mOutStream;
-    protected SecureRandom mRandom;
+    private Socket mSocket;
+    private InputStream mInStream;
+    private OutputStream mOutStream;
+    private SecureRandom mRandom;
     private SecurityOptions mSecurityOptions;
-    protected Packetizer mPacketizer;
-    protected Kex mKexEngine;
-    protected Map mServerKeyMap;    // Map<String, PKey> of available keys
-    protected PKey mServerKey;      // server key (in server mode)
-    protected PKey mHostKey;        // server key (in client mode)
-    protected ServerInterface mServer;
+    private Packetizer mPacketizer;
+    private Kex mKexEngine;
+    private Map mServerKeyMap;    // Map<String, PKey> of available keys
+    private PKey mServerKey;      // server key (in server mode)
+    private PKey mHostKey;        // server key (in client mode)
+    private ServerInterface mServer;
     private Object mServerAcceptLock;
     private List mServerAccepts;
     
     // negotiation:
-    protected String mAgreedKex;
-    protected String mAgreedServerKey;
-    protected String mAgreedLocalCipher;
-    protected String mAgreedRemoteCipher;
-    protected String mAgreedLocalMac;
-    protected String mAgreedRemoteMac;
+    private String mAgreedKex;
+    private String mAgreedServerKey;
+    private String mAgreedLocalCipher;
+    private String mAgreedRemoteCipher;
+    private String mAgreedLocalMac;
+    private String mAgreedRemoteMac;
     
     // transport state:
-    protected String mLocalVersion;
-    protected String mRemoteVersion;
-    protected byte[] mLocalKexInit;
-    protected byte[] mRemoteKexInit;
-    protected byte mExpectedPacket;
+    private String mLocalVersion;
+    private String mRemoteVersion;
+    private byte[] mLocalKexInit;
+    private byte[] mRemoteKexInit;
+    private byte mExpectedPacket;
     private boolean mInKex;
     private boolean mInitialKexDone;
     private byte[] mSessionID;
@@ -1568,11 +1603,11 @@ public class Transport
     private Channel[] mChannels;
     private Event[] mChannelEvents;
     
-    protected boolean mActive;
-    protected boolean mServerMode;
-    protected Event mCompletionEvent;
-    protected Event mClearToSend;
-    protected LogSink mLog;
+    private boolean mActive;
+    private boolean mServerMode;
+    private Event mCompletionEvent;
+    private Event mClearToSend;
+    private LogSink mLog;
     private IOException mSavedException;
     private AuthHandler mAuthHandler;
     private Message mGlobalResponse;

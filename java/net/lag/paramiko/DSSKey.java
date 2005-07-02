@@ -14,7 +14,8 @@ import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
 
 /**
- * Implementation of DSS public/private key algorithm for SSH2.
+ * Standard DSS public/private key algorithm for signing and verification.
+ * This wraps the java library in some SSH-specific functionality.
  * 
  * @author robey
  */
@@ -51,9 +52,6 @@ public class DSSKey
         return m.toByteArray();
     }
 
-    /* (non-Javadoc)
-     * @see net.lag.paramiko.PKey#signSSHData(java.security.SecureRandom, byte[])
-     */
     public Message
     signSSHData (SecureRandom random, byte[] data)
         throws SSHException

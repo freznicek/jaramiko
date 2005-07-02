@@ -127,7 +127,7 @@ public class TransportTest
         sync.waitFor(5000);
         
         assertTrue(sync.isSet());
-        assertTrue(mTS.mActive);
+        assertTrue(mTS.isActive());
         assertEquals("slowdive", mTC.getUsername());
         assertEquals("slowdive", mTS.getUsername());
         assertTrue(mTC.isAuthenticated());
