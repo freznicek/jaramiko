@@ -23,6 +23,9 @@
 
 package net.lag.paramiko;
 
+import java.util.List;
+
+
 /**
  * This class defines an interface for controlling the behavior of paramiko
  * in server mode.
@@ -35,6 +38,31 @@ package net.lag.paramiko;
  */
 public interface ServerInterface
 {
+    /**
+     * Handle a global request of the given kind.  This method is called
+     * in server mode and client mode, whenever the remote host makes a global
+     * request.  If there are any arguments to the request, they will be in
+     * <code>m</code>.
+     * 
+     * <p>There aren'y any useful global requests defined in the SSH2
+     * protocol, aside from port forwarding, so usually this type of request
+     * is an extension to the protocol.
+     * 
+     * <p>If the request was successful, a list of contextual data should be
+     * returned, which will be attached to the response.  The list may only
+     * contain objects which can be streamed in the SSH2 protocol: Integers,
+     * Longs, Booleans, Bytes, BigIntegers, Strings, or byte[]s.
+     * 
+     * <p>If the request fails, this method should return null.
+     * 
+     * @param kind the name of the global request being made
+     * @param m any extra arguments to the request
+     * @return a list of data to attach to the response (on success), or null
+     *     on failure
+     */
+    public List
+    checkGlobalRequest (String kind, Message m);
+
     /**
      * Determine if a pseudo-terminal of the given dimensions (usually
      * requested for shell access) can be provided on the given channel.

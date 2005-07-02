@@ -161,6 +161,33 @@ public class BaseTransport
         }
     }
     
+    public void
+    startServer (ServerInterface server, int timeout_ms)
+        throws IOException
+    {
+        mServer = server;
+        mCompletionEvent = new Event();
+        mServerMode = true;
+        mActive = true;
+        new Thread(new Runnable() {
+            public void run() {
+                privateRun();
+            }
+        }).start();
+        
+        if (! waitForEvent(mCompletionEvent, timeout_ms)) {
+            throw new SSHException("Timeout.");
+        }
+        if (! mActive) {
+            IOException x = getException();
+            if (x != null) {
+                throw x;
+            } else {
+                throw new SSHException("Negotiation failed.");
+            }
+        }
+    }
+    
     /**
      * Return true if this session is active and has authenticated
      * successfully.
@@ -925,8 +952,8 @@ public class BaseTransport
             parseNewKeys();
             return true;
         case MessageType.GLOBAL_REQUEST:
-            //parseGlobalRequest(m);
-            break;
+            parseGlobalRequest(m);
+            return true;
         case MessageType.REQUEST_SUCCESS:
             parseRequestSuccess(m);
             return true;
@@ -991,6 +1018,29 @@ public class BaseTransport
             mInKex = false;
         }
         mClearToSend.set();
+    }
+    
+    private void
+    parseGlobalRequest (Message m)
+        throws IOException
+    {
+        String kind = m.getString();
+        boolean wantReply = m.getBoolean();
+        mLog.debug("Received global request '" + kind + "'");
+        List response = null;
+        if (mServer != null) {
+            response = mServer.checkGlobalRequest(kind, m);
+        }
+        if (wantReply) {
+            Message mx = new Message();
+            if (response != null) {
+                mx.putByte(MessageType.REQUEST_SUCCESS);
+                mx.putAll(response);
+            } else {
+                mx.putByte(MessageType.REQUEST_FAILURE);
+            }
+            sendMessage(mx);
+        }
     }
     
     private void
@@ -1330,6 +1380,7 @@ public class BaseTransport
     protected Kex mKexEngine;
     protected PKey mServerKey;
     protected PKey mHostKey;        // server key (in client mode)
+    protected ServerInterface mServer;
     
     // negotiation:
     protected String mAgreedKex;
