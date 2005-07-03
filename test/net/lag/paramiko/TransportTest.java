@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.List;
 import junit.framework.TestCase;
 
@@ -132,6 +133,47 @@ public class TransportTest
         assertEquals("slowdive", mTS.getUsername());
         assertTrue(mTC.isAuthenticated());
         assertTrue(mTS.isAuthenticated());
+    }
+    
+    /*
+     * verify that the client can demand odd handshake settings, and can
+     * renegotiate keys in mid-stream.
+     */
+    public void
+    testSpecial ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        SecurityOptions o = mTC.getSecurityOptions();
+        o.setCiphers(Arrays.asList(new String[] { "aes256-cbc" }));
+        o.setDigests(Arrays.asList(new String[] { "hmac-md5-96" }));
+        mTC.startClient(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        sync.waitFor(5000);
+
+        assertTrue(mTS.isActive());
+        assertEquals("aes256-cbc", mTC.mAgreedLocalCipher);
+        assertEquals("aes256-cbc", mTC.mAgreedRemoteCipher);
+        assertEquals(12, mTC.mPacketizer.mMacSizeOut);
+        assertEquals(12, mTC.mPacketizer.mMacSizeIn);
+        
+        mTC.sendIgnore(1024, 15000);
+        assertTrue(mTC.renegotiateKeys(15000));
+        mTC.sendIgnore(1024, 15000);
     }
     
 

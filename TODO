@@ -5,3 +5,10 @@ Things I didn't port from paramiko:
 * sftp client/server support
 
 * why is java's RSA key generation broken? :(
+
+* aes256-cbc will not work with java's default "crypto policy" files.
+  you have to go to:
+      http://java.sun.com/j2se/1.4.2/download.html
+  and download the "unlimited strength" files at the bottom of the page,
+  under "other downloads".  THIS IS RETARDED.
+  

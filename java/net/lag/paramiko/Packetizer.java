@@ -410,8 +410,8 @@ import javax.crypto.ShortBufferException;
     private Mac mMacEngineIn;
     private byte[] mMacBufferOut;
     private byte[] mMacBufferIn;
-    private int mMacSizeOut;
-    private int mMacSizeIn;
+    /* package */ int mMacSizeOut;
+    /* package */ int mMacSizeIn;
     private int mSequenceNumberOut;
     private int mSequenceNumberIn;
     

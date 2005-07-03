@@ -64,7 +64,7 @@ public final class SecurityOptions
     }
     
     public void
-    setMacs (List macs)
+    setDigests (List macs)
     {
         setList(mMacs, macs, mKnownMacs);
     }
@@ -88,7 +88,7 @@ public final class SecurityOptions
     }
     
     public List
-    getMacs ()
+    getDigests ()
     {
         return new ArrayList(mMacs);
     }

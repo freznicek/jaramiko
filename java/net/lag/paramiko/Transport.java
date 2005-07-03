@@ -415,6 +415,40 @@ public class Transport
     }
     
     /**
+     * Force this session to switch to new keys.  Normally this is done
+     * automatically after the session hits a certain number of packets or
+     * bytes sent or received, but this method gives you the option of forcing
+     * new keys whenever you want.  Negotiating new keys causes a pause in
+     * traffic both ways as the two sides swap keys and do computations.  This
+     * method returns when the session has switched to new keys, or the
+     * session has died mid-negotiation.
+     * 
+     * @param timeout_ms time (in milliseconds) to wait for renegotiation
+     * @return true on success, false if the timeout occurred first
+     * @throws IOException if the renegotiation failed, or the connection was
+     *     lost
+     */
+    public boolean
+    renegotiateKeys (int timeout_ms)
+        throws IOException
+    {
+        mCompletionEvent = new Event();
+        sendKexInit();
+        if (! waitForEvent(mCompletionEvent, timeout_ms)) {
+            return false;
+        }
+        if (! mActive) {
+            IOException x = getException();
+            if (x != null) {
+                throw x;
+            } else {
+                throw new SSHException("Negotiation failed.");
+            }
+        }
+        return true;
+    }
+    
+    /**
      * Send a junk packet across the encrypted link.  This is sometimes used
      * to add "noise" to a connection to confuse would-be attackers.  It can
      * also be used as a keep-alive for long lived connections traversing
@@ -919,8 +953,8 @@ public class Transport
         m.putList(mSecurityOptions.getKeys());
         m.putList(mSecurityOptions.getCiphers());
         m.putList(mSecurityOptions.getCiphers());
-        m.putList(mSecurityOptions.getMacs());
-        m.putList(mSecurityOptions.getMacs());
+        m.putList(mSecurityOptions.getDigests());
+        m.putList(mSecurityOptions.getDigests());
         m.putString("none");
         m.putString("none");
         m.putString("");
@@ -1291,11 +1325,11 @@ public class Transport
         }
         
         if (mServerMode) {
-            mAgreedLocalMac = filter(serverMacAlgorithmList, mSecurityOptions.getMacs());
-            mAgreedRemoteMac = filter(clientMacAlgorithmList, mSecurityOptions.getMacs());
+            mAgreedLocalMac = filter(serverMacAlgorithmList, mSecurityOptions.getDigests());
+            mAgreedRemoteMac = filter(clientMacAlgorithmList, mSecurityOptions.getDigests());
         } else {
-            mAgreedLocalMac = filter(mSecurityOptions.getMacs(), clientMacAlgorithmList);
-            mAgreedRemoteMac = filter(mSecurityOptions.getMacs(), serverMacAlgorithmList);
+            mAgreedLocalMac = filter(mSecurityOptions.getDigests(), clientMacAlgorithmList);
+            mAgreedRemoteMac = filter(mSecurityOptions.getDigests(), serverMacAlgorithmList);
         }
         if ((mAgreedLocalMac == null) || (mAgreedRemoteMac == null)) {
             throw new SSHException("Incompatible SSH peer (no accpetable macs)");
@@ -1569,7 +1603,7 @@ public class Transport
     private OutputStream mOutStream;
     private SecureRandom mRandom;
     private SecurityOptions mSecurityOptions;
-    private Packetizer mPacketizer;
+    /* package */ Packetizer mPacketizer;
     private Kex mKexEngine;
     private Map mServerKeyMap;    // Map<String, PKey> of available keys
     private PKey mServerKey;      // server key (in server mode)
@@ -1581,10 +1615,10 @@ public class Transport
     // negotiation:
     private String mAgreedKex;
     private String mAgreedServerKey;
-    private String mAgreedLocalCipher;
-    private String mAgreedRemoteCipher;
-    private String mAgreedLocalMac;
-    private String mAgreedRemoteMac;
+    /* package */ String mAgreedLocalCipher;
+    /* package */ String mAgreedRemoteCipher;
+    /* package */ String mAgreedLocalMac;
+    /* package */ String mAgreedRemoteMac;
     
     // transport state:
     private String mLocalVersion;
