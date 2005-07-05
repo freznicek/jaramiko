@@ -37,32 +37,33 @@ public class ConsoleLog
     public void
     error (String text)
     {
-        System.err.println("ERR: " + text);
+        System.err.println(getThreadID() + " ERR: " + text);
     }
 
     public void
     warning (String text)
     {
-        System.err.println("WRN: " + text);
+        System.err.println(getThreadID() + " WRN: " + text);
     }
 
     public void
     notice (String text)
     {
-        System.err.println("NTC: " + text);
+        System.err.println(getThreadID() + " NTC: " + text);
     }
 
     public void
     debug (String text)
     {
-        System.err.println("DBG: " + text);
+        System.err.println(getThreadID() + " DBG: " + text);
     }
 
     public void
     dump (String text, byte[] data, int offset, int length)
     {
+        String tidstr = getThreadID();
         for (int i = 0; i < length; i += 16) {
-            System.err.println("DMP: " + text + ": " + dumpHex(data, offset + i, length - i));
+            System.err.println(tidstr + " DMP: " + text + ": " + dumpHex(data, offset + i, length - i));
         }
     }
     
@@ -95,5 +96,28 @@ public class ConsoleLog
         
         return hex.toString() + "   " + ascii.toString();
     }
+    
+    private String
+    getThreadID ()
+    {
+        int tid = ((Integer) sThreadID.get()).intValue();
+        String tidstr = "t" + Integer.toString(tid);
+        if (tid < 10) {
+            return tidstr + "  ";
+        }
+        if (tid < 100) {
+            return tidstr + " ";
+        }
+        return tidstr;
+    }
 
+    
+    private static int sNextThreadID = 1;
+    private static ThreadLocal sThreadID = new ThreadLocal() {
+        protected synchronized Object initialValue () {
+            synchronized (ConsoleLog.class) {
+                return new Integer(sNextThreadID++);
+            }
+        }
+    };
 }
