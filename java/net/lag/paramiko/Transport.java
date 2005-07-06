@@ -1042,7 +1042,7 @@ public class Transport
             }
             throw x;
         }
-        return null;
+        return new String[0];
     }
     
     private void

@@ -93,7 +93,9 @@ import java.util.List;
     public void
     abort ()
     {
-        mAuthEvent.set();
+        if (mAuthEvent != null) {
+            mAuthEvent.set();
+        }
     }
     
     public boolean

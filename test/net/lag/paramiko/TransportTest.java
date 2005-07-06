@@ -210,6 +210,112 @@ public class TransportTest
         assertEquals("keepalive@lag.net", server.mGlobalRequest);
     }
 
+    /*
+     * verify that we get the right exception when an unsupported auth type
+     * is requested.
+     */
+    public void
+    testBadAuthType ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        try {
+            mTC.startClient(publicHostKey, 15000);
+            mTC.authPassword("unknown", "error", 15000);
+            fail("expected BadAuthenticationType exception");
+        } catch (BadAuthenticationType x) {
+            String[] allowed = x.getAllowedTypes();
+            assertEquals(1, allowed.length);
+            assertEquals("publickey", allowed[0]);
+        }
+    }
+    
+    /*
+     * verify that a bad password gets the right exception, and that a retry
+     * with the right password works.
+     */
+    public void
+    testBadPassword ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        try {
+            mTC.authPassword("slowdive", "error", 15000);
+            fail("expected SSHException");
+        } catch (SSHException x) {
+            // pass
+        }
+        
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        sync.waitFor(5000);
+        
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+    }
+    
+    // verify that multipart auth works
+    public void
+    testMultipartAuth ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        
+        String[] remain = mTC.authPassword("paranoid", "paranoid", 15000);
+        assertEquals(1, remain.length);
+        assertEquals("publickey", remain[0]);
+        PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
+        remain = mTC.authPrivateKey("paranoid", key, 15000);
+        assertEquals(0, remain.length);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+    }
+
     
     private Socket mSocketC;
     private Socket mSocketS;
