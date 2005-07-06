@@ -382,7 +382,89 @@ public class TransportTest
         assertEquals(null, r.readLine());
         chan.close();
     }
+    
+    // verify that invoke_shell() does something reasonable
+    public void
+    testInvokeShell ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+        
+        Channel chan = mTC.openSession(5000);
+        assertTrue(chan.invokeShell(5000));
+        Channel schan = mTS.accept(5000);
+        chan.getOutputStream().write("communist j. cat\n".getBytes());
+        chan.close();
+        
+        BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
+        assertEquals("communist j. cat", r.readLine());
+        schan.close();
+    }
+    
+    // verify that getExitStatus works
+    public void
+    testExitStatus ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
 
+        Channel chan = mTC.openSession(5000);
+        assertTrue(chan.execCommand("yes", 5000));
+        Channel schan = mTS.accept(5000);
+        schan.getOutputStream().write("Hello there.\n".getBytes());
+        // trigger an EOF
+        schan.shutdownRead();
+        schan.shutdownWrite();
+        schan.sendExitStatus(23);
+        schan.close();
+        
+        BufferedReader r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
+        assertEquals("Hello there.", r.readLine());
+        assertEquals(null, r.readLine());
+        assertEquals(23, chan.getExitStatus(5000));
+        chan.close();
+    }
+    
     
     private Socket mSocketC;
     private Socket mSocketS;
