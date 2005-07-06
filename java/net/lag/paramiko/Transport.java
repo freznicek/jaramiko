@@ -1477,6 +1477,7 @@ public class Transport
             c.setTransport(new MyTransportInterface(), mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
+            c.setServer(mServer);
         }
         
         Message mx = new Message();

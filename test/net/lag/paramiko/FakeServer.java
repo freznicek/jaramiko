@@ -126,7 +126,7 @@ public class FakeServer
     public boolean
     checkChannelExecRequest (Channel c, String command)
     {
-        if (command.equals("yes")) {
+        if (! command.equals("yes")) {
             return false;
         }
         return true;

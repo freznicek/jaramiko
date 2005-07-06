@@ -109,12 +109,14 @@ public class Channel
                         }
                     }
                     
-                    synchronized (mLock) {
-                        if (mEOFReceived) {
-                            return 0;
-                        }
-                        if (mClosed) {
-                            throw new IOException("Stream closed.");
+                    if (mBufferLen == 0) {
+                        synchronized (mLock) {
+                            if (mEOFReceived) {
+                                return -1;
+                            }
+                            if (mClosed) {
+                                throw new IOException("Stream closed.");
+                            }
                         }
                     }
                 }
@@ -765,6 +767,12 @@ public class Channel
         }
         mActive = true;
         mLog.debug("Max packet out: " + serverMaxPacketSize + " bytes");
+    }
+    
+    /* package */ void
+    setServer (ServerInterface server)
+    {
+        mServer = server;
     }
     
     /* package */ void
