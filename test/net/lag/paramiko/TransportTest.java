@@ -175,8 +175,42 @@ public class TransportTest
         assertTrue(mTC.renegotiateKeys(15000));
         mTC.sendIgnore(1024, 15000);
     }
-    
 
+    // verify that the keepalive will be sent
+    public void
+    testKeepalive ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        sync.waitFor(5000);
+        
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+        assertEquals(null, server.mGlobalRequest);
+        mTC.setKeepAlive(1000);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException x) { }
+        assertEquals("keepalive@lag.net", server.mGlobalRequest);
+    }
+
+    
     private Socket mSocketC;
     private Socket mSocketS;
     private Transport mTC;

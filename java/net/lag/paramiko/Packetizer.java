@@ -101,24 +101,38 @@ import javax.crypto.ShortBufferException;
     
     // really inefficient, but only used for 1 line at the start of the session
     public String
-    readline ()
+    readline (int timeout_ms)
         throws IOException
     {
         StringBuffer line = new StringBuffer();
+        long deadline = (timeout_ms > 0) ? System.currentTimeMillis() + timeout_ms : 0;
         
         while (true) {
-            int c = mInStream.read();
-            if (c < 0) {
-                return null;
-            }
-            // only ASCII is allowed here, so this is ok; calm down. :)
-            if ((char)c == '\n') {
-                if ((line.length() > 0) && (line.charAt(line.length() - 1) == '\r')) {
-                    line.setLength(line.length() - 1);
+            try {
+                int c = mInStream.read();
+                if (c < 0) {
+                    return null;
                 }
-                return line.toString();
+                // only ASCII is allowed here, so this is ok; calm down. :)
+                if ((char)c == '\n') {
+                    if ((line.length() > 0) && (line.charAt(line.length() - 1) == '\r')) {
+                        line.setLength(line.length() - 1);
+                    }
+                    return line.toString();
+                }
+                line.append((char)c);
+            } catch (SocketTimeoutException x) {
+                // pass, try again
             }
-            line.append((char)c);
+            
+            if ((deadline > 0) && (System.currentTimeMillis() >= deadline)) {
+                throw new SocketTimeoutException();
+            }
+            synchronized (this) {
+                if (mClosed) {
+                    return line.toString();
+                }
+            }
         }
     }
     

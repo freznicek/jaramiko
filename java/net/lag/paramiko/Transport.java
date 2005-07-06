@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -87,7 +88,7 @@ public class Transport
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
         
-        // FIXME: set timeout on mSocket (or should we leave that to the app?)
+        mSocket.setSoTimeout(100);
         mPacketizer = new Packetizer(mInStream, mOutStream, mRandom);
         mExpectedPacket = 0;
         mInitialKexDone = false;
@@ -892,17 +893,15 @@ public class Transport
         
         for (int i = 0; i < 5; i++) {
             // give them 5 seconds for the first line, then just 2 seconds each additional line
-            try {
-                if (i == 0) {
-                    mSocket.setSoTimeout(5000);
-                } else {
-                    mSocket.setSoTimeout(2000);
-                }
-            } catch (SocketException x) {
-                // hrm.
-                throw new IOException("Unable to set socket timeout");
+            int timeout = 2000;
+            if (i == 0) {
+                timeout = 5000;
             }
-            line = mPacketizer.readline();
+            try {
+                line = mPacketizer.readline(timeout);
+            } catch (SocketTimeoutException x) {
+                throw new SSHException("Timeout waiting for SSH protocol banner");
+            }
             if (line == null) {
                 throw new SSHException("Error reading SSH protocol banner");
             }
@@ -932,9 +931,6 @@ public class Transport
             throw new SSHException("Incompatible version (" + version + " instead of 2.0)");
         }
         mLog.notice("Connected (version " + version + ", client " + client + ")");
-        try {
-            mSocket.setSoTimeout(0);
-        } catch (SocketException x) { }
     }
     
     private void
@@ -1107,7 +1103,7 @@ public class Transport
             logStackTrace(x);
             saveException(x);
         } catch (IOException x) {
-            mLog.error("I/O exception in transport thread: " + x);
+            mLog.error("I/O exception in feeder thread: " + x);
             saveException(x);
         }
         
