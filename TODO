@@ -12,3 +12,14 @@ Things I didn't port from paramiko:
   and download the "unlimited strength" files at the bottom of the page,
   under "other downloads".  THIS IS RETARDED.
   
+  
+* the transport unit tests are taking a long time.  there may not be any
+  simple fix, because it seems to be the crypto that's taking most of the
+  time.  some sample snapshots (all times in milliseconds):
+     [java] server kex-init = 183; k = 81; hash = 0; sign = 100; msg = 0; send = 0; activate = 2
+     [java] server kex-init = 199; k = 55; hash = 0; sign = 78; msg = 0; send = 62; activate = 4
+     [java] server kex-init = 819; k = 739; hash = 0; sign = 78; msg = 0; send = 0; activate = 2
+     [java] server kex-init = 1074; k = 351; hash = 1; sign = 80; msg = 0; send = 334; activate = 308
+     [java] startKex = 351; x = 0; e = 350
+     [java] server kex-init = 1072; k = 354; hash = 0; sign = 77; msg = 0; send = 340; activate = 301
+
