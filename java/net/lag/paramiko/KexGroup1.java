@@ -31,7 +31,7 @@ import java.util.Arrays;
     {
         mTransport = t;
         mRandom = r;
-        
+     
         generateX();
         if (mTransport.inServerMode()) {
             // compute f = g^x mod p, but don't send it yet

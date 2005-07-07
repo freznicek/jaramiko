@@ -46,7 +46,8 @@ public class TransportTest
         mSocketC = pair[1];
         mTS = new Transport(mSocketS);
         mTC = new Transport(mSocketC);
-        //mTC.setLog(new ConsoleLog());
+        mTC.setLog(new ConsoleLog());
+        //mTS.setLog(new ConsoleLog());
     }
     
     public void

@@ -185,7 +185,7 @@ public class Transport
             public void run () {
                 privateRun();
             }
-        }).start();
+        }, "paramikoj client feeder").start();
 
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
@@ -226,7 +226,7 @@ public class Transport
             public void run() {
                 privateRun();
             }
-        }).start();
+        }, "paramikoj server feeder").start();
         
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");

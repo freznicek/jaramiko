@@ -22,4 +22,3 @@ Things I didn't port from paramiko:
      [java] server kex-init = 1074; k = 351; hash = 1; sign = 80; msg = 0; send = 334; activate = 308
      [java] startKex = 351; x = 0; e = 350
      [java] server kex-init = 1072; k = 354; hash = 0; sign = 77; msg = 0; send = 340; activate = 301
-

@@ -270,15 +270,15 @@ public class Channel
             
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-        
-            if (! waitForEvent(mEvent, timeout_ms)) {
-                return false;
-            }
-            if (! mActive) {
-                return false;
-            }
-            return true;
         }
+        
+        if (! waitForEvent(mEvent, timeout_ms)) {
+            return false;
+        }
+        if (mClosed) {
+            return false;
+        }
+        return true;
     }
     
     /**
@@ -312,14 +312,15 @@ public class Channel
             
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if (! waitForEvent(mEvent, timeout_ms)) {
-                return false;
-            }
-            if (! mActive) {
-                return false;
-            }
-            return true;
         }
+        
+        if (! waitForEvent(mEvent, timeout_ms)) {
+            return false;
+        }
+        if (mClosed) {
+            return false;
+        }
+        return true;
     }
     
     /**
@@ -351,14 +352,15 @@ public class Channel
             
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if (! waitForEvent(mEvent, timeout_ms)) {
-                return false;
-            }
-            if (! mActive) {
-                return false;
-            }
-            return true;
         }
+        
+        if (! waitForEvent(mEvent, timeout_ms)) {
+            return false;
+        }
+        if (mClosed) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -390,14 +392,15 @@ public class Channel
             
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if (! waitForEvent(mEvent, timeout_ms)) {
-                return false;
-            }
-            if (! mActive) {
-                return false;
-            }
-            return true;
         }
+        
+        if (! waitForEvent(mEvent, timeout_ms)) {
+            return false;
+        }
+        if (mClosed) {
+            return false;
+        }
+        return true;
     }
     
     /**
@@ -433,14 +436,15 @@ public class Channel
             
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if (! waitForEvent(mEvent, timeout_ms)) {
-                return false;
-            }
-            if (! mActive) {
-                return false;
-            }
-            return true;
         }
+        
+        if (! waitForEvent(mEvent, timeout_ms)) {
+            return false;
+        }
+        if (mClosed) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -463,7 +467,7 @@ public class Channel
         if (! waitForEvent(mStatusEvent, timeout_ms)) {
             throw new SSHException("Timeout fetching exit status");
         }
-        if (! mActive) {
+        if (mClosed) {
             throw new SSHException("Channel is closed");
         }
         return mExitStatus;
@@ -660,11 +664,13 @@ public class Channel
                 mLog.debug("I/O exception while sending EOF/close");
             }
             
-            setClosed();
+            mClosed = true;
             /* can't unlink from the Transport yet -- the remote side may
              * still try to send meta-data (exit-status, etc)
              */
         }
+        
+        notifyClosed();
     }
     
     /**
@@ -784,18 +790,17 @@ public class Channel
                 return;
             }
 
-            setClosed();
+            mClosed = true;
             mTransport.unlinkChannel(mChanID);
         }
+        notifyClosed();
     }
     
     
     
-    // you are holding the lock.
     private void
-    setClosed ()
+    notifyClosed ()
     {
-        mClosed = true;
         synchronized (mInStream.mBufferLock) {
             mInStream.mBufferLock.notifyAll();
         }
@@ -859,8 +864,10 @@ public class Channel
                 return false;
             }
 
-            if (! mActive) {
-                return true;
+            synchronized (mLock) {
+                if (mClosed) {
+                    return true;
+                }
             }
         }
         return true;
