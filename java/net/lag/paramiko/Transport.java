@@ -28,7 +28,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
@@ -172,6 +171,8 @@ public class Transport
     startClient (PKey hostkey, int timeout_ms)
         throws IOException
     {
+        detectJavaSecurityBug();
+
         if (hostkey != null) {
             // we only want this particular key then
             mSecurityOptions.setKeys(Arrays.asList(new String[] { hostkey.getSSHName() }));
@@ -215,6 +216,8 @@ public class Transport
     startServer (ServerInterface server, int timeout_ms)
         throws IOException
     {
+        detectJavaSecurityBug();
+        
         mServer = server;
         mCompletionEvent = new Event();
         mServerMode = true;
@@ -1527,6 +1530,53 @@ public class Transport
         }
     }
     
+    /*
+     * many versions of java are crippled for no sane reason, and can't use
+     * 256 bit ciphers.  detect that so we can warn the user and explain how
+     * to fix it.
+     */
+    private void
+    detectJavaSecurityBug ()
+    {
+        if (sCheckedBug) { 
+            return;
+        }
+        
+        boolean bug = false;
+        
+        try {
+            Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
+            AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
+            byte[] key = new byte[32];
+            byte[] iv = new byte[16];
+            param.init(new IvParameterSpec(iv));
+            c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), param);
+        } catch (GeneralSecurityException x) {
+            bug = true;
+        } catch (SecurityException x) {
+            bug = true;
+        }
+        
+        sCheckedBug = true;
+        if (! bug) {
+            return;
+        }
+        
+        mLog.notice("Your java installation lacks support for 256-bit encryption.  " +
+                    "This is due to a poor choice of defaults in Sun's java.  To fix it, " +
+                    "visit: <http://java.sun.com/j2se/1.4.2/download.html> and download " +
+                    "the \"unlimited strength\" files at the bottom of the page, under " +
+                    "\"other downloads\".");
+        
+        for (Iterator i = sCipherMap.values().iterator(); i.hasNext(); ) {
+            CipherDescription desc = (CipherDescription) i.next();
+            if (desc.mKeySize > 16) {
+                i.remove();
+            }
+        }
+        mLog.notice("256-bit ciphers turned off.");
+    }
+    
     
     // ahhh java...  weird hoops to implement an interface only within this package
     private class MyTransportInterface
@@ -1567,6 +1617,7 @@ public class Transport
     private static Map sMacMap = new HashMap();
     private static Map sKeyMap = new HashMap();
     private static Map sKexMap = new HashMap();
+    private static boolean sCheckedBug = false;
     
     static {
         // mappings from SSH protocol names to java implementation details

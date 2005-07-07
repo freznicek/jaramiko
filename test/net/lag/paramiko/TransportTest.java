@@ -46,6 +46,7 @@ public class TransportTest
         mSocketC = pair[1];
         mTS = new Transport(mSocketS);
         mTC = new Transport(mSocketC);
+        //mTC.setLog(new ConsoleLog());
     }
     
     public void
@@ -161,15 +162,15 @@ public class TransportTest
         }).start();
         
         SecurityOptions o = mTC.getSecurityOptions();
-        o.setCiphers(Arrays.asList(new String[] { "aes256-cbc" }));
+        o.setCiphers(Arrays.asList(new String[] { "aes128-cbc" }));
         o.setDigests(Arrays.asList(new String[] { "hmac-md5-96" }));
         mTC.startClient(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
 
         assertTrue(mTS.isActive());
-        assertEquals("aes256-cbc", mTC.mAgreedLocalCipher);
-        assertEquals("aes256-cbc", mTC.mAgreedRemoteCipher);
+        assertEquals("aes128-cbc", mTC.mAgreedLocalCipher);
+        assertEquals("aes128-cbc", mTC.mAgreedRemoteCipher);
         assertEquals(12, mTC.mPacketizer.mMacSizeOut);
         assertEquals(12, mTC.mPacketizer.mMacSizeIn);
         
