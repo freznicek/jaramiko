@@ -23,6 +23,9 @@
 
 package net.lag.paramiko;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 
 /**
  * Simple {@link LogSink} implementation which dumps paramiko's log messages
@@ -100,15 +103,16 @@ public class ConsoleLog
     private String
     getThreadID ()
     {
+        String timestamp = sFormat.format(new Date());
+        
         int tid = ((Integer) sThreadID.get()).intValue();
         String tidstr = "t" + Integer.toString(tid);
         if (tid < 10) {
-            return tidstr + "  ";
+            tidstr = tidstr + "  ";
+        } else if (tid < 100) {
+            tidstr = tidstr + " ";
         }
-        if (tid < 100) {
-            return tidstr + " ";
-        }
-        return tidstr;
+        return timestamp + " " + tidstr;
     }
 
     
@@ -120,4 +124,6 @@ public class ConsoleLog
             }
         }
     };
+    
+    private static SimpleDateFormat sFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 }
