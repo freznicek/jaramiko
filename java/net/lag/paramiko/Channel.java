@@ -467,9 +467,6 @@ public class Channel
         if (! waitForEvent(mStatusEvent, timeout_ms)) {
             throw new SSHException("Timeout fetching exit status");
         }
-        if (mClosed) {
-            throw new SSHException("Channel is closed");
-        }
         return mExitStatus;
     }
     
