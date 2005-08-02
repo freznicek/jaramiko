@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<project name="paramikoj" default="jar" basedir=".">
+<project name="jaramiko" default="jar" basedir=".">
     <!-- internal folder locations -->   
     <property name="src-folder" location="java" />
     <property name="build-folder" location="classes" />
@@ -10,12 +10,12 @@
 
     <property name="dep-jars" value="" />
 
-    <property name="paramikoj-jar" value="paramikoj.jar" />
-    <property name="manifest-file" value="paramikoj.manifest" />
+    <property name="jaramiko-jar" value="jaramiko.jar" />
+    <property name="manifest-file" value="jaramiko.manifest" />
 
     <!-- junit (unit tests) -->
     <property name="junit-jar" location="${junit-folder}/junit.jar" />
-    <property name="test-dep-jars" value="${dep-jars}:${junit-jar}:${paramikoj-jar}" />
+    <property name="test-dep-jars" value="${dep-jars}:${junit-jar}:${jaramiko-jar}" />
 
     <tstamp>
         <format property="timestamp" pattern="yyyyMMdd-HHmmss" />
@@ -35,29 +35,29 @@
         <javac debug="yes" srcdir="${test-folder}" destdir="${test-build-folder}" classpath="${test-dep-jars}" />
     </target>
   
-    <target name="jar" depends="compile" description="create paramikoj jar">
+    <target name="jar" depends="compile" description="create jaramiko jar">
         <manifest file="${manifest-file}">
             <attribute name="Sealed" value="false" />
             <attribute name="Build-Date" value="${TODAY}" />
             <attribute name="Build-Time" value="${TSTAMP}" />
         </manifest>
-        <jar jarfile="${paramikoj-jar}" basedir="${build-folder}" manifest="${manifest-file}" />
+        <jar jarfile="${jaramiko-jar}" basedir="${build-folder}" manifest="${manifest-file}" />
     </target>
 
     <target name="test" depends="compile-tests" description="run unit tests">
         <java classname="junit.textui.TestRunner" classpath="${test-dep-jars}:${test-build-folder}">
-            <arg value="net.lag.paramiko.AllTests" />
+            <arg value="net.lag.jaramiko.AllTests" />
         </java>
     </target>
     
     <target name="docs" depends="init">
-        <javadoc sourcepath="${src-folder}" destdir="${docs-folder}" packagenames="net.lag.paramiko.*" classpath="${dep-jars}" />
+        <javadoc sourcepath="${src-folder}" destdir="${docs-folder}" packagenames="net.lag.jaramiko.*" classpath="${dep-jars}" />
     </target>
 
     <target name="clean" description="clean built targets">
         <delete dir="${build-folder}" failonerror="false" />
         <delete dir="${test-build-folder}" failonerror="false" />
-        <delete file="${paramikoj-jar}" failonerror="false" />
+        <delete file="${jaramiko-jar}" failonerror="false" />
         <delete file="${manifest-file}" failonerror="false" />
     </target>
 
