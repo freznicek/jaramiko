@@ -31,7 +31,9 @@ package net.lag.jaramiko;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
+// no: not until java 4
+//import java.net.SocketTimeoutException;
 
 /*
  * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
@@ -109,7 +111,7 @@ public class Channel
                         if (mTimeout > 0) {
                             timeout -= System.currentTimeMillis() - then;
                             if (timeout <= 0) {
-                                throw new SocketTimeoutException();
+                                throw new InterruptedIOException("timeout");
                             }
                         }
                     }
@@ -506,7 +508,7 @@ public class Channel
      * no timeout is set, and reads from this channel will block until there
      * is data available (or the channel is closed or reaches EOF).  If
      * <code>timeout_ms</code> is greater than zero, subsequent reads from
-     * this channel's input streams will throw SocketTimeoutException if no
+     * this channel's input streams will throw InterruptedIOException if no
      * data is ready within the timeout period.
      * 
      * <p>By default, there is no timeout set, and read operations block

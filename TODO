@@ -1,11 +1,21 @@
-Things I didn't port from paramiko:
+Things I want to do, specific to java:
+
+* wrapper classes for JCE; eventually allowing:
+    - runtime substitution of a different crypto library (for embedded)
+    - fallback to pure-java crypto if necessary
+  this means "javax.crypto" and "java.security"
+* fix RSA key generation (i couldn't get this to work!)
+
+Things I didn't port from paramiko (yet?):
 
 * kex-gex aka group-exchange kex
 	would require porting the list of primes
 * sftp client support (mediumly likely)
 * sftp server support (unlikely)
+* compression
 
-* why is java's RSA key generation broken? :(
+
+----------
 
 * aes256-cbc will not work with java's default "crypto policy" files.
   you have to go to:

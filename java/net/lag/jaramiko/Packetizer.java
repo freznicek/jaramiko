@@ -31,7 +31,8 @@ package net.lag.jaramiko;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
+//import java.net.SocketTimeoutException;
 import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -126,12 +127,12 @@ import javax.crypto.ShortBufferException;
                     return line.toString();
                 }
                 line.append((char)c);
-            } catch (SocketTimeoutException x) {
+            } catch (InterruptedIOException x) {
                 // pass, try again
             }
             
             if ((deadline > 0) && (System.currentTimeMillis() >= deadline)) {
-                throw new SocketTimeoutException();
+                throw new InterruptedIOException("timeout");
             }
             synchronized (this) {
                 if (mClosed) {
@@ -354,7 +355,7 @@ import javax.crypto.ShortBufferException;
                     // EOF: no partial results
                     return n;
                 }
-            } catch (SocketTimeoutException x) {
+            } catch (InterruptedIOException x) {
                 // pass
             }
             

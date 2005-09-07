@@ -33,7 +33,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
+//import java.net.SocketTimeoutException;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -907,7 +908,7 @@ public class Transport
             }
             try {
                 line = mPacketizer.readline(timeout);
-            } catch (SocketTimeoutException x) {
+            } catch (InterruptedIOException x) {
                 throw new SSHException("Timeout waiting for SSH protocol banner");
             }
             if (line == null) {
