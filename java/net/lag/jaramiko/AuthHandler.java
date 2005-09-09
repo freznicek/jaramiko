@@ -29,8 +29,10 @@
 package net.lag.jaramiko;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.List;
+
+import net.lag.crai.Crai;
+
 
 /**
  * @author robey
@@ -39,10 +41,10 @@ import java.util.List;
     implements MessageHandler
 {
     /* package */
-    AuthHandler (TransportInterface t, SecureRandom random, LogSink log)
+    AuthHandler (TransportInterface t, Crai crai, LogSink log)
     {
         mTransport = t;
-        mRandom = random;
+        mCrai = crai;
         mLog = log;
         mAuthenticated = false;
         mFailCount = 0;
@@ -185,7 +187,7 @@ import java.util.List;
             m.putString(mPrivateKey.getSSHName());
             m.putByteString(mPrivateKey.toByteArray());
             byte[] blob = getSessionBlob(mPrivateKey, "ssh-connection", mUsername);
-            m.putByteString(mPrivateKey.signSSHData(mRandom, blob).toByteArray());
+            m.putByteString(mPrivateKey.signSSHData(mCrai, blob).toByteArray());
         } else {
             throw new SSHException("Unknown auth method '" + mAuthMethod + "'");
         }
@@ -352,7 +354,7 @@ import java.util.List;
                 }
                 Message sig = new Message(m.getByteString());
                 byte[] blob = getSessionBlob(key, service, username);
-                if (! key.verifySSHSignature(blob, sig)) {
+                if (! key.verifySSHSignature(mCrai, blob, sig)) {
                     mLog.notice("Auth rejected: invalid signature");
                     result = AuthError.FAILED;
                 }
@@ -390,7 +392,7 @@ import java.util.List;
     private static final int DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14;
     
     private TransportInterface mTransport;
-    private SecureRandom mRandom;
+    private Crai mCrai;
     private LogSink mLog;
     private ServerInterface mServer;
     private Event mAuthEvent;

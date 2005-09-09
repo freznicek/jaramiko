@@ -30,10 +30,11 @@ package net.lag.jaramiko;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import net.lag.crai.CraiRandom;
 
 
 /**
@@ -420,14 +421,14 @@ public final class Message
      *     optimizing the use of entropy)
      */
     /* package */ void
-    packetize (SecureRandom random, int blockSize, boolean encrypting)
+    packetize (CraiRandom random, int blockSize, boolean encrypting)
     {
         // pad up at least 4 bytes, to nearest block-size (usually 8)
         int padding = 3 + blockSize - ((mPosition - mStart + 8) % blockSize);
         byte[] pad = new byte[padding];
         if (encrypting) {
             // leave the padding as zero bytes unless we're encrypting
-            random.nextBytes(pad);
+            random.getBytes(pad);
         }
 
         if (mStart < 5) {

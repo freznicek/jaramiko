@@ -33,10 +33,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.InterruptedIOException;
 //import java.net.SocketTimeoutException;
-import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.ShortBufferException;
+
+import net.lag.crai.CraiRandom;
 
 
 /**
@@ -48,7 +49,7 @@ import javax.crypto.ShortBufferException;
 /* package */ class Packetizer
 {
     public
-    Packetizer (InputStream in, OutputStream out, SecureRandom random)
+    Packetizer (InputStream in, OutputStream out, CraiRandom random)
         throws IOException
     {
         mInStream = in;
@@ -409,7 +410,7 @@ import javax.crypto.ShortBufferException;
 
     private InputStream mInStream;
     private OutputStream mOutStream;
-    private SecureRandom mRandom;
+    private CraiRandom mRandom;
     private LogSink mLog;
     private boolean mClosed;
     private boolean mDumpPackets;

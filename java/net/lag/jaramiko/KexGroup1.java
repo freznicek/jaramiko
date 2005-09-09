@@ -32,8 +32,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Arrays;
+
+import net.lag.crai.Crai;
+
 
 /**
  * Standard "group1" SHA1 key exchange, the one type required by the protocol.
@@ -50,11 +52,11 @@ import java.util.Arrays;
     }
     
     public void
-    startKex (TransportInterface t, SecureRandom r)
+    startKex (TransportInterface t, Crai crai)
         throws IOException
     {
         mTransport = t;
-        mRandom = r;
+        mCrai = crai;
      
         generateX();
         if (mTransport.inServerMode()) {
@@ -101,7 +103,7 @@ import java.util.Arrays;
     {
         while (true) {
             byte[] b = new byte[128];
-            mRandom.nextBytes(b);
+            mCrai.getPRNG().getBytes(b);
             b[0] &= 0x7f;
             
             byte[] test = new byte[8];
@@ -147,7 +149,7 @@ import java.util.Arrays;
         }
         
         // sign it
-        byte[] sig = key.signSSHData(mRandom, h).toByteArray();
+        byte[] sig = key.signSSHData(mCrai, h).toByteArray();
         Message rm = new Message();
         rm.putByte(KEXDH_REPLY);
         rm.putByteString(keyBytes);
@@ -208,7 +210,7 @@ import java.util.Arrays;
     private static final byte[] BAD1 = { 0, 0, 0, 0, 0, 0, 0, 0 };
     private static final byte[] BAD2 = { 0x7f, -1, -1, -1, -1, -1, -1, -1 };
     
-    private SecureRandom mRandom;
+    private Crai mCrai;
     private TransportInterface mTransport;
     
     private BigInteger mX;

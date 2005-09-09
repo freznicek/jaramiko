@@ -29,7 +29,8 @@
 package net.lag.jaramiko;
 
 import java.io.IOException;
-import java.security.SecureRandom;
+import net.lag.crai.Crai;
+
 
 /**
  * Interface for implementing a key-exchange algorithm.
@@ -40,5 +41,5 @@ import java.security.SecureRandom;
     extends MessageHandler
 {
     public String getName ();
-    public void startKex (TransportInterface t, SecureRandom r) throws IOException;
+    public void startKex (TransportInterface t, Crai crai) throws IOException;
 }

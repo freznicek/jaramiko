@@ -37,7 +37,6 @@ import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +45,8 @@ import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import net.lag.crai.Crai;
 
 
 /**
@@ -97,26 +98,27 @@ public abstract class PKey
      * Sign a blob of data using this private key, and return a {@link Message}
      * representing the signature.
      * 
-     * @param random a secure source of random bytes
+     * @param crai the crypto abstraction layer
      * @param data the data to sign
      * @return a {@link Message} representing the signature
      * @throws SSHException if there is an error with underlying java crypto
      *     libraries
      */
-    public abstract Message signSSHData (SecureRandom random, byte[] data) throws SSHException;
+    public abstract Message signSSHData (Crai crai, byte[] data) throws SSHException;
     
     /**
      * Verify an SSH2 signature against a blob of data using this public key.
      * If the data appears to have been signed by this key, this method
      * returns true.
      * 
+     * @param crai the crypto abstraction layer
      * @param data the data that was signed
      * @param sig the message containing the signature
      * @return true if the signature is valid
      * @throws SSHException if there is an error with underlying java crypto
      *     libraries
      */
-    public abstract boolean verifySSHSignature (byte[] data, Message sig) throws SSHException;
+    public abstract boolean verifySSHSignature (Crai crai, byte[] data, Message sig) throws SSHException;
 
     /**
      * Return an MD5 fingerprint of the public part of this key.  Nothing

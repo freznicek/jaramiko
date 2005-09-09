@@ -39,7 +39,6 @@ import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,6 +50,8 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import net.lag.crai.*;
 
 
 /**
@@ -78,6 +79,13 @@ public class Transport
     Transport (Socket socket)
         throws IOException
     {
+        if (sCrai == null) {
+            try {
+                sCrai = (Crai) Class.forName("net.lag.craijce.CraiJCE").newInstance();
+            } catch (Throwable t) {
+                throw new RuntimeException("Unable to load default CraiJCE: " + t);
+            }
+        }
         mActive = false;
         mServerMode = false;
         mInKex = false;
@@ -87,14 +95,13 @@ public class Transport
         mSocket = socket;
         mInStream = mSocket.getInputStream();
         mOutStream = mSocket.getOutputStream();
-        mRandom = new SecureRandom();
         mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX);
         
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
         
         mSocket.setSoTimeout(100);
-        mPacketizer = new Packetizer(mInStream, mOutStream, mRandom);
+        mPacketizer = new Packetizer(mInStream, mOutStream, sCrai.getPRNG());
         mExpectedPacket = 0;
         mInitialKexDone = false;
         
@@ -301,7 +308,7 @@ public class Transport
         throws IOException
     {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
+        mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
         mAuthHandler.authPassword(username, password, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -333,7 +340,7 @@ public class Transport
         throws IOException
     {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
+        mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
         mAuthHandler.authPrivateKey(username, key, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -480,11 +487,11 @@ public class Transport
         m.putByte(MessageType.IGNORE);
         if (bytes <= 0) {
             byte[] b = new byte[1];
-            mRandom.nextBytes(b);
+            sCrai.getPRNG().getBytes(b);
             bytes = (b[0] % 32) + 10;
         }
         byte[] data = new byte[bytes];
-        mRandom.nextBytes(data);
+        sCrai.getPRNG().getBytes(data);
         m.putBytes(data);
         sendUserMessage(m, timeout_ms);
     }
@@ -733,7 +740,7 @@ public class Transport
     {
         PKey key = PKey.createFromData(hostKey);
         mLog.debug("Server host key: " + Util.encodeHex(key.getFingerprint()));
-        if (! key.verifySSHSignature(mH, new Message(sig))) {
+        if (! key.verifySSHSignature(sCrai, mH, new Message(sig))) {
             throw new SSHException("Signature verification (" + key.getSSHName() + ") failed.");
         }
         mHostKey = key;
@@ -949,7 +956,7 @@ public class Transport
         mClearToSend.clear();
         
         byte[] rand = new byte[16];
-        mRandom.nextBytes(rand);
+        sCrai.getPRNG().getBytes(rand);
 
         Message m = new Message();
         m.putByte(MessageType.KEX_INIT);
@@ -1229,7 +1236,7 @@ public class Transport
         
         if (mServerMode && (mAuthHandler == null)) {
             // create auth handler for server mode
-            mAuthHandler = new AuthHandler(new MyTransportInterface(), mRandom, mLog);
+            mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
             mAuthHandler.useServerMode(mServer);
         }
         if (! mInitialKexDone) {
@@ -1363,7 +1370,7 @@ public class Transport
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
-        mKexEngine.startKex(new MyTransportInterface(), mRandom);
+        mKexEngine.startKex(new MyTransportInterface(), sCrai);
     }
     
     private void
@@ -1625,6 +1632,9 @@ public class Transport
     private static Map sKexMap = new HashMap();
     private static boolean sCheckedBug = false;
     
+    // crypto abstraction (not everyone has JCE)
+    private static Crai sCrai = null;
+    
     static {
         // mappings from SSH protocol names to java implementation details
         sCipherMap.put("aes128-cbc", new CipherDescription("AES/CBC/NoPadding", 16, 16));
@@ -1655,7 +1665,6 @@ public class Transport
     private Socket mSocket;
     private InputStream mInStream;
     private OutputStream mOutStream;
-    private SecureRandom mRandom;
     private SecurityOptions mSecurityOptions;
     /* package */ Packetizer mPacketizer;
     private Kex mKexEngine;

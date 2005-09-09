@@ -17,6 +17,8 @@ Things I didn't port from paramiko (yet?):
 
 ----------
 
+* unit tests require JCE.  this probably won't change.
+
 * aes256-cbc will not work with java's default "crypto policy" files.
   you have to go to:
       http://java.sun.com/j2se/1.4.2/download.html

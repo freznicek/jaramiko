@@ -29,13 +29,12 @@
 package net.lag.jaramiko;
 
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.spec.DSAPrivateKeySpec;
-import java.security.spec.DSAPublicKeySpec;
+
+import net.lag.crai.Crai;
+import net.lag.crai.CraiException;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
+
 
 /**
  * Standard DSS public/private key algorithm for signing and verification.
@@ -77,22 +76,19 @@ public class DSSKey
     }
 
     public Message
-    signSSHData (SecureRandom random, byte[] data)
+    signSSHData (Crai crai, byte[] data)
         throws SSHException
     {
         try {
-            // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS SO PAINFUL?!?!?!
-            Signature s = Signature.getInstance("SHA1withDSA");
-            KeyFactory keyFac = KeyFactory.getInstance("DSA");
-            PrivateKey key = keyFac.generatePrivate(new DSAPrivateKeySpec(mX, mP, mQ, mG));
-            s.initSign(key, random);
-            s.update(data);
-            byte[] sig = s.sign();
+            CraiPrivateKey dsa = crai.makePrivateDSAKey(mX, mP, mQ, mG);
+            byte[] sig = dsa.sign(data, 0, data.length);
             
             /* decode java's odd signature format:
              * java returns a ber sequence containing (r, s) but ssh2 expects
              * a 40-byte buffer containing the 20 bytes of r followed by the
              * 20 bytes of s, with no sign extension.
+             * 
+             * FIXME: should push this down into crai
              */
             BigInteger[] rs = decodeBERSequence(sig);
             byte[] rb = rs[0].toByteArray();
@@ -105,13 +101,13 @@ public class DSSKey
             m.putString(getSSHName());
             m.putByteString(sig);
             return m;
-        } catch (Exception x) {
+        } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }
     
     public boolean
-    verifySSHSignature (byte[] data, Message sig)
+    verifySSHSignature (Crai crai, byte[] data, Message sig)
         throws SSHException
     {
         try {
@@ -140,13 +136,9 @@ public class DSSKey
             argh[27] = 0;
             System.arraycopy(sigData, 20, argh, 28, 20);
             
-            Signature s = Signature.getInstance("SHA1withDSA");
-            KeyFactory keyFac = KeyFactory.getInstance("DSA");
-            PublicKey key = keyFac.generatePublic(new DSAPublicKeySpec(mY, mP, mQ, mG));
-            s.initVerify(key);
-            s.update(data);
-            return s.verify(argh);
-        } catch (Exception x) {
+            CraiPublicKey dsa = crai.makePublicDSAKey(mY, mP, mQ, mG);
+            return dsa.verify(data, 0, data.length, argh);
+        } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }

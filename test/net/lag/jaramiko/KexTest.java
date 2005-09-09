@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import junit.framework.TestCase;
 
+
 /**
  * @author robey
  */
@@ -45,7 +46,7 @@ public class KexTest
         FakeTransport t = new FakeTransport();
         t.mServerMode = false;
         KexGroup1 kex = new KexGroup1();
-        kex.startKex(t, new FakeRandom());
+        kex.startKex(t, new FakeCrai());
         assertTrue(Arrays.equals(EXP1, t.mMessage.toByteArray()));
         assertEquals(KexGroup1.KEXDH_REPLY, t.mExpect);
         
@@ -69,7 +70,7 @@ public class KexTest
         FakeTransport t = new FakeTransport();
         t.mServerMode = true;
         KexGroup1 kex = new KexGroup1();
-        kex.startKex(t, new FakeRandom());
+        kex.startKex(t, new FakeCrai());
         assertEquals(KexGroup1.KEXDH_INIT, t.mExpect);
         
         Message m = new Message();

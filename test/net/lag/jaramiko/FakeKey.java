@@ -29,7 +29,9 @@
 package net.lag.jaramiko;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
+
+import net.lag.crai.Crai;
+
 
 /**
  * @author robey
@@ -38,7 +40,7 @@ public class FakeKey
     extends PKey
 {
     public Message
-    signSSHData (SecureRandom random, byte[] data)
+    signSSHData (Crai crai, byte[] data)
     {
         Message m = new Message();
         m.putBytes("fake-sig".getBytes());
@@ -46,7 +48,7 @@ public class FakeKey
     }
     
     public boolean
-    verifySSHSignature (byte[] data, Message sig)
+    verifySSHSignature (Crai crai, byte[] data, Message sig)
     {
         return false;
     }

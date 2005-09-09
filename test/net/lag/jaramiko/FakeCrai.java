@@ -23,27 +23,60 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  * 
- * Created on May 23, 2005
+ * Created on May 7, 2005
  */
 
 package net.lag.jaramiko;
 
-import net.lag.crai.CraiRandom;
+import java.math.BigInteger;
+import net.lag.crai.*;
+import net.lag.craijce.CraiJCE;
 
 
 /**
+ * This only exists to allow a test to use FakeRandom.
+ * 
  * @author robey
  */
-public class FakeRandom
-    implements CraiRandom
+public class FakeCrai
+    implements Crai
 {
-    public void
-    getBytes (byte[] b)
+    public
+    FakeCrai ()
     {
-        for (int i = 0; i < b.length; i++) {
-            b[i] = (byte)0xcc;
-        }
+        mCraiJCE.mCraiRandom = new FakeRandom();
     }
     
-    private static final long serialVersionUID = 0;
+    public CraiRandom
+    getPRNG ()
+    {
+        return new FakeRandom();
+    }
+    
+    public CraiPrivateKey
+    makePrivateRSAKey (BigInteger n, BigInteger d)
+    {
+        return mCraiJCE.makePrivateRSAKey(n, d);
+    }
+    
+    public CraiPrivateKey
+    makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
+    {
+        return mCraiJCE.makePrivateDSAKey(x, p, q, g);
+    }
+    
+    public CraiPublicKey
+    makePublicRSAKey (BigInteger n, BigInteger e)
+    {
+        return mCraiJCE.makePublicRSAKey(n, e);
+    }
+    
+    public CraiPublicKey
+    makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
+    {
+        return mCraiJCE.makePublicDSAKey(y, p, q, g);
+    }
+    
+    
+    private CraiJCE mCraiJCE = new CraiJCE();
 }

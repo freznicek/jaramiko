@@ -29,17 +29,11 @@
 package net.lag.jaramiko;
 
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
+
+import net.lag.crai.Crai;
+import net.lag.crai.CraiException;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
 
 
 /**
@@ -90,28 +84,22 @@ public final class RSAKey
     }
 
     public Message
-    signSSHData (SecureRandom random, byte[] data)
+    signSSHData (Crai crai, byte[] data)
         throws SSHException
     {
         try {
-            // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS SO PAINFUL?!?!?!
-            Signature s = Signature.getInstance("SHA1withRSA");
-            KeyFactory keyFac = KeyFactory.getInstance("RSA");
-            PrivateKey key = keyFac.generatePrivate(new RSAPrivateKeySpec(mN, mD));
-            s.initSign(key, random);
-            s.update(data);
-            
+            CraiPrivateKey rsa = crai.makePrivateRSAKey(mN, mD);
             Message m = new Message();
             m.putString(getSSHName());
-            m.putByteString(s.sign());
+            m.putByteString(rsa.sign(data, 0, data.length));
             return m;
-        } catch (Exception x) {
+        } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }
     
     public boolean
-    verifySSHSignature (byte[] data, Message sig)
+    verifySSHSignature (Crai crai, byte[] data, Message sig)
         throws SSHException
     {
         try {
@@ -119,14 +107,10 @@ public final class RSAKey
                 return false;
             }
             byte[] sigData = sig.getByteString();
-
-            Signature s = Signature.getInstance("SHA1withRSA");
-            KeyFactory keyFac = KeyFactory.getInstance("RSA");
-            PublicKey key = keyFac.generatePublic(new RSAPublicKeySpec(mN, mE));
-            s.initVerify(key);
-            s.update(data);
-            return s.verify(sigData);
-        } catch (Exception x) {
+            
+            CraiPublicKey rsa = crai.makePublicRSAKey(mN, mE);
+            return rsa.verify(data, 0, data.length, sigData);
+        } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }
@@ -162,9 +146,9 @@ public final class RSAKey
      * @param random a source of random bytes
      * @return a new RSA key
      * @throws SSHException if there's an error within java's crypto library
-     */
+     *
     public static RSAKey
-    generate (int bits, SecureRandom random)
+    generate (int bits, CraiRandom random)
         throws SSHException
     {
         try {
@@ -184,6 +168,7 @@ public final class RSAKey
             throw new SSHException("Java publickey error: " + x);
         }
     }
+    */
     
 
     private BigInteger mE;

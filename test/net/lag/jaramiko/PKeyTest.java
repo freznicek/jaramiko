@@ -33,6 +33,9 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import junit.framework.TestCase;
 
+import net.lag.craijce.CraiJCE;
+
+
 /**
  * @author robey
  */
@@ -127,14 +130,14 @@ public class PKeyTest
         throws Exception
     {
         PKey rsa = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
-        Message m = rsa.signSSHData(new FakeRandom(), "ice weasels".getBytes());
+        Message m = rsa.signSSHData(new CraiJCE(), "ice weasels".getBytes());
         m.rewind();
         assertEquals("ssh-rsa", m.getString());
         assertEquals(SIGNED_RSA, Util.encodeHex(m.getByteString()));
         
         m.rewind();
         PKey pub = PKey.createFromData(rsa.toByteArray());
-        assertTrue(pub.verifySSHSignature("ice weasels".getBytes(), m));
+        assertTrue(pub.verifySSHSignature(new CraiJCE(), "ice weasels".getBytes(), m));
     }
     
     public void
@@ -142,26 +145,32 @@ public class PKeyTest
         throws Exception
     {
         PKey dss = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
-        Message m = dss.signSSHData(new FakeRandom(), "ice weasels".getBytes());
+        Message m = dss.signSSHData(new CraiJCE(), "ice weasels".getBytes());
         m.rewind();
         assertEquals("ssh-dss", m.getString());
-        assertEquals(SIGNED_DSS, Util.encodeHex(m.getByteString()));
+        /* DSS uses randomness in its key signatures, so we can't know the
+         * exact signature without providing a fake source of randomness.
+         * in the post-Crai world, providing that source is really hard. 
+         */
+        //assertEquals(SIGNED_DSS, Util.encodeHex(m.getByteString()));
 
         m.rewind();
         PKey pub = PKey.createFromData(dss.toByteArray());
-        assertTrue(pub.verifySSHSignature("ice weasels".getBytes(), m));
+        assertTrue(pub.verifySSHSignature(new CraiJCE(), "ice weasels".getBytes(), m));
     }
     
     // don't test key generation, it's broken in the java crypto library
+    /*
     public void
-    XXXtestGenerateRSA ()
+    testGenerateRSA ()
         throws Exception
     {
         RSAKey rsa = RSAKey.generate(1024, new FakeRandom());
-        Message m = rsa.signSSHData(new FakeRandom(), "jerri blank".getBytes());
+        Message m = rsa.signSSHData(new FakeCrai(), "jerri blank".getBytes());
         m.rewind();
         assertTrue(rsa.verifySSHSignature("jerri blank".getBytes(), m));
     }
+    */
 
     
     private static final String RSA_FINGERPRINT = "60733844CB5186657FDEDAA22B5A57D5";
@@ -189,7 +198,7 @@ public class PKeyTest
         "34738F207728E2941508D891407A8583BF183795DC541A9B88296C73CA38B404" +
         "F156B9F2429D521B2929B44FFDC92DAF47D2407630F363450CD91D43860F1C70" +
         "E2931234F3ACC50A2F14506659F188EEC14AE9D19C4E46F00E476F3874F144A8";
-    private static final String SIGNED_DSS =
-        "5B6835B10278B432E014BBA487CB4D23415FFA87C1FBCC29C23DB51734732E17" +
-        "9D6C3542E1527E8D";
+    //private static final String SIGNED_DSS =
+    //    "5B6835B10278B432E014BBA487CB4D23415FFA87C1FBCC29C23DB51734732E17" +
+    //    "9D6C3542E1527E8D";
 }

@@ -29,7 +29,6 @@
 package net.lag.jaramiko;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -178,7 +177,7 @@ public class MessageTest
     {
         Message m = new Message();
         m.putInt(23);
-        m.packetize(new SecureRandom(), 8, true);
+        m.packetize(new FakeRandom(), 8, true);
         
         byte[] buf = m.toByteArray();
         assertEquals(16, m.getPosition());

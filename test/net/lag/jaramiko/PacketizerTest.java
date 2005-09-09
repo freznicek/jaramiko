@@ -31,7 +31,6 @@ package net.lag.jaramiko;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.security.AlgorithmParameters;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -51,7 +50,7 @@ public class PacketizerTest
     {
         ByteArrayInputStream is = new ByteArrayInputStream(new byte[0]);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        Packetizer p = new Packetizer(is, os, new SecureRandom());
+        Packetizer p = new Packetizer(is, os, new FakeRandom());
         
         Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
         AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
@@ -84,7 +83,7 @@ public class PacketizerTest
     {
         ByteArrayInputStream is = new ByteArrayInputStream(DATA_READ);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        Packetizer p = new Packetizer(is, os, new SecureRandom());
+        Packetizer p = new Packetizer(is, os, new FakeRandom());
         
         Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
         AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
