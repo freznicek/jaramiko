@@ -33,10 +33,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.InterruptedIOException;
 //import java.net.SocketTimeoutException;
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.ShortBufferException;
 
+import net.lag.crai.CraiCipher;
+import net.lag.crai.CraiDigest;
+import net.lag.crai.CraiException;
 import net.lag.crai.CraiRandom;
 
 
@@ -151,7 +151,7 @@ import net.lag.crai.CraiRandom;
     }
     
     public void
-    setOutboundCipher (Cipher cipher, int blockSize, Mac mac, int macSize)
+    setOutboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
     {
         synchronized (mWriteLock) {
             mBlockEngineOut = cipher;
@@ -174,7 +174,7 @@ import net.lag.crai.CraiRandom;
     
     // FIXME: how do i guarantee that nobody's in read() while this is happening?
     public void
-    setInboundCipher (Cipher cipher, int blockSize, Mac mac, int macSize)
+    setInboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
     {
         mBlockEngineIn = cipher;
         mBlockSizeIn = blockSize;
@@ -220,14 +220,14 @@ import net.lag.crai.CraiRandom;
                 mMacEngineOut.update(mMacBufferOut, 0, 4);
                 mMacEngineOut.update(packet, 0, length);
                 try {
-                    mMacEngineOut.doFinal(mMacBufferOut, 0);
-                } catch (ShortBufferException x) {
+                    mMacEngineOut.finish(mMacBufferOut, 0);
+                } catch (CraiException x) {
                     throw new IOException("mac error: " + x);
                 }
 
                 try {
-                    mBlockEngineOut.update(packet, 0, length, packet, 0);
-                } catch (ShortBufferException x) {
+                    mBlockEngineOut.process(packet, 0, length, packet, 0);
+                } catch (CraiException x) {
                     throw new IOException("encipher error: " + x);
                 }
             }
@@ -261,8 +261,8 @@ import net.lag.crai.CraiRandom;
         }
         if (mBlockEngineIn != null) {
             try {
-                mBlockEngineIn.update(mReadBuffer, 0, mBlockSizeIn, mReadBuffer, 0);
-            } catch (ShortBufferException x) {
+                mBlockEngineIn.process(mReadBuffer, 0, mBlockSizeIn, mReadBuffer, 0);
+            } catch (CraiException x) {
                 throw new IOException("decode error: " + x);
             }
         }
@@ -286,8 +286,8 @@ import net.lag.crai.CraiRandom;
         }
         if (mBlockEngineIn != null) {
             try {
-                mBlockEngineIn.update(packet, leftover, length - leftover - 1, packet, leftover);
-            } catch (ShortBufferException x) {
+                mBlockEngineIn.process(packet, leftover, length - leftover - 1, packet, leftover);
+            } catch (CraiException x) {
                 throw new IOException("decode error: " + x);
             }
 
@@ -297,8 +297,8 @@ import net.lag.crai.CraiRandom;
             mMacEngineIn.update(mReadBuffer, 0, 5);
             mMacEngineIn.update(packet, 0, length - 1);        
             try {
-                mMacEngineIn.doFinal(mMacBufferIn, 0);
-            } catch (ShortBufferException x) {
+                mMacEngineIn.finish(mMacBufferIn, 0);
+            } catch (CraiException x) {
                 throw new IOException("mac error: " + x);
             }
             if (read(mReadBuffer, 0, mMacSizeIn) < 0) {
@@ -422,10 +422,10 @@ import net.lag.crai.CraiRandom;
     
     private int mBlockSizeOut = 8;
     private int mBlockSizeIn = 8;
-    private Cipher mBlockEngineOut;
-    private Cipher mBlockEngineIn;
-    private Mac mMacEngineOut;
-    private Mac mMacEngineIn;
+    private CraiCipher mBlockEngineOut;
+    private CraiCipher mBlockEngineIn;
+    private CraiDigest mMacEngineOut;
+    private CraiDigest mMacEngineIn;
     private byte[] mMacBufferOut;
     private byte[] mMacBufferIn;
     /* package */ int mMacSizeOut;

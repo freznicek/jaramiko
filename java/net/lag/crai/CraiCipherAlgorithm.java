@@ -25,21 +25,25 @@
 
 package net.lag.crai;
 
-public class CraiException
-    extends Exception
+public final class CraiCipherAlgorithm
 {
-    public
-    CraiException ()
+    private
+    CraiCipherAlgorithm (String name)
     {
-        super();
+        // pass
     }
     
-    public
-    CraiException (String message)
+    public String
+    toString ()
     {
-        super(message);
+        return mName;
     }
     
     
-    private static final long serialVersionUID = 0;
+    private String mName;
+
+    
+    public final static CraiCipherAlgorithm DES3_CBC = new CraiCipherAlgorithm("DES3_CBC");
+    public final static CraiCipherAlgorithm AES_CBC = new CraiCipherAlgorithm("AES_CBC");
+    public final static CraiCipherAlgorithm BLOWFISH_CBC = new CraiCipherAlgorithm("BLOWFISH_CBC");
 }

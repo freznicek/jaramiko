@@ -28,6 +28,7 @@
 
 package net.lag.jaramiko;
 
+
 /**
  * Description of HMAC algorithms we understand, what java calls them, and
  * their digest sizes.
@@ -39,12 +40,12 @@ package net.lag.jaramiko;
     public
     MacDescription (String name, int size, int naturalSize)
     {
-        mJavaName = name;
+        mName = name;
         mDigestSize = size;
         mNaturalSize = naturalSize;
     }
     
-    public String mJavaName;
+    public String mName;
     public int mDigestSize;     // bytes
     public int mNaturalSize;    // bytes
 }

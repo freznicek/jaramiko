@@ -25,21 +25,9 @@
 
 package net.lag.crai;
 
-public class CraiException
-    extends Exception
+public interface CraiCipher
 {
-    public
-    CraiException ()
-    {
-        super();
-    }
-    
-    public
-    CraiException (String message)
-    {
-        super(message);
-    }
-    
-    
-    private static final long serialVersionUID = 0;
+    public void initEncrypt(byte[] key, byte[] iv) throws CraiException;
+    public void initDecrypt(byte[] key, byte[] iv) throws CraiException;
+    public void process(byte[] in, int off, int len, byte[] out, int off_out) throws CraiException;
 }

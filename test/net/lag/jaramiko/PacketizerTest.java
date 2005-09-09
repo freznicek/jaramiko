@@ -30,13 +30,13 @@ package net.lag.jaramiko;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.security.AlgorithmParameters;
 import java.util.Arrays;
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import junit.framework.TestCase;
+
+import net.lag.crai.CraiCipher;
+import net.lag.crai.CraiCipherAlgorithm;
+import net.lag.crai.CraiDigest;
+
 
 /**
  * @author robey
@@ -52,13 +52,9 @@ public class PacketizerTest
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Packetizer p = new Packetizer(is, os, new FakeRandom());
         
-        Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
-        AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
-        param.init(new IvParameterSpec(IV));
-        c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(KEY, "AES"), param);
-
-        Mac mac = Mac.getInstance("HmacSHA1");
-        mac.init(new SecretKeySpec(MAC_KEY, "HmacSHA1"));
+        CraiCipher c = new FakeCrai().getCipher(CraiCipherAlgorithm.AES_CBC);
+        c.initEncrypt(KEY, IV);
+        CraiDigest mac = new FakeCrai().makeSHA1HMAC(MAC_KEY);
         
         p.setOutboundCipher(c, 16, mac, 12);
         
@@ -85,13 +81,9 @@ public class PacketizerTest
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Packetizer p = new Packetizer(is, os, new FakeRandom());
         
-        Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
-        AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
-        param.init(new IvParameterSpec(IV));
-        c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(KEY, "AES"), param);
-
-        Mac mac = Mac.getInstance("HmacSHA1");
-        mac.init(new SecretKeySpec(MAC_KEY, "HmacSHA1"));
+        CraiCipher c = new FakeCrai().getCipher(CraiCipherAlgorithm.AES_CBC);
+        c.initDecrypt(KEY, IV);
+        CraiDigest mac = new FakeCrai().makeSHA1HMAC(MAC_KEY);
 
         p.setInboundCipher(c, 16, mac, 12);
         

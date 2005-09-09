@@ -25,21 +25,10 @@
 
 package net.lag.crai;
 
-public class CraiException
-    extends Exception
+public interface CraiDigest
 {
-    public
-    CraiException ()
-    {
-        super();
-    }
-    
-    public
-    CraiException (String message)
-    {
-        super(message);
-    }
-    
-    
-    private static final long serialVersionUID = 0;
+    public void reset();
+    public void update(byte[] data, int off, int len);
+    public byte[] finish();
+    public void finish(byte[] out, int off) throws CraiException;
 }

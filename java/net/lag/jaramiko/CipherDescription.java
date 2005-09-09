@@ -28,22 +28,25 @@
 
 package net.lag.jaramiko;
 
+import net.lag.crai.CraiCipherAlgorithm;
+
+
 /**
- * Description of ciphers we understand, what java calls them, and their
+ * Description of ciphers we understand, what crai calls them, and their
  * key/block size parameters.
  * 
  * @author robey
  */
 /* package */ final class CipherDescription
 {
-    public CipherDescription (String j, int k, int b)
+    public CipherDescription (CraiCipherAlgorithm algorithm, int keySize, int blockSize)
     {
-        mJavaName = j;
-        mKeySize = k;
-        mBlockSize = b;
+        mAlgorithm = algorithm;
+        mKeySize = keySize;
+        mBlockSize = blockSize;
     }
 
-    public String mJavaName;
+    public CraiCipherAlgorithm mAlgorithm;
     public int mKeySize;        // bytes
     public int mBlockSize;      // bytes
 }

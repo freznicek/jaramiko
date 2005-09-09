@@ -29,10 +29,10 @@
 package net.lag.jaramiko;
 
 import java.io.FileInputStream;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import junit.framework.TestCase;
 
+import net.lag.crai.CraiDigest;
 import net.lag.craijce.CraiJCE;
 
 
@@ -47,7 +47,7 @@ public class PKeyTest
     testGenerateKey ()
         throws Exception
     {
-        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        CraiDigest md5 = new FakeCrai().makeMD5();
         byte[] salt = { 1, 2, 3, 4 };
         byte[] key = PKey.generateKeyBytes(md5, salt, "happy birthday".getBytes(), 30);
         

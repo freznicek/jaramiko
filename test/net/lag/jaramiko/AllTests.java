@@ -30,6 +30,8 @@ package net.lag.jaramiko;
 
 import junit.framework.*;
 
+import net.lag.craijce.CraiJCE;
+
 
 /**
  * @author robey
@@ -41,6 +43,7 @@ public class AllTests
     suite ()
     {
         TestSuite ts = new TestSuite();
+        Transport.setCrai(new CraiJCE());
 
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);

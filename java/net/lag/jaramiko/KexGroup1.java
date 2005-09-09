@@ -30,11 +30,10 @@ package net.lag.jaramiko;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import net.lag.crai.Crai;
+import net.lag.crai.CraiDigest;
 
 
 /**
@@ -139,14 +138,11 @@ import net.lag.crai.Crai;
         hm.putMPZ(mF);
         hm.putMPZ(k);
         
-        byte[] h = null;
-        try {
-            MessageDigest sha = MessageDigest.getInstance("SHA-1");
-            h = sha.digest(hm.toByteArray());
-            mTransport.setKH(k, h);
-        } catch (NoSuchAlgorithmException x) {
-            throw new SSHException("Unable to find SHA-1 algorithm in java");
-        }
+        CraiDigest sha = mCrai.makeSHA1();
+        byte[] data = hm.toByteArray();
+        sha.update(data, 0, data.length);
+        byte[] h = sha.finish();
+        mTransport.setKH(k, h);
         
         // sign it
         byte[] sig = key.signSSHData(mCrai, h).toByteArray();
@@ -183,15 +179,12 @@ import net.lag.crai.Crai;
         hm.putMPZ(mF);
         hm.putMPZ(k);
 
-        try {
-            MessageDigest sha = MessageDigest.getInstance("SHA-1");
-            byte[] h = sha.digest(hm.toByteArray());
-            mTransport.setKH(k, h);
-            mTransport.verifyKey(hostKey, sig);
-            mTransport.activateOutbound();
-        } catch (NoSuchAlgorithmException x) {
-            throw new SSHException("Unable to find SHA-1 algorithm in java");
-        }
+        CraiDigest sha = mCrai.makeSHA1();
+        byte[] data = hm.toByteArray();
+        sha.update(data, 0, data.length);
+        mTransport.setKH(k, sha.finish());
+        mTransport.verifyKey(hostKey, sig);
+        mTransport.activateOutbound();
     }
     
     

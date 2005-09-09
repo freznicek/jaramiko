@@ -34,19 +34,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import net.lag.crai.Crai;
+import net.lag.crai.CraiCipher;
+import net.lag.crai.CraiCipherAlgorithm;
+import net.lag.crai.CraiDigest;
+import net.lag.crai.CraiException;
 
 
 /**
@@ -130,12 +128,10 @@ public abstract class PKey
     public byte[]
     getFingerprint ()
     {
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            return md5.digest(toByteArray());
-        } catch (GeneralSecurityException x) {
-            throw new RuntimeException("Java is missing MD5 support!");
-        }
+        CraiDigest md5 = Transport.getCrai().makeMD5();
+        byte[] d = toByteArray();
+        md5.update(d, 0, d.length);
+        return md5.finish();
     }
 
     /**
@@ -340,7 +336,7 @@ public abstract class PKey
      * @return key data
      */
     public static byte[]
-    generateKeyBytes (MessageDigest mac, byte[] salt, byte[] key, int bytes)
+    generateKeyBytes (CraiDigest mac, byte[] salt, byte[] key, int bytes)
     {
         byte[] digest = null;
         byte[] keydata = new byte[bytes];
@@ -349,11 +345,11 @@ public abstract class PKey
         while (bytes > 0) {
             mac.reset();
             if (digest != null) {
-                mac.update(digest);
+                mac.update(digest, 0, digest.length);
             }
-            mac.update(key);
-            mac.update(salt);
-            digest = mac.digest();
+            mac.update(key, 0, key.length);
+            mac.update(salt, 0, salt.length);
+            digest = mac.finish();
             
             int len = (digest.length < bytes) ? digest.length : bytes;
             System.arraycopy(digest, 0, keydata, offset, len);
@@ -387,19 +383,17 @@ public abstract class PKey
         }
         
         try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            Cipher c = Cipher.getInstance(cdesc.mJavaName);
-            String algName = cdesc.mJavaName.split("/")[0];
-            AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+            Crai crai = Transport.getCrai();
+            CraiDigest md5 = crai.makeMD5();
+            CraiCipher c = crai.getCipher(cdesc.mAlgorithm);
             byte[] key = generateKeyBytes(md5, salt, password.getBytes(), cdesc.mKeySize);
-            param.init(new IvParameterSpec(salt));
-            c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
+            c.initDecrypt(key, salt);
             
             byte[] out = new byte[data.length];
-            c.doFinal(data, 0, data.length, out);
+            c.process(data, 0, data.length, out, 0);
             return out;
-        } catch (GeneralSecurityException x) {
-            throw new SSHException("Unable to initialize cipher '" + cdesc.mJavaName + "' due to internal java error: " + x);
+        } catch (CraiException x) {
+            throw new SSHException("Unable to initialize cipher '" + cdesc.mAlgorithm + "' due to internal java error: " + x);
         }
     }
 
@@ -471,6 +465,6 @@ public abstract class PKey
         sBannerMap.put("RSA", RSAKey.class);
         sBannerMap.put("DSA", DSSKey.class);
         
-        sCipherMap.put("DES-EDE3-CBC", new CipherDescription("DESede/CBC/NoPadding", 24, 8));
+        sCipherMap.put("DES-EDE3-CBC", new CipherDescription(CraiCipherAlgorithm.DES3_CBC, 24, 8));
     }
 }

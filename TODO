@@ -1,9 +1,7 @@
 Things I want to do, specific to java:
 
-* wrapper classes for JCE; eventually allowing:
-    - runtime substitution of a different crypto library (for embedded)
-    - fallback to pure-java crypto if necessary
-  this means "javax.crypto" and "java.security"
+* generalize "detectJavaSecurityBug()" to just cycle thru all crypto
+  algorithms, removing the ones not supported by this CRAI
 * fix RSA key generation (i couldn't get this to work!)
 
 Things I didn't port from paramiko (yet?):

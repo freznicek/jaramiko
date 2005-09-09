@@ -35,21 +35,12 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.io.InterruptedIOException;
 //import java.net.SocketTimeoutException;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import net.lag.crai.*;
 
@@ -680,6 +671,24 @@ public class Transport
         }
     }
     
+    /**
+     * Set a crypto library provider for paramiko.  This setting affects all
+     * Transport objects, present and future, and usually will only need to
+     * be set once (or never).  The only time you really need to set this is
+     * if you're using a non-standard crypto provider (like on an embedded
+     * platform).
+     * 
+     * <p>If no crypto provider is set, paramiko will attempt to use JCE,
+     * which comes standard with java 1.4 and up.
+     * 
+     * @param crai the crypto provider to use
+     */
+    public static void
+    setCrai (Crai crai)
+    {
+        sCrai = crai;
+    }
+    
     
     // -----  package
     
@@ -754,12 +763,7 @@ public class Transport
     {
         byte[] out = new byte[nbytes];
         int sofar = 0;
-        MessageDigest sha = null;
-        try {
-            sha = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException x) {
-            throw new RuntimeException("Unable to find SHA1: internal java error: " + x);
-        }
+        CraiDigest sha = sCrai.makeSHA1();
         
         while (sofar < nbytes) {
             Message m = new Message();
@@ -772,8 +776,9 @@ public class Transport
                 m.putBytes(out, 0, sofar);
             }
             sha.reset();
-            sha.update(m.toByteArray());
-            byte[] digest = sha.digest();
+            byte[] d = m.toByteArray();
+            sha.update(d, 0, d.length);
+            byte[] digest = sha.finish();
             if (sofar + digest.length > nbytes) {
                 System.arraycopy(digest, 0, out, sofar, nbytes - sofar);
                 sofar = nbytes;
@@ -792,9 +797,7 @@ public class Transport
         try {
             // this method shouldn't be so long, but java makes this really difficult and bureaucratic
             CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedRemoteCipher);
-            Cipher outCipher = Cipher.getInstance(desc.mJavaName);
-            String algName = desc.mJavaName.split("/")[0];
-            AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+            CraiCipher inCipher = sCrai.getCipher(desc.mAlgorithm);
             byte[] key, iv;
             if (mServerMode) {
                 key = computeKey((byte)'C', desc.mKeySize);
@@ -803,11 +806,9 @@ public class Transport
                 key = computeKey((byte)'D', desc.mKeySize);
                 iv = computeKey((byte)'B', desc.mBlockSize);
             }
-            param.init(new IvParameterSpec(iv));
-            outCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
+            inCipher.initDecrypt(key, iv);
 
             MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedRemoteMac);
-            Mac outMac = Mac.getInstance(mdesc.mJavaName);
             /* initial mac keys are done in the hash's natural size (not the
              * potentially truncated transmission size)
              */
@@ -816,9 +817,14 @@ public class Transport
             } else {
                 key = computeKey((byte)'F', mdesc.mNaturalSize);
             }
-            outMac.init(new SecretKeySpec(key, mdesc.mJavaName));
-            mPacketizer.setInboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
-        } catch (GeneralSecurityException x) {
+            CraiDigest inMac = null;
+            if (mdesc.mName == "MD5") {
+                inMac = sCrai.makeMD5HMAC(key);
+            } else {
+                inMac = sCrai.makeSHA1HMAC(key);
+            }
+            mPacketizer.setInboundCipher(inCipher, desc.mBlockSize, inMac, mdesc.mDigestSize);
+        } catch (CraiException x) {
             throw new SSHException("Internal java error: " + x);
         }
     }
@@ -835,9 +841,7 @@ public class Transport
         try {
             // this method shouldn't be so long, but java makes this really difficult and bureaucratic
             CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedLocalCipher);
-            Cipher outCipher = Cipher.getInstance(desc.mJavaName);
-            String algName = desc.mJavaName.split("/")[0];
-            AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+            CraiCipher outCipher = sCrai.getCipher(desc.mAlgorithm);
             byte[] key, iv;
             if (mServerMode) {
                 key = computeKey((byte)'D', desc.mKeySize);
@@ -846,11 +850,9 @@ public class Transport
                 key = computeKey((byte)'C', desc.mKeySize);
                 iv = computeKey((byte)'A', desc.mBlockSize);
             }
-            param.init(new IvParameterSpec(iv));
-            outCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, algName), param);
+            outCipher.initEncrypt(key, iv);
             
             MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedLocalMac);
-            Mac outMac = Mac.getInstance(mdesc.mJavaName);
             /* initial mac keys are done in the hash's natural size (not the
              * potentially truncated transmission size)
              */
@@ -859,7 +861,13 @@ public class Transport
             } else {
                 key = computeKey((byte)'E', mdesc.mNaturalSize);
             }
-            outMac.init(new SecretKeySpec(key, mdesc.mJavaName));
+            CraiDigest outMac = null;
+            if (mdesc.mName == "MD5") {
+                outMac = sCrai.makeMD5HMAC(key);
+            } else {
+                outMac = sCrai.makeSHA1HMAC(key);
+            }
+
             mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
             
             if (! mPacketizer.needRekey()) {
@@ -867,7 +875,7 @@ public class Transport
             }
             // we always expect to receive NEW_KEYS now
             mExpectedPacket = MessageType.NEW_KEYS;
-        } catch (GeneralSecurityException x) {
+        } catch (CraiException x) {
             throw new SSHException("Internal java error: " + x);
         }
     }
@@ -895,6 +903,12 @@ public class Transport
     isActive ()
     {
         return mActive;
+    }
+    
+    /* package */ static Crai
+    getCrai ()
+    {
+        return sCrai;
     }
 
     
@@ -1555,21 +1569,7 @@ public class Transport
             return;
         }
         
-        boolean bug = false;
-        
-        try {
-            Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
-            AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
-            byte[] key = new byte[32];
-            byte[] iv = new byte[16];
-            param.init(new IvParameterSpec(iv));
-            c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), param);
-        } catch (GeneralSecurityException x) {
-            bug = true;
-        } catch (SecurityException x) {
-            bug = true;
-        }
-        
+        boolean bug = sCrai.detectJavaSecurityBug();
         sCheckedBug = true;
         if (! bug) {
             return;
@@ -1637,15 +1637,15 @@ public class Transport
     
     static {
         // mappings from SSH protocol names to java implementation details
-        sCipherMap.put("aes128-cbc", new CipherDescription("AES/CBC/NoPadding", 16, 16));
-        sCipherMap.put("blowfish-cbc", new CipherDescription("Blowfish/CBC/NoPadding", 16, 8));
-        sCipherMap.put("aes256-cbc", new CipherDescription("AES/CBC/NoPadding", 32, 16));
-        sCipherMap.put("3des-cbc", new CipherDescription("DESede/CBC/NoPadding", 24, 8));
+        sCipherMap.put("aes128-cbc", new CipherDescription(CraiCipherAlgorithm.AES_CBC, 16, 16));
+        sCipherMap.put("blowfish-cbc", new CipherDescription(CraiCipherAlgorithm.BLOWFISH_CBC, 16, 8));
+        sCipherMap.put("aes256-cbc", new CipherDescription(CraiCipherAlgorithm.AES_CBC, 32, 16));
+        sCipherMap.put("3des-cbc", new CipherDescription(CraiCipherAlgorithm.DES3_CBC, 24, 8));
 
-        sMacMap.put("hmac-sha1", new MacDescription("HmacSHA1", 20, 20));
-        sMacMap.put("hmac-sha1-96", new MacDescription("HmacSHA1", 12, 20));
-        sMacMap.put("hmac-md5", new MacDescription("HmacMD5", 16, 16));
-        sMacMap.put("hmac-md5-96", new MacDescription("HmacMD5", 12, 16));
+        sMacMap.put("hmac-sha1", new MacDescription("SHA1", 20, 20));
+        sMacMap.put("hmac-sha1-96", new MacDescription("SHA1", 12, 20));
+        sMacMap.put("hmac-md5", new MacDescription("MD5", 16, 16));
+        sMacMap.put("hmac-md5-96", new MacDescription("MD5", 12, 16));
         
         sKeyMap.put("ssh-rsa", RSAKey.class);
         sKeyMap.put("ssh-dss", DSSKey.class);

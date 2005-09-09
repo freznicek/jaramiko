@@ -28,6 +28,7 @@
     </target>
 
     <target name="compile" depends="init">
+        <depend srcdir="${src-folder}" destdir="${build-folder}" />
         <javac debug="yes" srcdir="${src-folder}" destdir="${build-folder}" classpath="${dep-jars}" />
     </target>
 

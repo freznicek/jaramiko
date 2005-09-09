@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 7, 2005
  */
 
 package net.lag.jaramiko;
@@ -75,6 +72,43 @@ public class FakeCrai
     makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
     {
         return mCraiJCE.makePublicDSAKey(y, p, q, g);
+    }
+    
+    public CraiDigest
+    makeSHA1 ()
+    {
+        return mCraiJCE.makeSHA1();
+    }
+    
+    public CraiDigest
+    makeMD5 ()
+    {
+        return mCraiJCE.makeMD5();
+    }
+    
+    public CraiDigest
+    makeSHA1HMAC (byte[] key)
+    {
+        return mCraiJCE.makeSHA1HMAC(key);
+    }
+    
+    public CraiDigest
+    makeMD5HMAC (byte[] key)
+    {
+        return mCraiJCE.makeMD5HMAC(key);
+    }
+    
+    public CraiCipher
+    getCipher (CraiCipherAlgorithm algorithm)
+        throws CraiException
+    {
+        return mCraiJCE.getCipher(algorithm);
+    }
+    
+    public boolean
+    detectJavaSecurityBug ()
+    {
+        return mCraiJCE.detectJavaSecurityBug();
     }
     
     
