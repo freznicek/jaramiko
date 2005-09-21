@@ -290,7 +290,7 @@ public abstract class PKey
             }
 
             if (inHeaders) {
-                String[] fields = line.split(": ", 2);
+                String[] fields = Util.splitString(line, ": ", 2);
                 if (fields.length < 2) {
                     inHeaders = false;
                 } else {
@@ -367,7 +367,7 @@ public abstract class PKey
         if (! procType.equals("4,ENCRYPTED")) {
             throw new SSHException("Unknown private key structure '" + procType + "'");
         }
-        String[] dek = ((String) headers.get("dek-info")).split(",");
+        String[] dek = Util.splitString((String) headers.get("dek-info"), ",");
         if (dek.length != 2) {
             throw new SSHException("Can't parse DEK-info in private key");
         }

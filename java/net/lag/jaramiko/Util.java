@@ -30,6 +30,9 @@ package net.lag.jaramiko;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Dumb little utility functions.
@@ -79,13 +82,39 @@ public class Util
         }
         return out.toString();
     }
-    
+
+    // replacement for String.split() in java 4.
+    public static final String[]
+    splitString (String orig, String delim, int max)
+    {
+        List out = new ArrayList();
+        while (true) {
+            if (out.size() == max - 1) {
+                break;
+            }
+            int n = orig.indexOf(delim);
+            if (n < 0) {
+                break;
+            }
+            out.add(orig.substring(0, n));
+            orig = orig.substring(n + delim.length());
+        }
+        out.add(orig);
+        return (String[]) out.toArray(new String[0]);
+    }
+
+    public static final String[]
+    splitString (String orig, String delim)
+    {
+        return splitString(orig, delim, -1);
+    }
+
     public static final String[]
     getStackTrace (Exception x)
     {
         StringWriter sw = new StringWriter();
         x.printStackTrace(new PrintWriter(sw));
-        return sw.toString().split("\n");
+        return splitString(sw.toString(), "\n");
     }
     
     /**

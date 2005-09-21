@@ -951,7 +951,7 @@ public class Transport
         if (i > 0) {
             line = line.substring(0, i);
         }
-        String[] segs = line.split("\\-", 3);
+        String[] segs = Util.splitString(line, "-", 3);
         if (segs.length < 3) {
             throw new SSHException("Invalid SSH banner");
         }

@@ -406,7 +406,7 @@ public final class Message
     public List
     getList ()
     {
-        return Arrays.asList(getString().split(","));
+        return Arrays.asList(Util.splitString(getString(), ","));
     }
     
     /**
