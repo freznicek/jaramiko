@@ -291,7 +291,8 @@ public class Transport
      *     authentication (normally empty, meaning authentication is complete)
      * @throws BadAuthenticationType if password authentication isn't allowed
      *     by the server for this user
-     * @throws SSHException if the authentication failed
+     * @throws AuthenticationFailedException if the authentication failed
+     * @throws SSHException if an SSH protocol exception occurred
      * @throws IOException if an I/O exception occurred at the socket layer
      */
     public String[]
@@ -323,7 +324,8 @@ public class Transport
      *     authentication (normally empty, meaning authentication is complete)
      * @throws BadAuthenticationType if private key authentication isn't
      *     allowed by the server for this user
-     * @throws SSHException if the authentication failed
+     * @throws AuthenticationFailedException if the authentication failed
+     * @throws SSHException if an SSH protocol exception occurred
      * @throws IOException if an I/O exception occurred at the socket layer
      */
     public String[]
@@ -1058,7 +1060,7 @@ public class Transport
         if (! mActive) {
             IOException x = getException();
             if (x == null) {
-                x = new SSHException("Authentication failed.");
+                x = new AuthenticationFailedException();
             }
             throw x;
         }
@@ -1066,7 +1068,7 @@ public class Transport
         if (! mAuthHandler.isAuthenticated()) {
             IOException x = getException();
             if (x == null) {
-                x = new SSHException("Authentication failed.");
+                x = new AuthenticationFailedException();
             } else if (x instanceof PartialAuthentication) {
                 return ((PartialAuthentication) x).getAllowedTypes();
             }

@@ -4,7 +4,6 @@ Things I want to do, specific to java:
   them
 * allow client-app to pass an object to the Channel which will be notify()'d
   on whenever new data arrives
-* throw AuthenticationFailed on auth failed, not generic error
 * fix RSA key generation (i couldn't get this to work!)
 
 Things I didn't port from paramiko (yet?):
