@@ -46,6 +46,7 @@ import junit.framework.TestCase;
  */
 public class TransportTest
     extends TestCase
+    implements BannerListener
 {
     private static Socket[]
     makeSocketPair ()
@@ -83,6 +84,13 @@ public class TransportTest
         mSocketC.close();
         mSocketS.close();
     }
+    
+    public void
+    authenticationBannerEvent (String banner)
+    {
+        mBanner = banner;
+    }
+    
     
     // verify that the security options can be modified
     public void
@@ -142,6 +150,7 @@ public class TransportTest
         assertFalse(mTC.isAuthenticated());
         assertFalse(mTS.isAuthenticated());
         
+        mTS.setServerBanner("Hello there!");
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -151,6 +160,8 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
+        mBanner = null;
+        mTC.setBannerListener(this);
         mTC.startClient(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
@@ -161,6 +172,7 @@ public class TransportTest
         assertEquals("slowdive", mTS.getUsername());
         assertTrue(mTC.isAuthenticated());
         assertTrue(mTS.isAuthenticated());
+        assertEquals("Hello there!", mBanner);
     }
     
     /*
@@ -497,6 +509,8 @@ public class TransportTest
     private Transport mTC;
     private Transport mTS;
 
+    private String mBanner;
+    
     private static final BigInteger K =
         new BigInteger("12328109597968658152337725611420972077453906897310" +
                        "13308727636229713994294810725197135362927727095072" +

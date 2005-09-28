@@ -215,7 +215,27 @@ public class Transport
             mLog.debug("Host key verified (" + skey.getSSHName() + ")");
         }
     }
-    
+
+    /**
+     * Negotiate a new SSH2 session as a server.  This is the first step after
+     * creating a new Transport.  A separate thread is created for protocol
+     * negotiation, and this method blocks (up to a specified timeout) to find
+     * out if it was successful.  If negotiation failed, an exception will be
+     * thrown.
+     *
+     * <p>After a successful negotiation, the client will usually try to
+     * authenticate and open one or more {@link Channel}s.  Methods in
+     * {@link ServerInterface} will be called to handle the authentication and
+     * check permissions.  If everything succeeds, newly-opened channels will
+     * appear via the {@link #accept} method.
+     * 
+     * @param server a callback object used for authentication and permission
+     *     checking
+     * @param timeout_ms maximum time (in milliseconds) to wait for negotiation
+     *     to finish; <code>-1</code> to wait indefinitely
+     * @throws SSHException if the SSH2 negotiation fails
+     * @throws IOException if there was an I/O exception on the socket
+     */
     public void
     startServer (ServerInterface server, int timeout_ms)
         throws IOException
@@ -274,6 +294,32 @@ public class Transport
     }
     
     /**
+     * Set a banner to be sent during authentication in server mode.  This
+     * method should be called before {@link #startServer} in order to
+     * guarantee that it gets sent.
+     *  
+     * @param banner the authentication banner to advertise
+     */
+    public void
+    setServerBanner (String banner)
+    {
+        mBanner = banner;
+    }
+    
+    /**
+     * Set a listener for banner events from the remote SSH server.  This is
+     * only used in client mode.  The listener will only receive callback
+     * events if the server sends a banner during authentication.
+     * 
+     * @param listener the new listener
+     */
+    public void
+    setBannerListener (BannerListener listener)
+    {
+        mBannerListener = listener;
+    }
+    
+    /**
      * Authenticate to the SSH2 server using a password.  The username and
      * password are sent over an encrypted link.
      * 
@@ -301,6 +347,7 @@ public class Transport
     {
         Event event = new Event();
         mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
+        mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authPassword(username, password, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -334,6 +381,7 @@ public class Transport
     {
         Event event = new Event();
         mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
+        mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authPrivateKey(username, key, event);
         return waitForAuthResponse(event, timeout_ms);
     }
@@ -1253,7 +1301,7 @@ public class Transport
         if (mServerMode && (mAuthHandler == null)) {
             // create auth handler for server mode
             mAuthHandler = new AuthHandler(new MyTransportInterface(), sCrai, mLog);
-            mAuthHandler.useServerMode(mServer);
+            mAuthHandler.useServerMode(mServer, mBanner);
         }
         if (! mInitialKexDone) {
             // this was the first key exchange
@@ -1718,6 +1766,8 @@ public class Transport
     private Event mCompletionEvent;
     private Event mClearToSend;
     private LogSink mLog;
+    private BannerListener mBannerListener;
+    private String mBanner;
     private IOException mSavedException;
     private AuthHandler mAuthHandler;
     private Message mGlobalResponse;

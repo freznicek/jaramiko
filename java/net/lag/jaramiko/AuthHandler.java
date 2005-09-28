@@ -51,13 +51,20 @@ import net.lag.crai.Crai;
     }
     
     /* package */ void
-    useServerMode (ServerInterface server)
+    useServerMode (ServerInterface server, String banner)
     {
         mServer = server;
+        mBanner = banner;
         mTransport.registerMessageHandler(MessageType.SERVICE_REQUEST, this);
         mTransport.registerMessageHandler(MessageType.USERAUTH_REQUEST, this);
     }
     
+    /* package */ void
+    setBannerListener (BannerListener listener)
+    {
+        mBannerListener = listener;
+    }
+
     public boolean
     isAuthenticated ()
     {
@@ -203,7 +210,9 @@ import net.lag.crai.Crai;
         String banner = m.getString();
         m.getString();      // lang
         mLog.notice("Auth banner: " + banner);
-        // who cares.
+        if (mBannerListener != null) {
+            mBannerListener.authenticationBannerEvent(banner);
+        }
     }
     
     private void
@@ -276,6 +285,15 @@ import net.lag.crai.Crai;
             mx.putByte(MessageType.SERVICE_ACCEPT);
             mx.putString(service);
             mTransport.sendMessage(mx);
+            
+            if (mBanner != null) {
+                // send auth banner
+                mx = new Message();
+                mx.putByte(MessageType.USERAUTH_BANNER);
+                mx.putString(mBanner);
+                mx.putString("");
+                mTransport.sendMessage(mx);
+            }
             return;
         }
         // dunno this one
@@ -394,6 +412,8 @@ import net.lag.crai.Crai;
     private TransportInterface mTransport;
     private Crai mCrai;
     private LogSink mLog;
+    private BannerListener mBannerListener;
+    private String mBanner;
     private ServerInterface mServer;
     private Event mAuthEvent;
     private boolean mAuthenticated;
