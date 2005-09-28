@@ -105,12 +105,6 @@ public class FakeCrai
         return mCraiJCE.getCipher(algorithm);
     }
     
-    public boolean
-    detectJavaSecurityBug ()
-    {
-        return mCraiJCE.detectJavaSecurityBug();
-    }
-    
     
     private CraiJCE mCraiJCE = new CraiJCE();
 }

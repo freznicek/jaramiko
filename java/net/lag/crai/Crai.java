@@ -51,6 +51,4 @@ public interface Crai
     public CraiDigest makeMD5HMAC (byte[] key);
     
     public CraiCipher getCipher (CraiCipherAlgorithm algorithm) throws CraiException;
-    
-    public boolean detectJavaSecurityBug ();
 }

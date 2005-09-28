@@ -327,6 +327,8 @@ public class CraiJCE
                 mCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, algName), param);
             } catch (GeneralSecurityException x) {
                 throw new CraiException("cipher " + mJavaName + " encrypt init error: " + x);
+            } catch (SecurityException x) {
+                throw new CraiException("cipher " + mJavaName + " encrypt init error: " + x);
             }
         }
         
@@ -340,6 +342,8 @@ public class CraiJCE
                 param.init(new IvParameterSpec(iv));
                 mCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
             } catch (GeneralSecurityException x) {
+                throw new CraiException("cipher " + mJavaName + " decrypt init error: " + x);
+            } catch (SecurityException x) {
                 throw new CraiException("cipher " + mJavaName + " decrypt init error: " + x);
             }
         }
@@ -451,26 +455,7 @@ public class CraiJCE
             throw new CraiException("cipher algorithm not implemented");
         }
     }
-    
-    // FIXME: HACK HACK HACKITY HACK, this is terrible.
-    public boolean
-    detectJavaSecurityBug ()
-    {
-        try {
-            Cipher c = Cipher.getInstance("AES/CBC/NoPadding");
-            AlgorithmParameters param = AlgorithmParameters.getInstance("AES");
-            byte[] key = new byte[32];
-            byte[] iv = new byte[16];
-            param.init(new IvParameterSpec(iv));
-            c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), param);
-            return false;
-        } catch (GeneralSecurityException x) {
-            return true;
-        } catch (SecurityException x) {
-            return true;
-        }
-    }
-    
+
     
     public CraiRandom mCraiRandom = new JCERandom();
 }

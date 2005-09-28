@@ -175,7 +175,7 @@ public class Transport
     startClient (PKey hostkey, int timeout_ms)
         throws IOException
     {
-        detectJavaSecurityBug();
+        detectUnsupportedCiphers();
 
         if (hostkey != null) {
             // we only want this particular key then
@@ -189,7 +189,7 @@ public class Transport
             public void run () {
                 privateRun();
             }
-        }, "paramikoj client feeder").start();
+        }, "jaramiko client feeder").start();
 
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
@@ -220,7 +220,7 @@ public class Transport
     startServer (ServerInterface server, int timeout_ms)
         throws IOException
     {
-        detectJavaSecurityBug();
+        detectUnsupportedCiphers();
         
         mServer = server;
         mCompletionEvent = new Event();
@@ -230,7 +230,7 @@ public class Transport
             public void run() {
                 privateRun();
             }
-        }, "paramikoj server feeder").start();
+        }, "jaramiko server feeder").start();
         
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
@@ -1558,36 +1558,47 @@ public class Transport
     }
     
     /*
-     * many versions of java are crippled for no sane reason, and can't use
-     * 256 bit ciphers.  detect that so we can warn the user and explain how
-     * to fix it.
+     * try to generate each of the ciphers in sCipherMap, and remove the ones
+     * that throw exceptions.  different JVMs may have implement different
+     * subsets.  also, many versions of java (including the sun JVM!) are
+     * crippled and can't use 256-bit ciphers.  amazing.
      */
     private void
-    detectJavaSecurityBug ()
+    detectUnsupportedCiphers ()
     {
-        if (sCheckedBug) { 
+        if (sCheckedCiphers) {
             return;
         }
         
-        boolean bug = sCrai.detectJavaSecurityBug();
-        sCheckedBug = true;
-        if (! bug) {
-            return;
-        }
+        boolean giveAdvice = false;
         
-        mLog.notice("Your java installation lacks support for 256-bit encryption.  " +
-                    "This is due to a poor choice of defaults in Sun's java.  To fix it, " +
-                    "visit: <http://java.sun.com/j2se/1.4.2/download.html> and download " +
-                    "the \"unlimited strength\" files at the bottom of the page, under " +
-                    "\"other downloads\".");
-        
-        for (Iterator i = sCipherMap.values().iterator(); i.hasNext(); ) {
-            CipherDescription desc = (CipherDescription) i.next();
-            if (desc.mKeySize > 16) {
-                i.remove();
+        synchronized (Transport.class) {
+            for (Iterator i = sCipherMap.entrySet().iterator(); i.hasNext(); ) {
+                Map.Entry entry = (Map.Entry) i.next();
+                String name = (String) entry.getKey();
+                CipherDescription desc = (CipherDescription) entry.getValue();
+                try {
+                    CraiCipher cipher = sCrai.getCipher(desc.mAlgorithm);
+                    cipher.initEncrypt(new byte[desc.mKeySize], new byte[desc.mBlockSize]);
+                } catch (CraiException x) {
+                    mLog.notice("Turning off unsupported encryption: " + name);
+                    if (desc.mKeySize > 16) {
+                        giveAdvice = true;
+                    }
+                    i.remove();
+                }
             }
+            
+            sCheckedCiphers = true;
         }
-        mLog.notice("256-bit ciphers turned off.");
+        
+        if (giveAdvice) {        
+            mLog.notice("Your java installation lacks support for 256-bit encryption.  " +
+                        "This is due to a poor choice of defaults in Sun's java.  To fix it, " +
+                        "visit: <http://java.sun.com/j2se/1.4.2/download.html> and download " +
+                        "the \"unlimited strength\" files at the bottom of the page, under " +
+                        "\"other downloads\".");
+        }
     }
     
     
@@ -1630,7 +1641,7 @@ public class Transport
     private static Map sMacMap = new HashMap();
     private static Map sKeyMap = new HashMap();
     private static Map sKexMap = new HashMap();
-    private static boolean sCheckedBug = false;
+    private static volatile boolean sCheckedCiphers = false;
     
     // crypto abstraction (not everyone has JCE)
     private static Crai sCrai = null;
