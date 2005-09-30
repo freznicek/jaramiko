@@ -49,6 +49,9 @@ public class FakeServer
     public int
     checkChannelRequest (String kind, int chanID)
     {
+        if (kind.equals("bogus")) {
+            return ChannelError.ADMINISTRATIVELY_PROHIBITED;
+        }
         return ChannelError.SUCCESS;
     }
     

@@ -459,6 +459,41 @@ public class TransportTest
         schan.close();
     }
     
+    // verify that ChannelException is thrown for a bad channel-open request
+    public void
+    testChannelException ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.startServer(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.startClient(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+
+        try {
+            mTC.openChannel("bogus", null, 5000);
+            fail("expecting exception");
+        } catch (ChannelException x) {
+            assertEquals(x.getChannelError(), ChannelError.ADMINISTRATIVELY_PROHIBITED);
+        }
+    }
+    
     // verify that getExitStatus works
     public void
     testExitStatus ()
