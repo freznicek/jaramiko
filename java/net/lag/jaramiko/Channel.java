@@ -679,6 +679,20 @@ public class Channel
     }
     
     /**
+     * Return <code>true</code> if the channel is closed, either by the
+     * local or remote side.
+     * 
+     * @return <code>true</code> if this channel is closed
+     */
+    public boolean
+    isClosed ()
+    {
+        synchronized (mLock) {
+            return mClosed;
+        }
+    }
+    
+    /**
      * Shutdown the receiving side of this socket, closing the stream in the
      * incoming direction.  After this call, future reads on this channel
      * will fail instantly.
@@ -831,6 +845,11 @@ public class Channel
         }
         synchronized (mOutBufferLock) {
             mOutBufferLock.notifyAll();
+        }
+        if (mNotifyObject != null) {
+            synchronized(mNotifyObject) {
+                mNotifyObject.notifyAll();
+            }
         }
     }
     

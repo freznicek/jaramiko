@@ -452,7 +452,9 @@ public class TransportTest
         assertTrue(chan.invokeShell(5000));
         Channel schan = mTS.accept(5000);
         chan.getOutputStream().write("communist j. cat\n".getBytes());
+        assertFalse(chan.isClosed());
         chan.close();
+        assertTrue(chan.isClosed());
         
         BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
         assertEquals("communist j. cat", r.readLine());
