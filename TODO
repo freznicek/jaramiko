@@ -1,7 +1,5 @@
 Things I want to do, specific to java:
 
-* allow client-app to pass an object to the Channel which will be notify()'d
-  on whenever new data arrives
 * fix RSA key generation (i couldn't get this to work!)
 
 Things I didn't port from paramiko (yet?):

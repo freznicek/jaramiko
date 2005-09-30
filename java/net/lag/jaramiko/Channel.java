@@ -227,6 +227,7 @@ public class Channel
         mEOFSent = false;
         mLock = new Object();
         mEvent = new Event();
+        mNotifyObject = null;
         
         mInStream = new ChannelInputStream();
         mStderrInStream = new ChannelInputStream();
@@ -722,6 +723,24 @@ public class Channel
         return mChanID;
     }
     
+    /**
+     * Set an object to be notified when new data arrives on the channel.
+     * For an event-based server, it may be helpful to be notified through
+     * an object instead of looping in a thread around a <code>read()</code>
+     * call.
+     * 
+     * <p>Once a notify object is set, whenever new data arrives on this
+     * channel, the notify object will be notified via a call to
+     * {@link Object#notifyAll}.
+     * 
+     * @param obj the object to notify
+     */
+    public void
+    setNotifyObject (Object obj)
+    {
+        mNotifyObject = obj;
+    }
+    
     
     /* package */ boolean
     handleMessage (byte ptype, Message m)
@@ -799,7 +818,6 @@ public class Channel
         }
         notifyClosed();
     }
-    
     
     
     private void
@@ -954,6 +972,12 @@ public class Channel
             System.arraycopy(data, 0, is.mBuffer, is.mBufferLen, data.length);
             is.mBufferLen += data.length;
             is.mBufferLock.notifyAll();
+        }
+        
+        if (mNotifyObject != null) {
+            synchronized (mNotifyObject) {
+                mNotifyObject.notifyAll();
+            }
         }
     }
     
@@ -1123,12 +1147,10 @@ public class Channel
     private TransportInterface mTransport;
     private LogSink mLog;
     private ServerInterface mServer;
+    private Object mNotifyObject;
     
-    //private int mInWindowSize;
-    //private int mInMaxPacketSize;
     private int mInWindowThreshold;     // bytes we must receive before we bother to send a window update
     private int mInWindowSoFar;
-    
     private int mOutWindowSize;
     private int mOutMaxPacketSize;
     
