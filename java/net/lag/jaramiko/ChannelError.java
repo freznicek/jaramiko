@@ -43,10 +43,27 @@ public final class ChannelError
         // forbid
     }
     
+    static String
+    getDescription (int code)
+    {
+        if ((code > 0) && (code < DESCRIPTION.length)) {
+            return DESCRIPTION[code];
+        }
+        return "Unknown error";
+    }
+    
     
     public static final int SUCCESS = 0;
     public static final int ADMINISTRATIVELY_PROHIBITED = 1;
     public static final int CONNECT_FAILED = 2;
     public static final int UNKNOWN_CHANNEL_TYPE = 3;
     public static final int RESOURCE_SHORTAGE = 4;
+    
+    /* package */ static final String[] DESCRIPTION = {
+        "",
+        "Administratively prohibited",
+        "Connect failed",
+        "Unknown channel type",
+        "Resource shortage",
+    };
 }

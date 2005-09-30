@@ -600,6 +600,7 @@ public class Transport
      * @param timeout_ms time (in milliseconds) to wait for the operation to
      *     complete
      * @return a new {@link Channel} on success
+     * @throws ChannelException if an error was returned by the server
      * @throws IOException if there was an error making the request, or it was
      *     rejected by the server
      */
@@ -1489,13 +1490,11 @@ public class Transport
         int reason = m.getInt();
         String reasonStr = m.getString();
         m.getString();      // lang
-        String reasonText = "(unknown code)";
-        if ((reason > 0) && (reason < CONNECTION_FAILED_CODE.length)) {
-            reasonText = CONNECTION_FAILED_CODE[reason];
-        }
+        String reasonText = ChannelError.getDescription(reason);
         mLog.notice("Secsh channel " + chanID + " open FAILED: " + reasonStr + ": " + reasonText);
         
         synchronized (mLock) {
+            saveException(new ChannelException(reason));
             mChannels[chanID] = null;
             if (mChannelEvents[chanID] != null) {
                 mChannelEvents[chanID].set();
@@ -1678,14 +1677,6 @@ public class Transport
         
     private static final String PROTO_ID = "2.0";
     private static final String CLIENT_ID = "jaramiko_0.1";
-    
-    private static final String[] CONNECTION_FAILED_CODE = {
-        "",
-        "Administratively prohibited",
-        "Connect failed",
-        "Unknown channel type",
-        "Resource shortage",
-    };
     
     private static Map sCipherMap = new HashMap();
     private static Map sMacMap = new HashMap();
