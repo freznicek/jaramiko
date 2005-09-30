@@ -217,6 +217,7 @@ import net.lag.crai.CraiRandom;
         synchronized (mWriteLock) {
             if (mBlockEngineOut != null) {
                 new Message(mMacBufferOut).putInt(mSequenceNumberOut);
+                mMacEngineOut.reset();
                 mMacEngineOut.update(mMacBufferOut, 0, 4);
                 mMacEngineOut.update(packet, 0, length);
                 try {
@@ -290,9 +291,17 @@ import net.lag.crai.CraiRandom;
             } catch (CraiException x) {
                 throw new IOException("decode error: " + x);
             }
-
+        }
+        
+        // dump the packet before we try to verify the mac (helps with debugging)
+        if (mDumpPackets) {
+            mLog.dump("IN", packet, leftover, length - leftover - 1);
+        }
+        
+        if (mBlockEngineIn != null) {
             // now, compute the mac
             new Message(mMacBufferIn).putInt(mSequenceNumberIn);
+            mMacEngineIn.reset();
             mMacEngineIn.update(mMacBufferIn, 0, 4);
             mMacEngineIn.update(mReadBuffer, 0, 5);
             mMacEngineIn.update(packet, 0, length - 1);        
@@ -311,9 +320,6 @@ import net.lag.crai.CraiRandom;
                     throw new IOException("mac mismatch");
                 }
             }
-        }
-        if (mDumpPackets) {
-            mLog.dump("IN", packet, leftover, length - leftover - 1);
         }
 
         Message msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
