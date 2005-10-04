@@ -455,6 +455,12 @@ public class CraiJCE
             throw new CraiException("cipher algorithm not implemented");
         }
     }
+    
+    public BigInteger
+    modPow (BigInteger b, BigInteger e, BigInteger m)
+    {
+        return b.modPow(e, m);
+    }
 
     
     public CraiRandom mCraiRandom = new JCERandom();

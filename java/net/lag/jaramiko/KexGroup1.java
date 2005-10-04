@@ -60,13 +60,13 @@ import net.lag.crai.CraiDigest;
         generateX();
         if (mTransport.inServerMode()) {
             // compute f = g^x mod p, but don't send it yet
-            mF = G.modPow(mX, P);
+            mF = mCrai.modPow(G, mX, P);
             mTransport.registerMessageHandler(KEXDH_INIT, this);
             mTransport.expectPacket(KEXDH_INIT);
             return;
         }
         // compute e = g^x mod p (where g=2), and send it
-        mE = G.modPow(mX, P);
+        mE = mCrai.modPow(G, mX, P);
         Message m = new Message();
         m.putByte(KEXDH_INIT);
         m.putMPZ(mE);
@@ -123,7 +123,7 @@ import net.lag.crai.CraiDigest;
         if ((mE.compareTo(BigInteger.ONE) < 0) || (mE.compareTo(P.subtract(BigInteger.ONE)) > 0)) {
             throw new SSHException("Client kex 'e' is out of range");
         }
-        BigInteger k = mE.modPow(mX, P);
+        BigInteger k = mCrai.modPow(mE, mX, P);
         PKey key = mTransport.getServerKey();
         byte[] keyBytes = key.toByteArray();
         
@@ -166,7 +166,7 @@ import net.lag.crai.CraiDigest;
             throw new SSHException("Server kex 'f' is out of range");
         }
         byte[] sig = m.getByteString();
-        BigInteger k = mF.modPow(mX, P);
+        BigInteger k = mCrai.modPow(mF, mX, P);
 
         // okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         Message hm = new Message();

@@ -51,4 +51,6 @@ public interface Crai
     public CraiDigest makeMD5HMAC (byte[] key);
     
     public CraiCipher getCipher (CraiCipherAlgorithm algorithm) throws CraiException;
+    
+    public BigInteger modPow (BigInteger b, BigInteger e, BigInteger m);
 }

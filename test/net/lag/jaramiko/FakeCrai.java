@@ -105,6 +105,12 @@ public class FakeCrai
         return mCraiJCE.getCipher(algorithm);
     }
     
+    public BigInteger
+    modPow (BigInteger b, BigInteger e, BigInteger m)
+    {
+        return mCraiJCE.modPow(b, e, m);
+    }
+    
     
     private CraiJCE mCraiJCE = new CraiJCE();
 }
