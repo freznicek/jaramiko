@@ -282,20 +282,28 @@ import net.lag.crai.CraiRandom;
 
         byte[] packet = new byte[length - 1];
         System.arraycopy(mReadBuffer, 5, packet, 0, leftover);
-        if (read(packet, leftover, length - leftover - 1) < 0) {
-            return null;
-        }
-        if (mBlockEngineIn != null) {
-            try {
-                mBlockEngineIn.process(packet, leftover, length - leftover - 1, packet, leftover);
-            } catch (CraiException x) {
-                throw new IOException("decode error: " + x);
-            }
-        }
         
-        // dump the packet before we try to verify the mac (helps with debugging)
-        if (mDumpPackets) {
-            mLog.dump("IN", packet, leftover, length - leftover - 1);
+        /* don't try to read or process more bytes if we already have the
+         * entire packet.  (danger's JVM pukes and returns -1 [EOF] if you
+         * try to read zero bytes.)
+         */
+        int remainderLen = length - leftover - 1;
+        if (remainderLen > 0) {
+            if (read(packet, leftover, remainderLen) < 0) {
+                return null;
+            }
+            if (mBlockEngineIn != null) {
+                try {
+                    mBlockEngineIn.process(packet, leftover, remainderLen, packet, leftover);
+                } catch (CraiException x) {
+                    throw new IOException("decode error: " + x);
+                }
+            }
+            
+            // dump the packet before we try to verify the mac (helps with debugging)
+            if (mDumpPackets) {
+                mLog.dump("IN", packet, leftover, remainderLen);
+            }
         }
         
         if (mBlockEngineIn != null) {
