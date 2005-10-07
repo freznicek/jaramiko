@@ -1,7 +1,12 @@
 Things I want to do, specific to java:
 
 * fix RSA key generation (i couldn't get this to work!)
-
+* make this programmatically accessible:
+  mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
+                   mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
+                   ", remote " + mAgreedRemoteMac);
+  -- split cipher names into string(name) and int(bits)
+  
 Things I didn't port from paramiko (yet?):
 
 * keyboard-interactive auth -- do this!
@@ -9,7 +14,7 @@ Things I didn't port from paramiko (yet?):
 	would require porting the list of primes
 * sftp client support (mediumly likely)
 * sftp server support (unlikely)
-* compression
+* compression [not in paramiko yet]
 
 
 ----------
