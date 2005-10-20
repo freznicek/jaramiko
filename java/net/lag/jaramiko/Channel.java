@@ -225,6 +225,7 @@ public class Channel
         mClosed = false;
         mEOFReceived = false;
         mEOFSent = false;
+        mCombineStderr = false;
         mLock = new Object();
         mEvent = new Event();
         mNotifyObject = null;
@@ -983,8 +984,12 @@ public class Channel
     feed (ChannelInputStream is, byte[] data)
     {
         synchronized (is.mBufferLock) {
-            while (is.mBufferLen + data.length > is.mBuffer.length) {
-                byte[] newbuf = new byte[4 * is.mBuffer.length];
+            if (is.mBufferLen + data.length > is.mBuffer.length) {
+                int newlen = 4 * is.mBuffer.length;
+                while (is.mBufferLen + data.length > newlen) {
+                    newlen *= 4;
+                }
+                byte[] newbuf = new byte[newlen];
                 System.arraycopy(is.mBuffer, 0, newbuf, 0, is.mBufferLen);
                 is.mBuffer = newbuf;
             }
