@@ -23,23 +23,33 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  * 
- * Created on May 13, 2005
+ * Created on May 14, 2005
  */
 
 package net.lag.jaramiko;
 
 import java.io.IOException;
-import net.lag.crai.Crai;
-
+import java.math.BigInteger;
 
 /**
- * Interface for implementing a key-exchange algorithm.
+ * This makes it easier to unit-test the Kex implementations, by letting the
+ * Transport interface be easily stubbed out.
  * 
  * @author robey
  */
-/* package */ interface Kex
-    extends MessageHandler
+/* package */ interface KexTransportInterface
 {
-    public String getName ();
-    public void startKex (KexTransportInterface t, Crai crai) throws IOException;
+    public String getLocalVersion ();
+    public String getRemoteVersion ();
+    public byte[] getLocalKexInit ();
+    public byte[] getRemoteKexInit ();
+
+    public void registerMessageHandler (byte ptype, MessageHandler handler);
+    public void expectPacket (byte ptype);
+    public void sendMessage (Message m) throws IOException;
+
+    public PKey getServerKey ();
+    public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
+    public void setKH (BigInteger k, byte[] h);
+    public void kexComplete () throws IOException;
 }

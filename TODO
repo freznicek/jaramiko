@@ -6,6 +6,8 @@ Things I want to do, specific to java:
                    mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
                    ", remote " + mAgreedRemoteMac);
   -- split cipher names into string(name) and int(bits)
+* split out Transport into ClientTransport and ServerTransport and make Transport an interface (with all the
+  javadocs)
   
 Things I didn't port from paramiko (yet?):
 

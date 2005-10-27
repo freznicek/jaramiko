@@ -128,7 +128,7 @@ public abstract class PKey
     public byte[]
     getFingerprint ()
     {
-        CraiDigest md5 = Transport.getCrai().makeMD5();
+        CraiDigest md5 = BaseTransport.getCrai().makeMD5();
         byte[] d = toByteArray();
         md5.update(d, 0, d.length);
         return md5.finish();
@@ -383,7 +383,7 @@ public abstract class PKey
         }
         
         try {
-            Crai crai = Transport.getCrai();
+            Crai crai = BaseTransport.getCrai();
             CraiDigest md5 = crai.makeMD5();
             CraiCipher c = crai.getCipher(cdesc.mAlgorithm);
             byte[] key = generateKeyBytes(md5, salt, password.getBytes(), cdesc.mKeySize);

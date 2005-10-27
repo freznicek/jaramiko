@@ -50,11 +50,11 @@ public class WeirdNetTest
         Socket sock = new Socket();
         sock.connect(new InetSocketAddress("tavi.lag.net", 22));
         
-        Transport t = new Transport(sock);
+        ClientTransport t = new ClientTransport(sock);
         t.setLog(new ConsoleLog());
         t.setDumpPackets(true);
         PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("/Users/robey/.ssh/id_rsa"), null);
-        t.startClient(PKey.createFromBase64(TAVI_HOST_KEY), 5000);
+        t.start(PKey.createFromBase64(TAVI_HOST_KEY), 5000);
         t.authPrivateKey("robey", key, 5000);
         Channel c = t.openChannel("session", null, 5000);
         assertTrue(c != null);

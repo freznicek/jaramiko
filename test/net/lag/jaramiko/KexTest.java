@@ -43,7 +43,7 @@ public class KexTest
     testGroup1Client ()
         throws Exception
     {
-        FakeTransport t = new FakeTransport();
+        FakeKexTransport t = new FakeKexTransport();
         t.mServerMode = false;
         KexGroup1 kex = new KexGroup1();
         kex.startKex(t, new FakeCrai());
@@ -67,7 +67,7 @@ public class KexTest
     testGroup1Server ()
         throws Exception
     {
-        FakeTransport t = new FakeTransport();
+        FakeKexTransport t = new FakeKexTransport();
         t.mServerMode = true;
         KexGroup1 kex = new KexGroup1();
         kex.startKex(t, new FakeCrai());

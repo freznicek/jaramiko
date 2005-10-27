@@ -784,7 +784,7 @@ public class Channel
     }
     
     /* package */ void
-    setTransport (TransportInterface t, LogSink log)
+    setTransport (ChannelTransportInterface t, LogSink log)
     {
         mTransport = t;
         mLog = log;
@@ -1168,7 +1168,7 @@ public class Channel
     private boolean mCombineStderr;
     private Object mLock;
     private Event mEvent;
-    private TransportInterface mTransport;
+    private ChannelTransportInterface mTransport;
     private LogSink mLog;
     private ServerInterface mServer;
     private Object mNotifyObject;

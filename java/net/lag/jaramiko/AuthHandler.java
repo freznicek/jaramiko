@@ -41,7 +41,7 @@ import net.lag.crai.Crai;
     implements MessageHandler
 {
     /* package */
-    AuthHandler (TransportInterface t, Crai crai, LogSink log)
+    AuthHandler (BaseTransport t, Crai crai, LogSink log)
     {
         mTransport = t;
         mCrai = crai;
@@ -409,7 +409,7 @@ import net.lag.crai.Crai;
     //private static final int DISCONNECT_AUTH_CANCELLED_BY_USER = 13;
     private static final int DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14;
     
-    private TransportInterface mTransport;
+    private BaseTransport mTransport;
     private Crai mCrai;
     private LogSink mLog;
     private BannerListener mBannerListener;

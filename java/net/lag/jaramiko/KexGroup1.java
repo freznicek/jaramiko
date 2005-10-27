@@ -51,14 +51,15 @@ import net.lag.crai.CraiDigest;
     }
     
     public void
-    startKex (TransportInterface t, Crai crai)
+    startKex (KexTransportInterface t, Crai crai)
         throws IOException
     {
         mTransport = t;
         mCrai = crai;
      
         generateX();
-        if (mTransport.inServerMode()) {
+        if (mTransport.getServerKey() != null) {
+            // (server mode)
             // compute f = g^x mod p, but don't send it yet
             mF = mCrai.modPow(G, mX, P);
             mTransport.registerMessageHandler(KEXDH_INIT, this);
@@ -79,10 +80,12 @@ import net.lag.crai.CraiDigest;
     handleMessage (byte ptype, Message m)
         throws IOException
     {
-        if (mTransport.inServerMode() && (ptype == KEXDH_INIT)) {
+        if (ptype == KEXDH_INIT) {
+            // server mode
             handleKexDHInit(m);
             return true;
-        } else if (! mTransport.inServerMode() && (ptype == KEXDH_REPLY)) {
+        } else if (ptype == KEXDH_REPLY) {
+            // client mode
             handleKexDHReply(m);
             return true;
         }
@@ -152,7 +155,7 @@ import net.lag.crai.CraiDigest;
         rm.putMPZ(mF);
         rm.putByteString(sig);
         mTransport.sendMessage(rm);
-        mTransport.activateOutbound();
+        mTransport.kexComplete();
     }
     
     // client mode
@@ -184,7 +187,7 @@ import net.lag.crai.CraiDigest;
         sha.update(data, 0, data.length);
         mTransport.setKH(k, sha.finish());
         mTransport.verifyKey(hostKey, sig);
-        mTransport.activateOutbound();
+        mTransport.kexComplete();
     }
     
     
@@ -204,7 +207,7 @@ import net.lag.crai.CraiDigest;
     private static final byte[] BAD2 = { 0x7f, -1, -1, -1, -1, -1, -1, -1 };
     
     private Crai mCrai;
-    private TransportInterface mTransport;
+    private KexTransportInterface mTransport;
     
     private BigInteger mX;
     private BigInteger mE;

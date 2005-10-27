@@ -69,8 +69,8 @@ public class TransportTest
         Socket[] pair = makeSocketPair();
         mSocketS = pair[0];
         mSocketC = pair[1];
-        mTS = new Transport(mSocketS);
-        mTC = new Transport(mSocketC);
+        mTS = new ServerTransport(mSocketS);
+        mTC = new ClientTransport(mSocketC);
         //mTC.setLog(new ConsoleLog());
         //mTS.setLog(new ConsoleLog());
     }
@@ -155,14 +155,14 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         mBanner = null;
         mTC.setBannerListener(this);
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
         
@@ -192,7 +192,7 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
@@ -201,7 +201,7 @@ public class TransportTest
         SecurityOptions o = mTC.getSecurityOptions();
         o.setCiphers(Arrays.asList(new String[] { "aes128-cbc" }));
         o.setDigests(Arrays.asList(new String[] { "hmac-md5-96" }));
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
 
@@ -230,13 +230,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
         
@@ -267,14 +267,14 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
         try {
-            mTC.startClient(publicHostKey, 15000);
+            mTC.start(publicHostKey, 15000);
             mTC.authPassword("unknown", "error", 15000);
             fail("expected BadAuthenticationType exception");
         } catch (BadAuthenticationType x) {
@@ -301,13 +301,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         try {
             mTC.authPassword("slowdive", "error", 15000);
             fail("expected SSHException");
@@ -336,13 +336,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         
         String[] remain = mTC.authPassword("paranoid", "paranoid", 15000);
         assertEquals(1, remain.length);
@@ -370,13 +370,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         
         sync.waitFor(5000);
@@ -435,13 +435,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         
         sync.waitFor(5000);
@@ -475,13 +475,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         
         sync.waitFor(5000);
@@ -510,13 +510,13 @@ public class TransportTest
         new Thread(new Runnable() {
             public void run () {
                 try {
-                    mTS.startServer(server, 15000);
+                    mTS.start(server, 15000);
                     sync.set();
                 } catch (IOException x) { }
             }
         }).start();
         
-        mTC.startClient(publicHostKey, 15000);
+        mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         
         sync.waitFor(5000);
@@ -543,8 +543,8 @@ public class TransportTest
     
     private Socket mSocketC;
     private Socket mSocketS;
-    private Transport mTC;
-    private Transport mTS;
+    private ClientTransport mTC;
+    private ServerTransport mTS;
 
     private String mBanner;
     

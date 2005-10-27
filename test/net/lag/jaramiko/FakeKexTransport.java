@@ -28,46 +28,15 @@
 
 package net.lag.jaramiko;
 
-import java.io.IOException;
 import java.math.BigInteger;
+
 
 /**
  * @author robey
  */
-public class FakeTransport
-    implements TransportInterface
+public class FakeKexTransport
+    implements KexTransportInterface
 {
-    public void
-    sendMessage (Message m)
-    {
-        mMessage = m;
-    }
-    
-    public void
-    sendUserMessage (Message m, int timeout_ms)
-    {
-        mUserMessage = m;
-    }
-    
-    public void
-    setKH (BigInteger k, byte[] h)
-    {
-        mK = k;
-        mH = h;
-    }
-    
-    public void
-    saveException (IOException x)
-    {
-        // pass
-    }
-    	 
-    public void
-    activateOutbound ()
-    {
-        mActivated = true;
-    }
-    
     public String
     getRemoteVersion ()
     {
@@ -93,6 +62,34 @@ public class FakeTransport
     }
     
     public void
+    registerMessageHandler (byte ptype, MessageHandler handler)
+    {
+        // pass
+    }
+
+    public void
+    expectPacket (byte expect)
+    {
+        mExpect = expect;
+    }
+
+    public void
+    sendMessage (Message m)
+    {
+        mMessage = m;
+    }
+    
+    public PKey
+    getServerKey ()
+    {
+        if (mServerMode) {
+            return new FakeKey();
+        } else {
+            return null;
+        }
+    }
+    
+    public void
     verifyKey (byte[] key, byte[] sig)
     {
         mVerifyKey = key;
@@ -100,45 +97,16 @@ public class FakeTransport
     }
     
     public void
-    expectPacket (byte expect)
+    setKH (BigInteger k, byte[] h)
     {
-        mExpect = expect;
-    }
-    
-    public boolean
-    inServerMode ()
-    {
-        return mServerMode;
-    }
-    
-    public PKey
-    getServerKey ()
-    {
-        return new FakeKey();
-    }
-    
-    public byte[]
-    getSessionID ()
-    {
-        return null;
-    }
-
-    public void
-    registerMessageHandler (byte ptype, MessageHandler handler)
-    {
-        // pass
+        mK = k;
+        mH = h;
     }
     
     public void
-    unlinkChannel (int chanID)
+    kexComplete ()
     {
-        // pass
-    }
-    
-    public void
-    close ()
-    {
-        // pass
+        mActivated = true;
     }
     
     
