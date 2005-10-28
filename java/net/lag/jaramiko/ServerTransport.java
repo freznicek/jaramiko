@@ -204,7 +204,7 @@ public class ServerTransport
     
     /**
      * Set a banner to be sent during authentication in server mode.  This
-     * method should be called before {@link #startServer} in order to
+     * method should be called before {@link #start} in order to
      * guarantee that it gets sent.
      *  
      * @param banner the authentication banner to advertise

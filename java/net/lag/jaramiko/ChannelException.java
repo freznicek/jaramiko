@@ -28,7 +28,7 @@ package net.lag.jaramiko;
 
 /**
  * An exception raised when an attempt to open a channel (via
- * {@link Transport#openSession} or {@link Transport#openChannel}) fails.
+ * {@link ClientTransport#openSession} or {@link ClientTransport#openChannel}) fails.
  * The exception contains an error code from the SSH server.
  * 
  * @author robey
