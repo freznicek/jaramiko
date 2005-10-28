@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.lag.crai.Crai;
 import net.lag.crai.CraiCipher;
 import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
@@ -277,6 +278,24 @@ public class ServerTransport
             }
             return null;
         }
+    }
+    
+    /**
+     * Set a crypto library provider for paramiko.  This setting affects all
+     * Transport objects (both ClientTransport and ServerTransport), present
+     * and future, and usually will only need to be set once (or never).
+     * The only time you really need to set this is if you're using a
+     * non-standard crypto provider (like on an embedded platform).
+     * 
+     * <p>If no crypto provider is set, paramiko will attempt to use JCE,
+     * which comes standard with java 1.4 and up.
+     * 
+     * @param crai the crypto provider to use
+     */
+    public static void
+    setCrai (Crai crai)
+    {
+        sCrai = crai;
     }
     
     

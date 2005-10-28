@@ -43,7 +43,7 @@ public class AllTests
     suite ()
     {
         TestSuite ts = new TestSuite();
-        BaseTransport.setCrai(new CraiJCE());
+        ClientTransport.setCrai(new CraiJCE());
 
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);
