@@ -195,13 +195,30 @@ public class CraiJCE
         verify (byte[] data, int off, int len, byte[] signature)
             throws CraiException
         {
+            /* build up a fake ber sequence containing r and s.  this is
+             * terrible to behold but i didn't feel like implementing the
+             * ber encoding algorithm just to workaround one tiny bit of
+             * oddness with java's API.
+             */
+            byte[] argh = new byte[48];
+            argh[0] = 0x30;
+            argh[1] = 46;
+            argh[2] = 2;
+            argh[3] = 21;
+            argh[4] = 0;
+            System.arraycopy(signature, 0, argh, 5, 20);
+            argh[25] = 2;
+            argh[26] = 21;
+            argh[27] = 0;
+            System.arraycopy(signature, 20, argh, 28, 20);
+
             try {
                 Signature s = Signature.getInstance("SHA1withDSA");
                 KeyFactory keyFac = KeyFactory.getInstance("DSA");
                 PublicKey key = keyFac.generatePublic(new DSAPublicKeySpec(mY, mP, mQ, mG));
                 s.initVerify(key);
                 s.update(data, off, len);
-                return s.verify(signature);
+                return s.verify(argh);
             } catch (Exception e) {
                 throw new CraiException("error verifying DSA signature: " + e);
             }

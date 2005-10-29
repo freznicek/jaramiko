@@ -119,25 +119,8 @@ public class DSSKey
             if (sigData.length != 40) {
                 throw new SSHException("DSS signature must be exactly 40 bytes! (is: " + sigData.length + ")");
             }
-            /* build up a fake ber sequence containing r and s.  this is
-             * terrible to behold but i didn't feel like implementing the
-             * ber encoding algorithm just to workaround one tiny bit of
-             * oddness with java's API.
-             */
-            byte[] argh = new byte[48];
-            argh[0] = 0x30;
-            argh[1] = 46;
-            argh[2] = 2;
-            argh[3] = 21;
-            argh[4] = 0;
-            System.arraycopy(sigData, 0, argh, 5, 20);
-            argh[25] = 2;
-            argh[26] = 21;
-            argh[27] = 0;
-            System.arraycopy(sigData, 20, argh, 28, 20);
-            
             CraiPublicKey dsa = crai.makePublicDSAKey(mY, mP, mQ, mG);
-            return dsa.verify(data, 0, data.length, argh);
+            return dsa.verify(data, 0, data.length, sigData);
         } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
