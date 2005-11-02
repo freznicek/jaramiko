@@ -94,6 +94,8 @@ public class Channel
         read (byte[] buf, int off, int len)
             throws IOException
         {
+            int ack = 0;
+            
             synchronized (mBufferLock) {
                 if (mBufferLen == 0) {
                     int timeout = mTimeout;
@@ -133,16 +135,25 @@ public class Channel
                     System.arraycopy(mBuffer, 0, buf, off, mBufferLen);
                     len = mBufferLen;
                     mBufferLen = 0;
-                    checkAddWindow(len);
-                    return len;
                 } else {
                     System.arraycopy(mBuffer, 0, buf, off, len);
                     System.arraycopy(mBuffer, len, mBuffer, 0, mBufferLen - len);
                     mBufferLen -= len;
-                    checkAddWindow(len);
-                    return len;
                 }
+                
+                ack = checkAddWindow(len);
             }
+
+            // can do this outside of the lock
+            if (ack > 0) {
+                Message m = new Message();
+                m.putByte(MessageType.CHANNEL_WINDOW_ADJUST);
+                m.putInt(mRemoteChanID);
+                m.putInt(ack);
+                mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
+            }
+
+            return len;
         }
     
         public void
@@ -916,26 +927,21 @@ public class Channel
     }
     
     // you're already holding mInBufferLock
-    private void
+    private int
     checkAddWindow (int nbytes)
     {
         synchronized (mLock) {
             if (mClosed || mEOFReceived || !mActive) {
-                return;
+                return 0;
             }
+            
             mInWindowSoFar += nbytes;
-            if (mInWindowSoFar > mInWindowThreshold) {
-                Message m = new Message();
-                m.putByte(MessageType.CHANNEL_WINDOW_ADJUST);
-                m.putInt(mRemoteChanID);
-                m.putInt(mInWindowSoFar);
-                try {
-                    mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
-                } catch (IOException x) {
-                    mLog.debug("I/O Exception while sending window adjustment");
-                }
-                mInWindowSoFar = 0;
+            if (mInWindowSoFar <= mInWindowThreshold) {
+                return 0;
             }
+            int ack = mInWindowSoFar;
+            mInWindowSoFar = 0;
+            return ack;
         }
     }
     
