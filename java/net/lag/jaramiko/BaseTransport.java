@@ -358,10 +358,17 @@ import net.lag.crai.*;
     sendUserMessage (Message m, int timeout_ms)
         throws IOException
     {
-        if (! waitForEvent(mClearToSend, timeout_ms)) {
-            return;
+        while (true) {
+            synchronized (mClearToSend) {
+                if (mClearToSend.isSet()) {
+                    sendMessage(m);
+                    return;
+                }
+            }
+            if (! waitForEvent(mClearToSend, timeout_ms)) {
+                return;
+            }
         }
-        sendMessage(m);
     }
     
     /* package */ boolean
@@ -438,7 +445,9 @@ import net.lag.crai.*;
     sendKexInit ()
         throws IOException
     {
-        mClearToSend.clear();
+        synchronized (mClearToSend) {
+            mClearToSend.clear();
+        }
         
         byte[] rand = new byte[16];
         sCrai.getPRNG().getBytes(rand);
@@ -532,10 +541,16 @@ import net.lag.crai.*;
                 if (mPacketizer.needRekey() && ! mInKex) {
                     sendKexInit();
                 }
-                Message m = mPacketizer.read();
+                Message m = null;
+                try {
+                    m = mPacketizer.read();
+                } catch (NeedRekeyException x) {
+                    continue;
+                }
                 if (m == null) {
                     break;
                 }
+                
                 byte ptype = m.getByte();
                 switch (ptype) {
                 case MessageType.IGNORE:
@@ -700,7 +715,9 @@ import net.lag.crai.*;
         if (! mPacketizer.needRekey()) {
             mInKex = false;
         }
-        mClearToSend.set();
+        synchronized (mClearToSend) {
+            mClearToSend.set();
+        }
     }
     
     /* package */ void
@@ -751,7 +768,9 @@ import net.lag.crai.*;
         throws IOException
     {
         // okay, no sending requests until kex init is done
-        mClearToSend.clear();
+        synchronized (mClearToSend) {
+            mClearToSend.clear();
+        }
         if (mLocalKexInit == null) {
             // send ours too
             sendKexInit();
@@ -771,7 +790,7 @@ import net.lag.crai.*;
         m.getList();        // server lang list
         m.getBoolean();     // kex follows
         m.getInt();         // unused
-        
+    
         // no compression support (yet?)
         List supportedCompressions = Arrays.asList(new String[] { "none" });
         if ((filter(supportedCompressions, clientCompressAlgorithmList) == null) ||

@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
- * Created on May 7, 2005
  */
 
 package net.lag.jaramiko;
@@ -92,6 +89,20 @@ import net.lag.crai.CraiRandom;
         mKeepAliveInterval = interval;
         mKeepAliveHandler = handler;
         mKeepAliveLast = System.currentTimeMillis();
+    }
+    
+    /**
+     * Set the number of bytes that can be sent or received before the
+     * packetizer decides it's time to renegotiate keys.  Normally there is
+     * no reason to chnage the default value, but it can be useful for unit
+     * tests.
+     * 
+     * @param bytes bytes to be send/received before rekeying
+     */
+    public void
+    setRekeyBytes (int bytes)
+    {
+        mRekeyBytes = bytes;
     }
     
     /**
@@ -165,7 +176,7 @@ import net.lag.crai.CraiRandom;
             mInitCount |= 1;
             if (mInitCount == 3) {
                 mInitCount = 0;
-                mNeedRekey = false;
+                triggerRekey(false);
             }
             
             mMacBufferOut = new byte[32];
@@ -188,7 +199,7 @@ import net.lag.crai.CraiRandom;
         mInitCount |= 2;
         if (mInitCount == 3) {
             mInitCount = 0;
-            mNeedRekey = false;
+            triggerRekey(false);
         }
         
         mMacBufferIn = new byte[32];
@@ -236,16 +247,17 @@ import net.lag.crai.CraiRandom;
             mSequenceNumberOut++;
             write(packet, 0, length);
             if (mBlockEngineOut != null) {
+                mLog.dump("mac", mMacBufferOut, 0, mMacSizeOut);
                 write(mMacBufferOut, 0, mMacSizeOut);
             }
             
             mSentBytes += length;
             mSentPackets++;
-            if (((mSentPackets >= REKEY_PACKETS) || (mSentBytes >= REKEY_BYTES)) && ! mNeedRekey) {
+            if (((mSentPackets >= mRekeyPackets) || (mSentBytes >= mRekeyBytes)) && ! needRekey()) {
                 // only ask once for rekeying
                 mLog.debug("Rekeying (hit " + mSentPackets + " packets, " + mSentBytes + " bytes sent)");
                 mReceivedPacketsOverflow = 0;
-                triggerRekey();
+                triggerRekey(true);
             }
         }
     }
@@ -257,9 +269,10 @@ import net.lag.crai.CraiRandom;
         throws IOException
     {
         // [ab]use mMacBufferIn for reading the first block
-        if (read(mReadBuffer, 0, mBlockSizeIn) < 0) {
+        if (read(mReadBuffer, 0, mBlockSizeIn, true) < 0) {
             return null;
         }
+        mLog.dump("in pre-decrypt", mReadBuffer, 0, mBlockSizeIn);
         if (mBlockEngineIn != null) {
             try {
                 mBlockEngineIn.process(mReadBuffer, 0, mBlockSizeIn, mReadBuffer, 0);
@@ -289,7 +302,7 @@ import net.lag.crai.CraiRandom;
          */
         int remainderLen = length - leftover - 1;
         if (remainderLen > 0) {
-            if (read(packet, leftover, remainderLen) < 0) {
+            if (read(packet, leftover, remainderLen, false) < 0) {
                 return null;
             }
             if (mBlockEngineIn != null) {
@@ -318,7 +331,7 @@ import net.lag.crai.CraiRandom;
             } catch (CraiException x) {
                 throw new IOException("mac error: " + x);
             }
-            if (read(mReadBuffer, 0, mMacSizeIn) < 0) {
+            if (read(mReadBuffer, 0, mMacSizeIn, false) < 0) {
                 return null;
             }
             
@@ -343,12 +356,12 @@ import net.lag.crai.CraiRandom;
             if (mReceivedPacketsOverflow >= 20) {
                 throw new IOException("rekey requests are being ignored");
             }
-        } else if ((mReceivedPackets >= REKEY_PACKETS) || (mReceivedBytes >= REKEY_BYTES)) {
+        } else if ((mReceivedPackets >= mRekeyPackets) || (mReceivedBytes >= mRekeyBytes)) {
             // only ask once
             mLog.debug("Rekeying (hit " + mReceivedPackets + " packets, " +
                        mReceivedBytes + " bytes received)");
             mReceivedPacketsOverflow = 0;
-            triggerRekey();
+            triggerRekey(true);
         }
 
         return msg;
@@ -356,7 +369,7 @@ import net.lag.crai.CraiRandom;
     
     // do not return until the entire buffer is read, or EOF
     private int
-    read (byte[] buffer, int offset, int length)
+    read (byte[] buffer, int offset, int length, boolean checkRekey)
         throws IOException
     {
         int total = 0;
@@ -383,6 +396,9 @@ import net.lag.crai.CraiRandom;
                     return -1;
                 }
             }
+            if (checkRekey && (total == 0) && needRekey()) {
+                throw new NeedRekeyException();
+            }
             checkKeepAlive();
         }
     }
@@ -398,7 +414,7 @@ import net.lag.crai.CraiRandom;
     private void
     checkKeepAlive ()
     {
-        if ((mKeepAliveInterval == 0) || (mBlockEngineOut == null) || mNeedRekey) {
+        if ((mKeepAliveInterval == 0) || (mBlockEngineOut == null) || needRekey()) {
             // wait till we're in a normal state
             return;
         }
@@ -410,9 +426,9 @@ import net.lag.crai.CraiRandom;
     }
     
     private synchronized void
-    triggerRekey ()
+    triggerRekey (boolean rekey)
     {
-        mNeedRekey = true;
+        mNeedRekey = rekey;
     }
     
     
@@ -422,6 +438,9 @@ import net.lag.crai.CraiRandom;
     private final static int REKEY_PACKETS = 0x40000000;
     private final static int REKEY_BYTES = 0x40000000;      // 1GB
 
+    private int mRekeyPackets = REKEY_PACKETS;
+    private int mRekeyBytes = REKEY_BYTES;
+    
     private InputStream mInStream;
     private OutputStream mOutStream;
     private CraiRandom mRandom;

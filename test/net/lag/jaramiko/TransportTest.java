@@ -540,6 +540,58 @@ public class TransportTest
         chan.close();
     }
     
+    public void
+    testRenegotiate ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+
+        Channel chan = mTC.openSession(5000);
+        assertTrue(chan.execCommand("yes", 5000));
+        Channel schan = mTS.accept(5000);
+
+        mTC.mPacketizer.setRekeyBytes(16384);
+        assertEquals(mTC.mH, mTC.mSessionID);
+        
+        for (int i = 0; i < 20; i++) {
+            chan.getOutputStream().write(new byte[1024]);
+        }
+        chan.close();
+        
+        // allow a few seconds for the rekeying to complete
+        for (int i = 0; i < 50; i++) {
+            if (! mTC.mH.equals(mTC.mSessionID)) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException x) { }
+        }
+
+        assertFalse(mTC.mH.equals(mTC.mSessionID));
+        schan.close();
+    }
+    
     
     private Socket mSocketC;
     private Socket mSocketS;
