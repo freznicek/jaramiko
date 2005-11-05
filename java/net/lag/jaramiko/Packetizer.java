@@ -217,10 +217,11 @@ import net.lag.crai.CraiRandom;
     write (Message msg)
         throws IOException
     {
+        int contentLength = msg.getPosition();
         msg.packetize(mRandom, mBlockSizeOut, (mBlockEngineOut != null));
         byte[] packet = msg.toByteArray();
         int length = msg.getPosition();
-        mLog.debug("Write packet <" + MessageType.getDescription(packet[5]) + ">, length " + length);
+        mLog.debug("Write packet <" + MessageType.getDescription(packet[5]) + ">, length " + contentLength);
         if (mDumpPackets) {
             mLog.dump("OUT", packet, 0, length);
         }
@@ -247,7 +248,6 @@ import net.lag.crai.CraiRandom;
             mSequenceNumberOut++;
             write(packet, 0, length);
             if (mBlockEngineOut != null) {
-                mLog.dump("mac", mMacBufferOut, 0, mMacSizeOut);
                 write(mMacBufferOut, 0, mMacSizeOut);
             }
             
@@ -272,7 +272,6 @@ import net.lag.crai.CraiRandom;
         if (read(mReadBuffer, 0, mBlockSizeIn, true) < 0) {
             return null;
         }
-        mLog.dump("in pre-decrypt", mReadBuffer, 0, mBlockSizeIn);
         if (mBlockEngineIn != null) {
             try {
                 mBlockEngineIn.process(mReadBuffer, 0, mBlockSizeIn, mReadBuffer, 0);
