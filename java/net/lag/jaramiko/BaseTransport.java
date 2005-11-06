@@ -1026,7 +1026,7 @@ import net.lag.crai.*;
     
 
     /* package */ int mWindowSize = 65536; 
-    /* package */ int mMaxPacketSize = 32768;
+    /* package */ int mMaxPacketSize = 34816;
     
     private Socket mSocket;
     private InputStream mInStream;
