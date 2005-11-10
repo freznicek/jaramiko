@@ -166,4 +166,15 @@ public interface Transport
      */
     public void close ();
 
+    /**
+     * Register a specific subclass of Channel to be used with the specified
+     * kind.  This does not need to be done for the generic "session" channel
+     * kind; however, if you want to override the Channel class used for kind
+     * "session" you may do so.  This is generally used for implementing new
+     * protocols over SSH.
+     *  
+     * @param kind kind of channel the class implements
+     * @param factory the factory for creating channels of this type
+     */
+    public void registerChannelKind (String kind, ChannelFactory factory);
 }

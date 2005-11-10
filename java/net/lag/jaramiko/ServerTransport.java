@@ -136,6 +136,12 @@ public class ServerTransport
                 mChannels[chanID] = null;
             }
         }
+        
+        public Transport
+        getTransport ()
+        {
+            return ServerTransport.this;
+        }
     }
 
     
@@ -417,7 +423,7 @@ public class ServerTransport
         
         synchronized (mLock) {
             myChanID = getNextChannel();
-            c = new Channel(myChanID);
+            c = getChannelForKind(myChanID, kind, m);
             mChannels[myChanID] = c;
         }
         

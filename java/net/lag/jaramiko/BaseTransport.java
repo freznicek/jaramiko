@@ -96,6 +96,8 @@ import net.lag.crai.*;
         mRemoteVersion = null;
         
         mMessageHandlers = new HashMap();
+        mChannelFactoryMap = new HashMap();
+        mChannelFactoryMap.put("session", new Channel.Factory());
     }
     
     public void
@@ -912,6 +914,35 @@ import net.lag.crai.*;
     
     /* package */ abstract void parseChannelOpen (Message m) throws IOException;
     
+    public void 
+    registerChannelKind (String kind, ChannelFactory factory)
+    {
+        mChannelFactoryMap.put(kind, factory);
+    }
+    
+    /* package */ Channel
+    getChannelForKind (int chanid, String kind, Message params)
+    {
+        ChannelFactory factory = (ChannelFactory) mChannelFactoryMap.get(kind);
+        // If we don't know what channel factory to use, use the default Channel
+        if (factory == null) {
+            mLog.notice("Cannot find a ChannelFactory for the channel kind '" + kind + "'; using default Channel");
+            factory = new Channel.Factory();
+        }
+        return factory.createChannel(kind, chanid, params);
+    }  
+
+    /* package */ Channel
+    getChannelForKind (int chanid, String kind, List params)
+    {
+        ChannelFactory factory = (ChannelFactory) mChannelFactoryMap.get(kind);
+        // If we don't know what channel factory to use, use the default Channel
+        if (factory == null) {
+            mLog.notice("Cannot find a ChannelFactory for the channel kind '" + kind + "'; using default Channel");
+            factory = new Channel.Factory();
+        }
+        return factory.createChannel(kind, chanid, params);
+    }
     
     // you are already holding mLock
     /* package */ int
@@ -1068,4 +1099,5 @@ import net.lag.crai.*;
     /* package */ AuthHandler mAuthHandler;
     private Message mGlobalResponse;
     private Map mMessageHandlers;       // Map<byte, MessageHandler>
+    private Map mChannelFactoryMap;     // Map<String, Class> of registered channel types
 }

@@ -34,6 +34,8 @@ import java.io.OutputStream;
 import java.io.InterruptedIOException;
 // no: not until java 4
 //import java.net.SocketTimeoutException;
+import java.util.List;
+
 
 /*
  * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
@@ -60,6 +62,23 @@ import java.io.InterruptedIOException;
  */
 public class Channel
 {
+    public static class Factory
+        implements ChannelFactory
+    {
+        public Channel 
+        createChannel (String kind, int chanid, List params)
+        {
+            return new Channel(chanid, kind, params);
+        }
+
+        public Channel 
+        createChannel (String kind, int chanid, Message params)
+        {
+            return new Channel(chanid, kind, (List)null);
+        }
+    }
+    
+    
     private class ChannelInputStream
         extends InputStream
     {
@@ -228,10 +247,20 @@ public class Channel
     }
     
 
-    /* package */
-    Channel (int chanid)
+    /**
+     * Client-mode constructor for a Channel.  The parameters (if any) are
+     * passed in as a list directly from the application request.
+     * 
+     * @param chanid channel ID
+     * @param kind kind of channel
+     * @param params the parameters this channel was opened with
+     */
+    protected
+    Channel (int chanid, String kind, List params)
     {
         mChanID = chanid;
+        mKind = kind;
+        mParams = params;
         mActive = false;
         mClosed = false;
         mEOFReceived = false;
@@ -515,7 +544,77 @@ public class Channel
             mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
         }
     }
-        
+    
+    /**
+     * Send a generic channel request.  There is no reason to use this if you
+     * are communicating with a standard SSH server, but it can be useful for
+     * implementing other protocols across SSH.
+     *   
+     * @param type the type of the message (an arbitrary string)
+     * @param wantReply true if a reply should be requested from the server
+     *     (will wait up to <code>timeout_ms</code> for a response)
+     * @param data data to be sent along with the request (can be null if no
+     *     extra data is to be sent)
+     * @param timeout_ms time (in milliseconds) to wait to send the message;
+     *     -1 to wait forever
+     * @return true if the operation succeeded; false if not
+     * @throws IOException if an exception occurred while making the request
+     */
+    public boolean
+    sendChannelRequest (String type, boolean wantReply, List data, int timeout_ms) 
+        throws IOException
+    {
+        synchronized (mLock) {
+            if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
+                throw new SSHException("Channel is not open");
+            }
+               
+            Message m = new Message();
+            m.putByte(MessageType.CHANNEL_REQUEST);
+            m.putInt(mRemoteChanID);
+            m.putString(type);
+            m.putBoolean(wantReply);
+            if (data != null) {
+                m.putAll(data);
+            }
+
+            mEvent.clear();
+            mTransport.sendUserMessage(m, timeout_ms);
+            if (wantReply && ! waitForEvent(mEvent, timeout_ms)) {
+                return false;
+            }
+        }
+
+        if (mClosed) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Return the arbitrary string identifying the "type" for this channel.
+     * For normal SSH channels, this will usually be <code>"session"</code>.
+     * 
+     * @retuen the kind of SSH channel
+     */
+    public String 
+    getKind ()
+    {
+        return mKind;
+    }
+
+    /**
+     * Return a list of parameters passed to the channel.  In most cases this
+     * will be null because most SSH channels don't take parameters.
+     * 
+     * @return the channel parameters
+     */
+    public List 
+    getParams ()
+    {
+        return mParams; 
+    }
+
     /**
      * Set a timeout on read operations.  If <code>timeout_ms</code> is zero,
      * no timeout is set, and reads from this channel will block until there
@@ -767,6 +866,33 @@ public class Channel
         mNotifyObject = obj;
     }
     
+    /**
+     * Get the {@link Transport} this Channel is associated with.
+     * 
+     * @return this channel's Transport
+     */
+    public Transport
+    getTransport ()
+    {
+        return mTransport.getTransport();
+    }
+
+    
+    /**
+     * Handle a custom channel request from the remote host.  The default
+     * method just returns <code>false</code> to reject the request.
+     * 
+     * @param type channel request type (an arbitrary string)
+     * @param message an SSH Message object which may contain extra parameters
+     *    for this request
+     * @return true if the request was successful; false if not
+     */
+    protected boolean 
+    handleCustomRequest (String type, Message message)
+    {
+        mLog.debug("Unhandled channel request '" + type + "'");
+        return false;
+    }
     
     /* package */ boolean
     handleMessage (byte ptype, Message m)
@@ -1134,8 +1260,7 @@ public class Channel
                 ok = false;
             }
         } else {
-            mLog.debug("Unhandled channel request '" + key + "'");
-            ok = false;
+            ok = handleCustomRequest(key, m);
         }
         
         if (wantReply) {
@@ -1167,6 +1292,8 @@ public class Channel
     
     private int mChanID;
     private int mRemoteChanID;
+    private String mKind;
+    private List mParams;
     private boolean mActive;
     private boolean mClosed;
     private boolean mEOFReceived;

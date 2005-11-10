@@ -40,4 +40,5 @@ import java.io.IOException;
 {
     public void sendUserMessage (Message m, int timeout_ms) throws IOException;
     public void unlinkChannel (int chanID);
+    public Transport getTransport ();
 }

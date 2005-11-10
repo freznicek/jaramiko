@@ -134,6 +134,12 @@ public class ClientTransport
                 mChannels[chanID] = null;
             }
         }
+        
+        public Transport
+        getTransport ()
+        {
+            return ClientTransport.this;
+        }
     }
     
     
@@ -362,7 +368,10 @@ public class ClientTransport
                 m.putAll(parameters);
             }
             
-            Channel c = new Channel(chanid);
+            Channel c = getChannelForKind(chanid, kind, parameters);
+            if (c == null) {
+                throw new ChannelException(ChannelError.ADMINISTRATIVELY_PROHIBITED);
+            }
             mChannels[chanid] = c;
             e = new Event();
             mChannelEvents[chanid] = e;
