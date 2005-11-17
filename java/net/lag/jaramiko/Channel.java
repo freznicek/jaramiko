@@ -287,11 +287,15 @@ public class Channel
      * It isn't necessary (or desirable) to call this method if you're going
      * to execute a single command with {@link #execCommand}.
      * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
      * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
      * @param width width (in characters) of the terminal screen
      * @param height height (in characters) of the terminal screen
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
-     *     wait forever
+     *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -308,7 +312,7 @@ public class Channel
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("pty-req");
-            m.putBoolean(true);
+            m.putBoolean(timeout_ms != 0);
             m.putString(term);
             m.putInt(width);
             m.putInt(height);
@@ -318,10 +322,10 @@ public class Channel
             m.putString("");
             
             mEvent.clear();
-            mTransport.sendUserMessage(m, timeout_ms);
+            mTransport.sendUserMessage(m, -1);
         }
         
-        if (! waitForEvent(mEvent, timeout_ms)) {
+        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
             return false;
         }
         if (mClosed) {
@@ -335,12 +339,16 @@ public class Channel
      * allows it, the channel will then be directly connected to the stdin,
      * stdout, and stderr of the shell.
      * 
-     * <p>Normally you would call {@link #getPTY} before this, in which case
-     * the shell will operate through the pty, and the channel will be
+     * <p>A typical usage would call {@link #getPTY} before this, in which
+     * case the shell will operate through the pty, and the channel will be
      * connected to the stdin and stdout of the pty.
      * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
-     *     wait forever
+     *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -357,13 +365,13 @@ public class Channel
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("shell");
-            m.putBoolean(true);
+            m.putBoolean(timeout_ms != 0);
             
             mEvent.clear();
-            mTransport.sendUserMessage(m, timeout_ms);
+            mTransport.sendUserMessage(m, -1);
         }
         
-        if (! waitForEvent(mEvent, timeout_ms)) {
+        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
             return false;
         }
         if (mClosed) {
@@ -377,9 +385,13 @@ public class Channel
      * will then be directly connected to the stdin, stdout, and stderr of
      * the command being executed.
      * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
      * @param command a shell command to execute
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
-     *     wait forever
+     *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -396,14 +408,14 @@ public class Channel
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("exec");
-            m.putBoolean(true);
+            m.putBoolean(timeout_ms != 0);
             m.putString(command);
             
             mEvent.clear();
-            mTransport.sendUserMessage(m, timeout_ms);
+            mTransport.sendUserMessage(m, -1);
         }
         
-        if (! waitForEvent(mEvent, timeout_ms)) {
+        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
             return false;
         }
         if (mClosed) {
@@ -417,9 +429,13 @@ public class Channel
      * If the server allows it, the channel will then be directly connected
      * to the requested subsystem.
      * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
      * @param subsystem name of the subsystem being requested
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
-     *     wait forever
+     *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded, false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -436,14 +452,14 @@ public class Channel
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("subsystem");
-            m.putBoolean(true);
+            m.putBoolean(timeout_ms != 0);
             m.putString(subsystem);
             
             mEvent.clear();
-            mTransport.sendUserMessage(m, timeout_ms);
+            mTransport.sendUserMessage(m, -1);
         }
         
-        if (! waitForEvent(mEvent, timeout_ms)) {
+        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
             return false;
         }
         if (mClosed) {
@@ -457,10 +473,14 @@ public class Channel
      * height of the terminal emulation created by a previous {@link #getPTY}
      * call.
      * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
      * @param width new width (in characters) of the terminal
      * @param height new height (in characters) of the terminal
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
-     *     wait forever
+     *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded, false if not
      * @throws IOException if an exception occurred while making the request
      */
@@ -477,7 +497,7 @@ public class Channel
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("window-change");
-            m.putBoolean(true);
+            m.putBoolean(timeout_ms != 0);
             m.putInt(width);
             m.putInt(height);
             m.putInt(0);
@@ -487,7 +507,7 @@ public class Channel
             mTransport.sendUserMessage(m, timeout_ms);
         }
         
-        if (! waitForEvent(mEvent, timeout_ms)) {
+        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
             return false;
         }
         if (mClosed) {
@@ -549,6 +569,10 @@ public class Channel
      * Send a generic channel request.  There is no reason to use this if you
      * are communicating with a standard SSH server, but it can be useful for
      * implementing other protocols across SSH.
+     * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
      *   
      * @param type the type of the message (an arbitrary string)
      * @param wantReply true if a reply should be requested from the server
@@ -556,31 +580,31 @@ public class Channel
      * @param data data to be sent along with the request (can be null if no
      *     extra data is to be sent)
      * @param timeout_ms time (in milliseconds) to wait to send the message;
-     *     -1 to wait forever
+     *     -1 to wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
     public boolean
-    sendChannelRequest (String type, boolean wantReply, List data, int timeout_ms) 
+    sendChannelRequest (String type, List data, int timeout_ms) 
         throws IOException
     {
         synchronized (mLock) {
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-               
+            
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString(type);
-            m.putBoolean(wantReply);
+            m.putBoolean(timeout_ms != 0);
             if (data != null) {
                 m.putAll(data);
             }
 
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if (wantReply && ! waitForEvent(mEvent, timeout_ms)) {
+            if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
                 return false;
             }
         }
