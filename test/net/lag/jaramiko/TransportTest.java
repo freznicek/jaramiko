@@ -356,6 +356,76 @@ public class TransportTest
         assertTrue(mTS.isActive());
     }
     
+    // verify keyboard-interactive auth mode
+    public void
+    testInteractiveAuth ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.start(publicHostKey, 15000);
+
+        String[] remain = mTC.authInteractive("commie", new InteractiveHandler() {
+            public String[] handleInteractiveRequest (InteractiveQuery query) {
+                mGotQuery = query;
+                return new String[] { "cat" };
+            }
+        }, null, 15000);
+        assertEquals("password", mGotQuery.title);
+        assertEquals(1, mGotQuery.prompts.length);
+        assertEquals("Password", mGotQuery.prompts[0].text);
+        assertEquals(false, mGotQuery.prompts[0].echoResponse);
+        assertEquals(0, remain.length);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+    }
+    
+    // verify that a password auth attempt will fallback to "interactive" if
+    // password auth isn't supported, but interactive is.
+    public void
+    testInteractiveAuthFallback ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.start(publicHostKey, 15000);
+
+        String[] remain = mTC.authPassword("commie", "cat", 15000);
+        assertEquals(0, remain.length);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+    }
+    
     // verify that exec_command() does something reasonable
     public void
     testExecCommand ()
@@ -599,6 +669,7 @@ public class TransportTest
     private ServerTransport mTS;
 
     private String mBanner;
+    private InteractiveQuery mGotQuery;
     
     private static final BigInteger K =
         new BigInteger("12328109597968658152337725611420972077453906897310" +

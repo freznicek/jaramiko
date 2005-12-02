@@ -21,14 +21,12 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * 
- * Created on May 30, 2005
  */
 
 package net.lag.jaramiko;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import net.lag.crai.Crai;
@@ -78,6 +76,18 @@ import net.lag.crai.Crai;
     }
     
     public void
+    authNone (String username, Event event)
+        throws IOException
+    {
+        synchronized (this) {
+            mAuthEvent = event;
+            mAuthMethod = "none";
+            mUsername = username;
+            requestAuth();
+        }
+    }
+    
+    public void
     authPassword (String username, String password, Event event)
         throws IOException
     {
@@ -99,6 +109,20 @@ import net.lag.crai.Crai;
             mAuthMethod = "publickey";
             mUsername = username;
             mPrivateKey = key;
+            requestAuth();
+        }
+    }
+    
+    public void
+    authInteractive (String username, InteractiveHandler handler, Event event, String[] submethods)
+        throws IOException
+    {
+        synchronized (this) {
+            mAuthEvent = event;
+            mAuthMethod = "keyboard-interactive";
+            mUsername = username;
+            mInteractiveHandler = handler;
+            mSubmethods = submethods;
             requestAuth();
         }
     }
@@ -134,6 +158,12 @@ import net.lag.crai.Crai;
             return true;
         case MessageType.USERAUTH_REQUEST:
             parseAuthRequest(m);
+            return true;
+        case MessageType.USERAUTH_INFO_REQUEST:
+            parseInfoRequest(m);
+            return true;
+        case MessageType.USERAUTH_INFO_RESPONSE:
+            parseInfoResponse(m);
             return true;
         }
         return true;
@@ -195,6 +225,16 @@ import net.lag.crai.Crai;
             m.putByteString(mPrivateKey.toByteArray());
             byte[] blob = getSessionBlob(mPrivateKey, "ssh-connection", mUsername);
             m.putByteString(mPrivateKey.signSSHData(mCrai, blob).toByteArray());
+        } else if (mAuthMethod.equals("keyboard-interactive")) {
+            m.putString("");
+            if (mSubmethods == null) {
+                m.putString("");
+            } else {
+                m.putList(Arrays.asList(mSubmethods));
+            }
+            mTransport.registerMessageHandler(MessageType.USERAUTH_INFO_REQUEST, this);
+        } else if (mAuthMethod.equals("none")) {
+            // nothing
         } else {
             throw new SSHException("Unknown auth method '" + mAuthMethod + "'");
         }
@@ -219,7 +259,7 @@ import net.lag.crai.Crai;
     parseAuthFailure (Message m)
     {
         List authList = m.getList();
-        String[] auths = (String[]) authList.toArray(new String[0]);
+        String[] auths = (String[]) authList.toArray(new String[authList.size()]);
         boolean partial = m.getBoolean();
         if (partial) {
             mLog.notice("Authentication continues...");
@@ -243,6 +283,36 @@ import net.lag.crai.Crai;
         mLog.notice("Authentication successful!");
         mAuthenticated = true;
         mAuthEvent.set();
+    }
+    
+    private void
+    parseInfoRequest (Message m)
+        throws IOException
+    {
+        if (! mAuthMethod.equals("keyboard-interactive")) {
+            throw new SSHException("Illegal info request from the server");
+        }
+        
+        InteractiveQuery query = new InteractiveQuery();
+        query.title = m.getString();
+        query.instructions = m.getString();
+        m.getString();      // lang
+        int n = m.getInt();
+        query.prompts = new InteractiveQuery.Prompt[n];
+        for (int i = 0; i < n; i++) {
+            query.prompts[i] = new InteractiveQuery.Prompt();
+            query.prompts[i].text = m.getString();
+            query.prompts[i].echoResponse = m.getBoolean();
+        }
+        String[] responses = mInteractiveHandler.handleInteractiveRequest(query);
+        
+        Message mx = new Message();
+        mx.putByte(MessageType.USERAUTH_INFO_RESPONSE);
+        mx.putInt(responses.length);
+        for (int i = 0; i < responses.length; i++) {
+            mx.putString(responses[i]);
+        }
+        mTransport.sendMessage(mx);
     }
     
     
@@ -274,30 +344,100 @@ import net.lag.crai.Crai;
         mTransport.sendMessage(m);
         mTransport.close();
     }
+    
+    private void
+    sendAuthResult (String username, String method, int result)
+        throws IOException
+    {
+        Message m = new Message();
+        if (result == AuthError.SUCCESS) {
+            mLog.notice("Auth granted (" + method + ")");
+            m.putByte(MessageType.USERAUTH_SUCCESS);
+            mAuthenticated = true;
+        } else {
+            mLog.notice("Auth rejected (" + method + ")");
+            m.putByte(MessageType.USERAUTH_FAILURE);
+            m.putString(mServer.getAllowedAuths(username));
+            if (result == AuthError.PARTIAL_SUCCESS) {
+                m.putBoolean(true);
+            } else {
+                m.putBoolean(false);
+                mFailCount++;
+            }
+        }
+        mTransport.sendMessage(m);
+        if (mFailCount >= 10) {
+            disconnectNoMoreAuth();
+        }
+    }
 
     private void
     parseServiceRequest (Message m)
         throws IOException
     {
         String service = m.getString();
-        if (service.equals("ssh-userauth")) {
-            Message mx = new Message();
-            mx.putByte(MessageType.SERVICE_ACCEPT);
-            mx.putString(service);
-            mTransport.sendMessage(mx);
-            
-            if (mBanner != null) {
-                // send auth banner
-                mx = new Message();
-                mx.putByte(MessageType.USERAUTH_BANNER);
-                mx.putString(mBanner);
-                mx.putString("");
-                mTransport.sendMessage(mx);
-            }
+        if (! service.equals("ssh-userauth")) {
+            // dunno this one
+            disconnectServiceNotAvailable();
             return;
         }
-        // dunno this one
-        disconnectServiceNotAvailable();
+
+        Message mx = new Message();
+        mx.putByte(MessageType.SERVICE_ACCEPT);
+        mx.putString(service);
+        mTransport.sendMessage(mx);
+        
+        if (mBanner != null) {
+            // send auth banner
+            mx = new Message();
+            mx.putByte(MessageType.USERAUTH_BANNER);
+            mx.putString(mBanner);
+            mx.putString("");
+            mTransport.sendMessage(mx);
+        }
+        return;
+    }
+    
+    private void
+    parseInfoResponse (Message m)
+        throws IOException
+    {
+        if (! mAuthMethod.equals("keyboard-interactive")) {
+            throw new SSHException("Illegal info response from the client");
+        }
+        int n = m.getInt();
+        String[] responses = new String[n];
+        for (int i = 0; i < n; i++) {
+            responses[i] = m.getString();
+        }
+        int result = mServer.checkAuthInteractiveResponse(responses);
+        if (result == AuthError.CONTINUE_INTERACTIVE) {
+            InteractiveQuery query = mServer.checkAuthInteractive(mUsername, mSubmethods);
+            if (query != null) {
+                interactiveQuery(query);
+                return;
+            }
+            result = AuthError.FAILED;
+        }
+        sendAuthResult(mUsername, "keyboard-interactive", result);
+    }
+    
+    private void
+    interactiveQuery (InteractiveQuery dialog)
+        throws IOException
+    {
+        Message m = new Message();
+        m.putByte(MessageType.USERAUTH_INFO_REQUEST);
+        m.putString(dialog.title);
+        m.putString(dialog.instructions);
+        m.putString("");
+        m.putInt(dialog.prompts.length);
+        for (int i = 0; i < dialog.prompts.length; i++) {
+            m.putString(dialog.prompts[i].text);
+            m.putBoolean(dialog.prompts[i].echoResponse);
+        }
+        mTransport.sendMessage(m);
+        mTransport.registerMessageHandler(MessageType.USERAUTH_INFO_RESPONSE, this);
     }
     
     private void
@@ -377,31 +517,25 @@ import net.lag.crai.Crai;
                     result = AuthError.FAILED;
                 }
             }
+        } else if (method.equals("keyboard-interactive")) {
+            m.getString();  // lang
+            List l = m.getList();
+            String[] submethods = (String[]) l.toArray(new String[l.size()]);
+            InteractiveQuery query = mServer.checkAuthInteractive(username, submethods);
+            if (query != null) {
+                mAuthMethod = method;
+                mUsername = username;
+                mSubmethods = submethods;
+                interactiveQuery(query);
+                return;
+            }
+            result = AuthError.FAILED;
         } else {
             result = mServer.checkAuthNone(username);
         }
         
         // okay, send result
-        Message mx = new Message();
-        if (result == AuthError.SUCCESS) {
-            mLog.notice("Auth granted (" + method + ")");
-            mx.putByte(MessageType.USERAUTH_SUCCESS);
-            mAuthenticated = true;
-        } else {
-            mLog.notice("Auth rejected (" + method + ")");
-            mx.putByte(MessageType.USERAUTH_FAILURE);
-            mx.putString(mServer.getAllowedAuths(username));
-            if (result == AuthError.PARTIAL_SUCCESS) {
-                mx.putBoolean(true);
-            } else {
-                mx.putBoolean(false);
-                mFailCount++;
-            }
-        }
-        mTransport.sendMessage(mx);
-        if (mFailCount >= 10) {
-            disconnectNoMoreAuth();
-        }
+        sendAuthResult(username, method, result);
     }
     
     
@@ -424,4 +558,6 @@ import net.lag.crai.Crai;
     private String mUsername;
     private String mPassword;
     private PKey mPrivateKey;
+    private InteractiveHandler mInteractiveHandler;
+    private String[] mSubmethods;
 }

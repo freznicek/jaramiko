@@ -243,8 +243,39 @@ public class ClientTransport
     }
     
     /**
+     * Try to authenticate to the SSH2 server using no authentication at all.
+     * This will almost always fail.  It may be useful for determining the list
+     * of authentication types supported by the server, by catching the
+     * {@link BadAuthenticationType} exception raised.
+     * 
+     * @param username the username to authenticate as
+     * @param timeout_ms how long to wait for a response (in milliseconds);
+     *     <code>-1</code> to wait forever
+     * @return a list of auth type permissible for the next step of
+     *     authentication (normally empty, meaning authentication is complete)
+     * @throws BadAuthenticationType if "none" authentication isn't allowed
+     *     by the server for this user
+     * @throws AuthenticationFailedException if the authentication failed
+     * @throws SSHException if an SSH protocol exception occurred
+     * @throws IOException if an I/O exception occurred at the socket layer
+     */
+    public String[]
+    authNone (String username, int timeout_ms)
+        throws IOException
+    {
+        Event event = new Event();
+        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler.setBannerListener(mBannerListener);
+        mAuthHandler.authNone(username, event);
+        return waitForAuthResponse(event, timeout_ms);
+    }
+    
+    /**
      * Authenticate to the SSH2 server using a password.  The username and
-     * password are sent over an encrypted link.
+     * password are sent over an encrypted link.  If the server doesn't support
+     * password authentication, but does support "interactive" authentication,
+     * an attempt at simple "interactive" password authentication is attempted.
+     * (This is usually a symptom of a misconfigured Debian or Gentoo server.)
      * 
      * <p>This method blocks until authentication succeeds or fails.  On
      * failure, an exception is raised.  Otherwise, the method simply returns.
@@ -268,11 +299,76 @@ public class ClientTransport
     authPassword (String username, String password, int timeout_ms)
         throws IOException
     {
+        return authPassword(username, password, true, timeout_ms);
+    }
+    
+    /**
+     * Authenticate to the SSH2 server using a password.  The username and
+     * password are sent over an encrypted link.
+     * 
+     * <p>This method blocks until authentication succeeds or fails.  On
+     * failure, an exception is raised.  Otherwise, the method simply returns.
+     * If the server requires multi-step authentication (which is very rare),
+     * this method will return a list of auth types permissible for the next
+     * step.  Otherwise, in the normal case, an empty list is returned.
+     * 
+     * @param username the username to authenticate as
+     * @param password the password to authenticate with
+     * @param fallback <code>true</code> if an attempt at an automated
+     *     "interactive" password auth should be made if the server doesn't
+     *     support normal password auth
+     * @param timeout_ms how long to wait for a response (in milliseconds);
+     *     <code>-1</code> to wait forever
+     * @return a list of auth types permissible for the next step of
+     *     authentication (normally empty, meaning authentication is complete)
+     * @throws BadAuthenticationType if password authentication isn't allowed
+     *     by the server for this user
+     * @throws AuthenticationFailedException if the authentication failed
+     * @throws SSHException if an SSH protocol exception occurred
+     * @throws IOException if an I/O exception occurred at the socket layer
+     */
+    public String[]
+    authPassword (String username, final String password, boolean fallback, int timeout_ms)
+        throws IOException
+    {
         Event event = new Event();
         mAuthHandler = new AuthHandler(this, sCrai, mLog);
         mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authPassword(username, password, event);
-        return waitForAuthResponse(event, timeout_ms);
+        try {
+            return waitForAuthResponse(event, timeout_ms);
+        } catch (BadAuthenticationType x) {
+            // if password auth isn't allowed, but keyboard-interactive *is*, try to fudge it
+            List allowed = Arrays.asList(x.getAllowedTypes());
+            if (! allowed.contains("keyboard-interactive")) {
+                fallback = false;
+            }
+            if (! fallback) {
+                throw x;
+            }
+            
+            try {
+                return authInteractive(username, new InteractiveHandler() {
+                    public String[] handleInteractiveRequest (InteractiveQuery query) throws SSHException {
+                        if (query.prompts.length > 1) {
+                            throw new SSHException("Fallback authentication failed.");
+                        }
+                        if (query.prompts.length == 0) {
+                            /* for some reason, at least on osx, a 2nd request
+                             * will be made with zero fields requested.  maybe
+                             * it's just to try to fake out automated scripting
+                             * of the exact type we're doing here.  *shrug* :)
+                             */
+                            return new String[0];
+                        }
+                        return new String[] { password };
+                    }
+                }, null, timeout_ms);
+            } catch (SSHException ignored) {
+                // attempt failed; just throw the original exception
+                throw x;
+            }
+        }
     }
     
     /**
@@ -284,7 +380,7 @@ public class ClientTransport
      * failure, an exception is raised.  Otherwise, the method simply returns.
      * If the server requires multi-step authentication (which is very rare),
      * this method will return a list of auth types permissible for the next
-     * step.  Otherwise, in the nromal case, an empty list is returned.
+     * step.  Otherwise, in the normal case, an empty list is returned.
      * 
      * @param username the username to authenticate as
      * @param key the private key to authenticate with
@@ -309,6 +405,46 @@ public class ClientTransport
         return waitForAuthResponse(event, timeout_ms);
     }
 
+    /**
+     * Authenticate to the SSH2 server interactively.  A handler is used to
+     * answer arbitrary questions from the server.  On many servers, this is
+     * just a dumb wrapper around PAM.
+     * 
+     * <p>This method blocks until the authentication succeeds or fails,
+     * periodically calling the given {@link InteractiveHandler} to get
+     * answers for authentication questions.  The handler may be called more
+     * than once if the server continues to ask questions.
+     * 
+     * <p>If the server requires multi-step authentication (which is very
+     * rare), this method will return a list of auth types permissible for the
+     * next step.  Otherwise, in the normal case, an empty list is returned.
+     * 
+     * @param username the username to authenticate as
+     * @param handler a handler for fielding interactive queries from the
+     *     server and providing responses
+     * @param submethods an optional list of requested interactive submethods
+     *     (may be null)
+     * @param timeout_ms how long to wait for a response (in milliseconds);
+     *     <code>-1</code> to wait forever
+     * @return a list of auth types permissible for the next step of
+     *     authentication (normally empty, meaning authentication is complete)
+     * @throws BadAuthenticationType if interactive authentication isn't
+     *     allowed by the server for this user
+     * @throws AuthenticationFailedException if the authentication failed
+     * @throws SSHException if an SSH protocol exception occurred
+     * @throws IOException if an I/O exception occurred at the socket layer
+     */
+    public String[]
+    authInteractive (String username, InteractiveHandler handler, String[] submethods, int timeout_ms)
+        throws IOException
+    {
+        Event event = new Event();
+        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler.setBannerListener(mBannerListener);
+        mAuthHandler.authInteractive(username, handler, event, submethods);
+        return waitForAuthResponse(event, timeout_ms);
+    }
+    
     /**
      * Return the host key of the server (in client mode).
      * 

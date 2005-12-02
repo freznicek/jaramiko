@@ -70,6 +70,9 @@ public class FakeServer
                 return "password";
             }
         }
+        if (username.equals("commie")) {
+            return "keyboard-interactive";
+        }
         return "publickey";
     }
     
@@ -106,6 +109,34 @@ public class FakeServer
                 return AuthError.SUCCESS;
             }
             return AuthError.PARTIAL_SUCCESS;
+        }
+        return AuthError.FAILED;
+    }
+    
+    public InteractiveQuery
+    checkAuthInteractive (String username, String[] methods)
+    {
+        if (username.equals("commie")) {
+            mUsername = username;
+            InteractiveQuery query = new InteractiveQuery();
+            query.title = "password";
+            query.instructions = "Please enter a password.";
+            query.prompts = new InteractiveQuery.Prompt[1];
+            query.prompts[0] = new InteractiveQuery.Prompt();
+            query.prompts[0].text = "Password";
+            query.prompts[0].echoResponse = false;
+            return query;
+        }
+        return null;
+    }
+    
+    public int
+    checkAuthInteractiveResponse (String[] responses)
+    {
+        if (mUsername.equals("commie")) {
+            if ((responses.length == 1) && responses[0].equals("cat")) {
+                return AuthError.SUCCESS;
+            }
         }
         return AuthError.FAILED;
     }
@@ -159,4 +190,5 @@ public class FakeServer
     public boolean mParanoidDidPublicKey;
     public PKey mParanoidKey;
     public String mGlobalRequest;
+    public String mUsername;
 }

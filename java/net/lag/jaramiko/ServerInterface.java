@@ -123,6 +123,41 @@ public interface ServerInterface
     checkAuthPublicKey (String username, PKey key);
     
     /**
+     * Begin (or continue) an interactive authentication challenge, if
+     * supported.  This is used for "keyboard-interactive" authentication,
+     * which requires the server to send a series of questions for the client
+     * to answer.
+     * 
+     * <p>If this method returns <code>null</code>, a
+     * {@link AuthError#FAILED FAILED} response is sent to the client.
+     * Otherwise the InteractiveQuery object returned should contain
+     * instructions and a set of one or more prompts for user input.
+     * 
+     * @param username the username of the client
+     * @param submethods a list of interactive methods preferred by the client
+     *     (usually empty)
+     * @return an object containing instructions and prompts for the user
+     */
+    public InteractiveQuery
+    checkAuthInteractive (String username, String[] submethods);
+    
+    /**
+     * Continue or finish an interactive authentication challenge.  This is
+     * used for "keyboard-interactive" authentication, which requires the
+     * server to send a series of questions for the client to answer.  The
+     * return code should be one of those listed in {@link AuthError}.
+     * 
+     * <p>If this method returns {@link AuthError#CONTINUE_INTERACTIVE},
+     * {@link #checkAuthInteractive checkAuthInteractive} will be called to get
+     * the next set of prompts for the client.
+     * 
+     * @param resposnes the set of responses from the client
+     * @return an AuthError code
+     */
+    public int
+    checkAuthInteractiveResponse (String[] responses);
+    
+    /**
      * Handle a global request of the given kind.  This method is called
      * in server mode and client mode, whenever the remote host makes a global
      * request.  If there are any arguments to the request, they will be in

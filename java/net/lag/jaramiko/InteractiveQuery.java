@@ -2,7 +2,7 @@
  * Copyright (C) 2005 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -21,53 +21,47 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * 
- * Created on Jul 2, 2005
  */
 
 package net.lag.jaramiko;
 
 
 /**
- * Error codes returned by an SSH2 server when it rejects an authentication
- * request.  These are used by the various authentication methods in
- * {@link ServerInterface}.
+ * Information from the server to the client containing instructions and
+ * prompts for an interactive authentication request.
  * 
  * @author robey
  */
-public final class AuthError
+public class InteractiveQuery
 {
-    private
-    AuthError ()
+    /**
+     * An interactive authentication prompt from the server.  Each prompt
+     * contains the prompt {@link #text} and a boolean ({@link #echoResponse})
+     * indicating if the response should be echoed back.
+     */
+    public static class Prompt
     {
-        // forbid
-    }
-    
-    
-    /**
-     * The authentication was successful, and the authentication process is
-     * complete.
-     */
-    public static final int SUCCESS = 0;
+        /** The prompt to offer the user */
+        public String text;
+        
+        /** Indicates if the user's response should be echoed back (ie, is not a password) */
+        public boolean echoResponse;
+    };
+
     
     /**
-     * The authentication was successful, but more stages of authentication
-     * are required before authentication is complete.  In this case,
-     * {@link ServerInterface#getAllowedAuths} will be called to get a list
-     * of authentication methods that can be used to continue.
+     * A short title for the dialog or session.
      */
-    public static final int PARTIAL_SUCCESS = 1;
+    public String title;
     
     /**
-     * Authentication failed.
+     * Longer-form instructions from the server, suitable for displaying inside
+     * a dialog box (for example).
      */
-    public static final int FAILED = 2;
+    public String instructions;
     
     /**
-     * The authentication was successful so far, but there is another set of
-     * questions to answer.  This may only be used in "keyboard-interactive"
-     * authentication.
+     * An array of prompts (text + echo indicator) to ask the user.
      */
-    public static final int CONTINUE_INTERACTIVE = 99;
+    public Prompt[] prompts;
 }

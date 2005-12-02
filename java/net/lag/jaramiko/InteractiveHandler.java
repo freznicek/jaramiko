@@ -2,7 +2,7 @@
  * Copyright (C) 2005 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -21,53 +21,24 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * 
- * Created on Jul 2, 2005
  */
 
 package net.lag.jaramiko;
 
-
 /**
- * Error codes returned by an SSH2 server when it rejects an authentication
- * request.  These are used by the various authentication methods in
- * {@link ServerInterface}.
- * 
- * @author robey
+ * Handler for getting user responses to an SSH2 server's "interactive"
+ * queries during an interactive authentication.
  */
-public final class AuthError
+public interface InteractiveHandler
 {
-    private
-    AuthError ()
-    {
-        // forbid
-    }
-    
-    
     /**
-     * The authentication was successful, and the authentication process is
-     * complete.
+     * Handle an interactive authentication request from the server.  The
+     * server provides a title, instructions, and one or more prompts.  After
+     * the user has entered the responses, this method should return them.
+     * It should return as many responses as there were prompts.
+     * 
+     * @param dialog instructions and prompts for the user
+     * @return an array of responses from the user
      */
-    public static final int SUCCESS = 0;
-    
-    /**
-     * The authentication was successful, but more stages of authentication
-     * are required before authentication is complete.  In this case,
-     * {@link ServerInterface#getAllowedAuths} will be called to get a list
-     * of authentication methods that can be used to continue.
-     */
-    public static final int PARTIAL_SUCCESS = 1;
-    
-    /**
-     * Authentication failed.
-     */
-    public static final int FAILED = 2;
-    
-    /**
-     * The authentication was successful so far, but there is another set of
-     * questions to answer.  This may only be used in "keyboard-interactive"
-     * authentication.
-     */
-    public static final int CONTINUE_INTERACTIVE = 99;
+    public String[] handleInteractiveRequest (InteractiveQuery dialog) throws SSHException;
 }

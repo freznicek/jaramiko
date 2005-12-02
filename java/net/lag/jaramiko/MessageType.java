@@ -58,6 +58,9 @@ package net.lag.jaramiko;
     
     public static final byte USERAUTH_PK_OK = 60;
     
+    public static final byte USERAUTH_INFO_REQUEST = 60;
+    public static final byte USERAUTH_INFO_RESPONSE = 61;
+    
     public static final byte GLOBAL_REQUEST = 80;
     public static final byte REQUEST_SUCCESS = 81;
     public static final byte REQUEST_FAILURE = 82;
@@ -114,7 +117,9 @@ package net.lag.jaramiko;
         case USERAUTH_BANNER:
             return "userauth-banner";
         case USERAUTH_PK_OK:
-            return "userauth-pk-ok";
+            return "userauth-pk-ok/info-request";
+        case USERAUTH_INFO_RESPONSE:
+            return "userauth-info-response";
         case GLOBAL_REQUEST:
             return "global-request";
         case REQUEST_SUCCESS:

@@ -28,6 +28,9 @@
 
 package net.lag.jaramiko;
 
+import java.util.Arrays;
+
+
 /**
  * Exception raised when an authentication type (like password) is used, but
  * the server isn't allowing that type.  (It may only allow public-key, for
@@ -56,6 +59,12 @@ public class BadAuthenticationType
     getAllowedTypes ()
     {
         return mAllowedTypes;
+    }
+    
+    public String
+    toString ()
+    {
+        return "Bad authentication type (allowed types: " + Arrays.asList(mAllowedTypes) + ")";
     }
     
     
