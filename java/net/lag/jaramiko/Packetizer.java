@@ -287,10 +287,8 @@ import net.lag.crai.CraiRandom;
         if ((length + 4) % mBlockSizeIn != 0) {
             throw new IOException("Invalid packet blocking");
         }
-        int padding = mReadBuffer[4];       // all cipher block sizes are >= 8
-        if ((padding < 0) || (padding > 32)) {
-            throw new IOException("invalid padding");
-        }
+        int padding = (int) mReadBuffer[4] & 255;       // all cipher block sizes are >= 8
+        // openssh will sometimes use padding of 64 or greater, which is ok
 
         byte[] packet = new byte[length - 1];
         System.arraycopy(mReadBuffer, 5, packet, 0, leftover);
