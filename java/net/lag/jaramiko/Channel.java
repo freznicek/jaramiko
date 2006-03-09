@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -62,7 +62,7 @@ import java.util.List;
  */
 public class Channel
 {
-    public static class Factory
+    /* package */ static class Factory
         implements ChannelFactory
     {
         public Channel 
@@ -575,8 +575,6 @@ public class Channel
      * the request without waiting for a response.
      *   
      * @param type the type of the message (an arbitrary string)
-     * @param wantReply true if a reply should be requested from the server
-     *     (will wait up to <code>timeout_ms</code> for a response)
      * @param data data to be sent along with the request (can be null if no
      *     extra data is to be sent)
      * @param timeout_ms time (in milliseconds) to wait to send the message;

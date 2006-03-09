@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -52,7 +52,7 @@ public interface ChannelFactory
     public Channel createChannel(String kind, int chanid, List params);
            
     /**
-     * Create a channel from parameteres that are in the form of an SSH
+     * Create a channel from parameters that are in the form of an SSH
      * {@link Message}.  This is called from {@link ServerTransport} when the
      * remote client has requested a special channel type.  The parameters
      * (if any) can be retrieved from the Message object.
