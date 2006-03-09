@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -373,6 +375,21 @@ public class ServerTransport
         }
     }
 
+    // FIXME this needs a unit test
+    /* package */ void
+    sendKexInitHook ()
+    {
+        // need to remove key-types from the SecurityOptions if we don't have corresponding keys
+        List keyTypes = mSecurityOptions.getKeys();
+        for (Iterator i = keyTypes.iterator(); i.hasNext(); ) {
+            String keyType = (String) i.next();
+            if (! mServerKeyMap.containsKey(keyType)) {
+                i.remove();
+            }
+        }
+        mSecurityOptions.equals(keyTypes);
+    }
+    
     /* package */ void
     parseNewKeysHook ()
     {

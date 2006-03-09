@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -444,6 +444,8 @@ import net.lag.crai.*;
     sendKexInit ()
         throws IOException
     {
+        sendKexInitHook();
+        
         synchronized (mClearToSend) {
             mClearToSend.clear();
         }
@@ -473,13 +475,20 @@ import net.lag.crai.*;
         sendMessage(m);
     }
     
-    // return the first string from clientPrefs that's in serverPrefs
-    /* package */ String
-    filter (List clientPrefs, List serverPrefs)
+    /* package */ void
+    sendKexInitHook ()
     {
-        for (Iterator i = clientPrefs.iterator(); i.hasNext(); ) {
+        // pass
+    }
+    
+    // return the first string from localPrefs that's in remotePrefs
+    // (server mode overrides this to reverse the sense)
+    /* package */ String
+    filter (List localPrefs, List remotePrefs)
+    {
+        for (Iterator i = localPrefs.iterator(); i.hasNext(); ) {
             String c = (String) i.next();
-            if (serverPrefs.contains(c)) {
+            if (remotePrefs.contains(c)) {
                 return c;
             }
         }
