@@ -216,6 +216,40 @@ public class TransportTest
         mTC.sendIgnore(1024, 15000);
     }
 
+    /*
+     * verify that the server doesn't offer a key type it doesn't have.
+     */
+    public void
+    testServerKeyFiltering ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+
+        /* make sure RSA is listed first */
+        SecurityOptions o = mTC.getSecurityOptions();
+        o.setKeys(Arrays.asList(new String[] { "ssh-rsa", "ssh-dss" }));
+
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        sync.waitFor(5000);
+
+        assertTrue(mTC.isActive());
+        assertTrue(mTS.isActive());
+    }
+    
     // verify that the keepalive will be sent
     public void
     testKeepalive ()
