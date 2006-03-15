@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -29,12 +29,18 @@ import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
+import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.RSAPrivateKeySpec;
@@ -103,6 +109,20 @@ public class CraiJCE
             }
         }
         
+        public CraiPrivateKey.Contents
+        getContents ()
+        {
+            return new CraiPrivateKey.RSAContents() {
+                public BigInteger getN() {
+                    return mN;
+                }
+                
+                public BigInteger getD() {
+                    return mD;
+                }
+            };
+        }
+        
         
         private BigInteger mN;
         private BigInteger mD;
@@ -138,6 +158,28 @@ public class CraiJCE
                 throw new CraiException("error performing DSA signature: " + e);
             }
         }
+        
+        public CraiPrivateKey.Contents
+        getContents ()
+        {
+            return new CraiPrivateKey.DSAContents() {
+                public BigInteger getP() {
+                    return mP;
+                }
+                
+                public BigInteger getQ() {
+                    return mQ;
+                }
+
+                public BigInteger getG() {
+                    return mG;
+                }
+
+                public BigInteger getX() {
+                    return mX;
+                }
+            };
+        }
 
 
         private BigInteger mX;
@@ -171,6 +213,20 @@ public class CraiJCE
             } catch (Exception e) {
                 throw new CraiException("error verifying RSA signature: " + e);
             }
+        }
+
+        public CraiPublicKey.Contents
+        getContents ()
+        {
+            return new CraiPublicKey.RSAContents() {
+                public BigInteger getN() {
+                    return mN;
+                }
+                
+                public BigInteger getE() {
+                    return mE;
+                }
+            };
         }
         
         
@@ -224,6 +280,28 @@ public class CraiJCE
             }
         }
         
+        public CraiPublicKey.Contents
+        getContents ()
+        {
+            return new CraiPublicKey.DSAContents() {
+                public BigInteger getP() {
+                    return mP;
+                }
+                
+                public BigInteger getQ() {
+                    return mQ;
+                }
+
+                public BigInteger getG() {
+                    return mG;
+                }
+
+                public BigInteger getY() {
+                    return mY;
+                }
+            };
+        }
+
         
         private BigInteger mY;
         private BigInteger mP;
@@ -410,6 +488,55 @@ public class CraiJCE
     makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
     {
         return new JCEPublicDSAKey(y, p, q, g);
+    }
+    
+    public CraiKeyPair
+    generateRSAKeyPair (int bits)
+    {
+        /*
+        RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(bits, RSAKeyGenParameterSpec.F4);
+        AlgorithmParameters param = AlgorithmParameters.getInstance("RSA");
+        param.init(spec);
+        */
+        KeyPair pair = null;
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(bits);
+            pair = generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException x) {
+            throw new RuntimeException("Unable to find RSA key algorithm");
+        }
+        
+        RSAPrivateKey priv = (RSAPrivateKey) pair.getPrivate();
+        RSAPublicKey pub = (RSAPublicKey) pair.getPublic();
+        
+        BigInteger n = priv.getModulus();
+        BigInteger d = priv.getPrivateExponent();
+        BigInteger e = pub.getPublicExponent();
+        return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(n, d));
+    }
+    
+    public CraiKeyPair
+    generateDSAKeyPair (int bits)
+    {
+        KeyPair pair = null;
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("DSA");
+            generator.initialize(bits);
+            pair = generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException x) {
+            throw new RuntimeException("Unable to find DSA key algorithm");
+        }
+        
+        DSAPrivateKey priv = (DSAPrivateKey) pair.getPrivate();
+        DSAPublicKey pub = (DSAPublicKey) pair.getPublic();
+        
+        BigInteger p = priv.getParams().getP();
+        BigInteger q = priv.getParams().getQ();
+        BigInteger g = priv.getParams().getG();
+        BigInteger x = priv.getX();
+        BigInteger y = pub.getY();
+        return new CraiKeyPair(new JCEPublicDSAKey(y, p, q, g), new JCEPrivateDSAKey(x, p, q, g));
     }
     
     public CraiDigest

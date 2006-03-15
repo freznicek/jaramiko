@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -44,6 +44,8 @@ public interface Crai
     public CraiPrivateKey makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g);
     public CraiPublicKey makePublicRSAKey (BigInteger n, BigInteger e);
     public CraiPublicKey makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g);
+    public CraiKeyPair generateRSAKeyPair (int bits);
+    public CraiKeyPair generateDSAKeyPair (int bits);
     
     public CraiDigest makeSHA1 ();
     public CraiDigest makeMD5 ();

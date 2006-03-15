@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -25,7 +25,66 @@
 
 package net.lag.crai;
 
+import java.math.BigInteger;
+
+
+/**
+ * Abstract representation for a private key (of type RSA or DSA).  Objects
+ * of this type can be used to sign data and retrieve the underlying key
+ * contents.
+ */
 public interface CraiPrivateKey
 {
+    /**
+     * Base interface for classes containing the private contents of a key.
+     */
+    public static interface Contents
+    {
+        // nothing
+    }
+    
+    
+    /**
+     * The private contents of an RSA key.
+     */
+    public static interface RSAContents
+        extends Contents
+    {
+        public BigInteger getN();
+        public BigInteger getD();
+    }
+    
+    
+    /**
+     * The private contents of a DSA key.
+     */
+    public static interface DSAContents
+        extends Contents
+    {
+        public BigInteger getP();
+        public BigInteger getQ();
+        public BigInteger getG();
+        public BigInteger getX();
+    }
+    
+    
+    /**
+     * Sign data with this private key.
+     * 
+     * @param data the data to sign
+     * @param off offset into the data to begin signing
+     * @param len number of bytes to sign
+     * @return a signature for this block of data
+     * @throws CraiException if the underlying crypto library throws an
+     *     exception
+     */
     public byte[] sign(byte[] data, int off, int len) throws CraiException;
+    
+    /**
+     * Return an object containing the private contents of this key.
+     * 
+     * @return an object which can be used to retrieve the underlying
+     *     contents (usually BigIntegers)
+     */
+    public Contents getContents();
 }
