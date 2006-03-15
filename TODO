@@ -1,11 +1,15 @@
 Things I want to do, specific to java:
 
-* fix RSA key generation (i couldn't get this to work!)
+* apparently BaseTransport.detectUnsupportedCiphers() isn't really working.
+
+* let ppl import RSAKey from BigIntegers?
+ 
 * make this programmatically accessible:
   mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
                    mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
                    ", remote " + mAgreedRemoteMac);
   -- split cipher names into string(name) and int(bits)
+* add ability to WRITE key files too
   
 Things I didn't port from paramiko (yet?):
 
