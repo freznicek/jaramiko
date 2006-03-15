@@ -32,6 +32,7 @@ import java.math.BigInteger;
 
 import net.lag.crai.Crai;
 import net.lag.crai.CraiException;
+import net.lag.crai.CraiKeyPair;
 import net.lag.crai.CraiPrivateKey;
 import net.lag.crai.CraiPublicKey;
 
@@ -94,6 +95,7 @@ public final class RSAKey
             m.putByteString(rsa.sign(data, 0, data.length));
             return m;
         } catch (CraiException x) {
+            x.printStackTrace();
             throw new SSHException("Java publickey error: " + x);
         }
     }
@@ -138,37 +140,33 @@ public final class RSAKey
     }
     
     /**
-     * Theoretically generate a new RSA private/public key pair.  However,
-     * DON'T CALL THIS METHOD!  Java's key generation is broken and never
-     * finishes on my Mac, so I'm leaving this stuff stubbed out.
+     * Generate a new DSS private/public key pair.  This operation may take
+     * a non-trivial amount of time.  The actual key generation is
+     * delegated to {@link Crai}.
      * 
      * @param bits bit size of the key to generate
-     * @param random a source of random bytes
-     * @return a new RSA key
-     * @throws SSHException if there's an error within java's crypto library
-     *
+     * @return a new DSS key
+     * @throws SSHException if there's an error within the underlying crypto
+     *     library
+     */
     public static RSAKey
-    generate (int bits, CraiRandom random)
+    generate (Crai crai, int bits)
         throws SSHException
     {
         try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(bits, random);
-            KeyPair kp = generator.generateKeyPair();
+            CraiKeyPair pair = crai.generateRSAKeyPair(bits);
+            CraiPrivateKey.RSAContents priv = (CraiPrivateKey.RSAContents) pair.getPrivateKey().getContents();
+            CraiPublicKey.RSAContents pub = (CraiPublicKey.RSAContents) pair.getPublicKey().getContents();
             
-            RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
-            RSAPrivateKey priv = (RSAPrivateKey) kp.getPrivate();
             RSAKey key = new RSAKey();
-            key.mE = pub.getPublicExponent();
-            key.mN = pub.getModulus();
-            key.mD = priv.getPrivateExponent();
-            // unfortunately, sun doesn't provide P and Q here.
+            key.mE = pub.getE();
+            key.mN = pub.getN();
+            key.mD = priv.getD();
             return key;
         } catch (Exception x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }
-    */
     
 
     private BigInteger mE;

@@ -32,6 +32,7 @@ import java.math.BigInteger;
 
 import net.lag.crai.Crai;
 import net.lag.crai.CraiException;
+import net.lag.crai.CraiKeyPair;
 import net.lag.crai.CraiPrivateKey;
 import net.lag.crai.CraiPublicKey;
 
@@ -148,6 +149,38 @@ public class DSSKey
         mG = m.getMPZ();
         mY = m.getMPZ();
     }
+    
+    /**
+     * Generate a new DSS private/public key pair.  This operation may take
+     * a non-trivial amount of time.  The actual key generation is
+     * delegated to {@link Crai}.
+     * 
+     * @param bits bit size of the key to generate
+     * @return a new DSS key
+     * @throws SSHException if there's an error within the underlying crypto
+     *     library
+     */
+    public static DSSKey
+    generate (Crai crai, int bits)
+        throws SSHException
+    {
+        try {
+            CraiKeyPair pair = crai.generateDSAKeyPair(bits);
+            CraiPrivateKey.DSAContents priv = (CraiPrivateKey.DSAContents) pair.getPrivateKey().getContents();
+            CraiPublicKey.DSAContents pub = (CraiPublicKey.DSAContents) pair.getPublicKey().getContents();
+            
+            DSSKey key = new DSSKey();
+            key.mP = pub.getP();
+            key.mQ = pub.getQ();
+            key.mG = pub.getG();
+            key.mX = priv.getX();
+            key.mY = pub.getY();
+            return key;
+        } catch (Exception x) {
+            throw new SSHException("Java publickey error: " + x);
+        }
+    }
+
     
     
     private BigInteger mP;
