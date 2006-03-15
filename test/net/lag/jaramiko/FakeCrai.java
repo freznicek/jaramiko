@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -72,6 +72,18 @@ public class FakeCrai
     makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
     {
         return mCraiJCE.makePublicDSAKey(y, p, q, g);
+    }
+    
+    public CraiKeyPair
+    generateRSAKeyPair (int bits)
+    {
+        return mCraiJCE.generateRSAKeyPair(bits);
+    }
+    
+    public CraiKeyPair
+    generateDSAKeyPair (int bits)
+    {
+        return mCraiJCE.generateDSAKeyPair(bits);
     }
     
     public CraiDigest

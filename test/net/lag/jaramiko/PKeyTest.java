@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import junit.framework.TestCase;
 
+import net.lag.crai.Crai;
 import net.lag.crai.CraiDigest;
 import net.lag.craijce.CraiJCE;
 
@@ -44,7 +45,7 @@ public class PKeyTest
 {
 
     public void
-    testGenerateKey ()
+    testGenerateKeyBytes ()
         throws Exception
     {
         CraiDigest md5 = new FakeCrai().makeMD5();
@@ -159,18 +160,27 @@ public class PKeyTest
         assertTrue(pub.verifySSHSignature(new CraiJCE(), "ice weasels".getBytes(), m));
     }
     
-    // don't test key generation, it's broken in the java crypto library
-    /*
     public void
     testGenerateRSA ()
         throws Exception
     {
-        RSAKey rsa = RSAKey.generate(1024, new FakeRandom());
-        Message m = rsa.signSSHData(new FakeCrai(), "jerri blank".getBytes());
+        Crai crai = new CraiJCE();
+        RSAKey rsa = RSAKey.generate(crai, 1024);
+        Message m = rsa.signSSHData(crai, "jerri blank".getBytes());
         m.rewind();
-        assertTrue(rsa.verifySSHSignature("jerri blank".getBytes(), m));
+        assertTrue(rsa.verifySSHSignature(crai, "jerri blank".getBytes(), m));
     }
-    */
+
+    public void
+    testGenerateDSA ()
+        throws Exception
+    {
+        Crai crai = new CraiJCE();
+        DSSKey rsa = DSSKey.generate(crai, 1024);
+        Message m = rsa.signSSHData(crai, "jerri blank".getBytes());
+        m.rewind();
+        assertTrue(rsa.verifySSHSignature(crai, "jerri blank".getBytes(), m));
+    }
 
     
     private static final String RSA_FINGERPRINT = "60733844CB5186657FDEDAA22B5A57D5";
