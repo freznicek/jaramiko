@@ -51,6 +51,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import net.lag.crai.*;
+import net.lag.jaramiko.Util;
 
 
 /**
@@ -152,7 +153,21 @@ public class CraiJCE
                 PrivateKey key = keyFac.generatePrivate(new DSAPrivateKeySpec(mX, mP, mQ, mG));
                 s.initSign(key, ((JCERandom) mCraiRandom).mRandom);
                 s.update(b, off, len);
-                return s.sign();
+                byte[] sig = s.sign();
+                
+                /* decode java's odd signature format:
+                 * java returns a ber sequence containing (r, s) but ssh2 expects
+                 * a 40-byte buffer containing the 20 bytes of r followed by the
+                 * 20 bytes of s, with no sign extension.
+                 */
+                BigInteger[] rs = Util.decodeBERSequence(sig);
+                byte[] rb = rs[0].toByteArray();
+                byte[] sb = rs[1].toByteArray();
+                sig = new byte[40];
+                System.arraycopy(rb, rb.length - 20, sig, 0, 20);
+                System.arraycopy(sb, sb.length - 20, sig, 20, 20);
+
+                return sig;
             } catch (Exception e) {
                 // JCE can throw weird exceptions at every stage :/
                 throw new CraiException("error performing DSA signature: " + e);

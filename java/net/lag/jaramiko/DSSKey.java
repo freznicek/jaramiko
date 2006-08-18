@@ -84,20 +84,6 @@ public class DSSKey
             CraiPrivateKey dsa = crai.makePrivateDSAKey(mX, mP, mQ, mG);
             byte[] sig = dsa.sign(data, 0, data.length);
             
-            /* decode java's odd signature format:
-             * java returns a ber sequence containing (r, s) but ssh2 expects
-             * a 40-byte buffer containing the 20 bytes of r followed by the
-             * 20 bytes of s, with no sign extension.
-             * 
-             * FIXME: should push this down into crai
-             */
-            BigInteger[] rs = decodeBERSequence(sig);
-            byte[] rb = rs[0].toByteArray();
-            byte[] sb = rs[1].toByteArray();
-            sig = new byte[40];
-            System.arraycopy(rb, rb.length - 20, sig, 0, 20);
-            System.arraycopy(sb, sb.length - 20, sig, 20, 20);
-            
             Message m = new Message();
             m.putString(getSSHName());
             m.putByteString(sig);

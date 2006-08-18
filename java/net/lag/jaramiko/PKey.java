@@ -35,9 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.lag.crai.Crai;
@@ -320,7 +318,7 @@ public abstract class PKey
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
-        pkey.buildFromBER(decodeBERSequence(data));
+        pkey.buildFromBER(Util.decodeBERSequence(data));
         return pkey;
     }
     
@@ -395,62 +393,6 @@ public abstract class PKey
         } catch (CraiException x) {
             throw new SSHException("Unable to initialize cipher '" + cdesc.mAlgorithm + "' due to internal java error: " + x);
         }
-    }
-
-    /**
-     * Incredibly lazy method for decoding BER sequences from private key
-     * files, knowing that they're always a single sequence of ints.
-     * 
-     * @param data a byte array to decode
-     * @return an array of BigIntegers representing the key data
-     */
-    protected static BigInteger[]
-    decodeBERSequence (byte[] data)
-        throws SSHException
-    {
-        if ((data.length < 6) || (data[0] != 0x30)) {
-            throw new SSHException("Invalid BER data");
-        }
-        int len = data[1], i = 2;
-        if ((len & 0x80) != 0) {
-            int metalen = len & 0x7f;
-            if (metalen > 2) {
-                // encoding more than 16 bits of length for this data is a bit insane
-                throw new SSHException("Invalid BER data");
-            }
-            for (len = 0; metalen > 0; i++, metalen--) {
-                len = (len << 8) | ((int) data[i] & 0xff);
-            }
-        }
-        if (len + i > data.length) {
-            throw new SSHException("Invalid BER data");
-        }
-        
-        List nums = new ArrayList();
-        while (len > 0) {
-            if (data[i++] != 2) {
-                throw new SSHException("Invalid BER data");
-            }
-            int nlen = data[i++];
-            len -= 2;
-            if ((nlen & 0x80) != 0) {
-                int metalen = nlen & 0x7f;
-                if (metalen > 2) {
-                    throw new SSHException("Invalid BER data");
-                }
-                for (nlen = 0; metalen > 0; i++, metalen--, len--) {
-                    nlen = (nlen << 8) | ((int) data[i] & 0xff);
-                }
-            }
-            
-            byte[] rawnum = new byte[nlen];
-            System.arraycopy(data, i, rawnum, 0, nlen);
-            nums.add(new BigInteger(rawnum));
-            len -= nlen;
-            i += nlen;
-        }
-        
-        return (BigInteger[]) nums.toArray(new BigInteger[0]);
     }
     
     
