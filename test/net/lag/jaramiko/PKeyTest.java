@@ -88,6 +88,10 @@ public class PKeyTest
         assertEquals(DSS_FINGERPRINT, Util.encodeHex(dss.getFingerprint()));
         assertEquals(PUB_DSS, dss.getBase64());
         assertEquals(1024, dss.getBits());
+        
+        dss = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss2.key"), null);
+        assertEquals("ssh-dss", dss.getSSHName());
+        assertEquals(1024, dss.getBits());
     }
     
     public void

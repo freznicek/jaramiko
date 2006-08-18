@@ -212,7 +212,7 @@ public class TransportTest
         assertEquals(12, mTC.mPacketizer.mMacSizeIn);
         
         mTC.sendIgnore(1024, 15000);
-        assertTrue(mTC.renegotiateKeys(15000));
+        mTC.renegotiateKeys(15000);
         mTC.sendIgnore(1024, 15000);
     }
 

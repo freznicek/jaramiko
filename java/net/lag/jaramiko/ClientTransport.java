@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -206,14 +206,6 @@ public class ClientTransport
 
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
-        }
-        if (! mActive) {
-            IOException x = getException();
-            if (x != null) {
-                throw x;
-            } else {
-                throw new SSHException("Negotiation failed.");
-            }
         }
         
         // check the host key
@@ -518,11 +510,7 @@ public class ClientTransport
         }
         
         if (! waitForEvent(e, timeout_ms)) {
-            IOException x = getException();
-            if (x == null) {
-                x = new SSHException("Unable to open channel.");
-            }
-            throw x;
+            throw new SSHException("Timeout.");
         }
         
         synchronized (mLock) {
@@ -665,13 +653,6 @@ public class ClientTransport
     {
         if (! waitForEvent(e, timeout_ms)) {
             throw new SSHException("Timeout.");
-        }
-        if (! mActive) {
-            IOException x = getException();
-            if (x == null) {
-                x = new AuthenticationFailedException();
-            }
-            throw x;
         }
         
         if (! mAuthHandler.isAuthenticated()) {

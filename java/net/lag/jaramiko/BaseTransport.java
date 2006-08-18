@@ -31,6 +31,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.io.InterruptedIOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 //import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -145,24 +147,17 @@ import net.lag.crai.*;
         });
     }
     
-    public boolean
+    public void
     renegotiateKeys (int timeout_ms)
         throws IOException
     {
         mCompletionEvent = new Event();
         sendKexInit();
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
-            return false;
+            // timeout
+            close();
+            throw new SSHException("Timeout during key renegotiation.");
         }
-        if (! mActive) {
-            IOException x = getException();
-            if (x != null) {
-                throw x;
-            } else {
-                throw new SSHException("Negotiation failed.");
-            }
-        }
-        return true;
     }
     
     public void
@@ -504,11 +499,13 @@ import net.lag.crai.*;
      * @param e the event to wait on
      * @param timeout_ms maximum time to wait (in milliseconds); -1 to wait
      *     forever
-     * @return true if the event was triggered or the transport died; false if
-     *     the timeout occurred or the thread was interrupted
+     * @return true if the event was triggered; false if the timeout occurred
+     *     or the thread was interrupted
+     * @throws IOException if the transport disconnected while waiting
      */
     /* package */ boolean
     waitForEvent (Event e, int timeout_ms)
+        throws IOException
     {
         long deadline = System.currentTimeMillis() + timeout_ms;
         while (! e.isSet()) {
@@ -530,14 +527,18 @@ import net.lag.crai.*;
             }
 
             if (! mActive) {
-                return true;
+                IOException x = getException();
+                if (x == null) {
+                    x = new SSHException("Transport closed.");
+                }
+                throw x;
             }
         }
         return true;
     }
     
     /* package */ void
-    transportRun ()
+    transportRun0 ()
     {
         try {
             mPacketizer.writeline(mLocalVersion + "\r\n");
@@ -624,9 +625,23 @@ import net.lag.crai.*;
         try {
             mSocket.close();
         } catch (IOException x) { }
-        mLog.debug("Feeder thread terminating.");
     }
-    
+
+    /* package */ void
+    transportRun ()
+    {
+        try {
+            transportRun0();
+        } catch (Throwable t) {
+            mLog.error("Exception from feeder thread! " + t);
+            StringWriter buffer = new StringWriter();
+            t.printStackTrace(new PrintWriter(buffer));
+            mLog.debug(buffer.toString());
+        } finally {
+            mLog.debug("Feeder thread terminating.");
+        }
+    }
+
     private boolean
     parsePacket (byte ptype, Message m)
         throws IOException

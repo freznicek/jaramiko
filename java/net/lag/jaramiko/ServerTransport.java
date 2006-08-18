@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -196,14 +195,6 @@ public class ServerTransport
         
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
-        }
-        if (! mActive) {
-            IOException x = getException();
-            if (x != null) {
-                throw x;
-            } else {
-                throw new SSHException("Negotiation failed.");
-            }
         }
     }
     

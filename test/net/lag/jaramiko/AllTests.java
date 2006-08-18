@@ -44,7 +44,7 @@ public class AllTests
     {
         TestSuite ts = new TestSuite();
         ClientTransport.setCrai(new CraiJCE());
-
+        
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);
         ts.addTestSuite(KexTest.class);

@@ -119,7 +119,7 @@ public interface Transport
      * @throws IOException if the renegotiation failed, or the connection was
      *     lost
      */
-    public boolean renegotiateKeys (int timeout_ms) throws IOException;
+    public void renegotiateKeys (int timeout_ms) throws IOException;
 
     /**
      * Send a junk packet across the encrypted link.  This is sometimes used
