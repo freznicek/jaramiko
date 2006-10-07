@@ -40,8 +40,6 @@ import net.lag.crai.CraiRandom;
 /**
  * Stream for reading and writing SSH2 {@link Message} objects.  Encryption and
  * re-keying are handled at this layer.
- * 
- * @author robey
  */
 /* package */ class Packetizer
 {

@@ -133,6 +133,4 @@ public final class SecurityOptions
     private List mMacs;
     private List mKeys;
     private List mKex;
-    
-
 }
