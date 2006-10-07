@@ -378,7 +378,7 @@ public class ServerTransport
                 i.remove();
             }
         }
-        mSecurityOptions.equals(keyTypes);
+        mSecurityOptions.setKeys(keyTypes);
     }
     
     /* package */ void
