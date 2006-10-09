@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 11, 2005
  */
 
 package net.lag.jaramiko;
@@ -113,7 +110,6 @@ public interface Transport
      * session has died mid-negotiation.
      * 
      * @param timeout_ms time (in milliseconds) to wait for renegotiation
-     * @return true on success, false if the timeout occurred first
      * @throws IOException if the renegotiation failed, or the connection was
      *     lost
      */

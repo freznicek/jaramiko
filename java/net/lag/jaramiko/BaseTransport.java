@@ -82,7 +82,7 @@ import net.lag.crai.*;
         mInStream = mSocket.getInputStream();
         mOutStream = mSocket.getOutputStream();
         mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX, KNOWN_COMPRESSIONS);
-        mSecurityOptions.setCompression(Arrays.asList(new String[] { "none" }));
+        mSecurityOptions.setCompressions(Arrays.asList(new String[] { "none" }));
         
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
@@ -160,9 +160,9 @@ import net.lag.crai.*;
     useCompression (boolean compress)
     {
         if (compress) {
-            mSecurityOptions.setCompression(Arrays.asList(KNOWN_COMPRESSIONS));
+            mSecurityOptions.setCompressions(Arrays.asList(KNOWN_COMPRESSIONS));
         } else {
-            mSecurityOptions.setCompression(Arrays.asList(new String[] { "none" }));
+            mSecurityOptions.setCompressions(Arrays.asList(new String[] { "none" }));
         }
     }            
 

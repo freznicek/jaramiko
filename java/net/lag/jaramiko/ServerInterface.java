@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on Jun 27, 2005
  */
 
 package net.lag.jaramiko;
@@ -151,7 +148,7 @@ public interface ServerInterface
      * {@link #checkAuthInteractive checkAuthInteractive} will be called to get
      * the next set of prompts for the client.
      * 
-     * @param resposnes the set of responses from the client
+     * @param responses the set of responses from the client
      * @return an AuthError code
      */
     public int

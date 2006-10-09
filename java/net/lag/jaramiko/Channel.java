@@ -617,7 +617,7 @@ public class Channel
      * Return the arbitrary string identifying the "type" for this channel.
      * For normal SSH channels, this will usually be <code>"session"</code>.
      * 
-     * @retuen the kind of SSH channel
+     * @return the kind of SSH channel
      */
     public String 
     getKind ()

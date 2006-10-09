@@ -43,7 +43,7 @@ public interface ChannelFactory
      * is called from {@link ClientTransport} when a client channel is opened.
      * 
      * @param kind arbitrary string (defined by the argument to
-     *     {@link ClientTransport#openChannel) indicating the kind of channel
+     *     {@link ClientTransport#openChannel}) indicating the kind of channel
      *     to open
      * @param chanid the transport-defined ID for the channel
      * @param params any parameters that were passed from openChannel.
@@ -58,7 +58,7 @@ public interface ChannelFactory
      * (if any) can be retrieved from the Message object.
      * 
      * @param kind arbitrary string (defined by the argument to
-     *     {@link ClientTransport#openChannel) string indicating the kind of
+     *     {@link ClientTransport#openChannel}) string indicating the kind of
      *     channel to open
      * @param chanid the transport-defined ID for the channel
      * @param params parameters that were originally passed by the remote
