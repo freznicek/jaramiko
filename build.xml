@@ -6,7 +6,6 @@
     <property name="docs-folder" location="docs" />
     <property name="test-folder" location="test" />
     <property name="test-build-folder" location="test-classes" />
-    <property name="junit-folder" location="junit3.8.1" />   
 
     <property name="dep-jars" value="" />
 
@@ -14,7 +13,7 @@
     <property name="manifest-file" value="jaramiko.manifest" />
 
     <!-- junit (unit tests) -->
-    <property name="junit-jar" location="${junit-folder}/junit.jar" />
+    <property name="junit-jar" location="junit3.8.1.jar" />
     <property name="test-dep-jars" value="${dep-jars}:${junit-jar}:${jaramiko-jar}" />
 
     <tstamp>
@@ -60,6 +59,7 @@
         <delete dir="${test-build-folder}" failonerror="false" />
         <delete file="${jaramiko-jar}" failonerror="false" />
         <delete file="${manifest-file}" failonerror="false" />
+        <delete dir="${docs-folder}" failonerror="false" />
     </target>
 
 </project>

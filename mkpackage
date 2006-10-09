@@ -1,0 +1,8 @@
+#!/bin/bash
+revno=$(bzr revno)
+pkgname="jaramiko-$revno"
+cd ..
+cp -r jaramiko $pkgname
+zip -r $pkgname.zip $pkgname/build.xml $pkgname/LICENSE $pkgname/TODO $pkgname/java $pkgname/junit3.8.1.jar $pkgname/test
+rm -rf $pkgname
+
