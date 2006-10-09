@@ -696,6 +696,54 @@ public class TransportTest
         schan.close();
     }
     
+    // verify that zlib compression is basically working
+    public void
+    testCompression ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        mTC.useCompression(true);
+        mTS.useCompression(true);
+        mTC.getSecurityOptions().setCompressions(Arrays.asList(new String[] { "zlib" }));
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+
+        Channel chan = mTC.openSession(5000);
+        assertTrue(chan.execCommand("yes", 5000));
+        Channel schan = mTS.accept(5000);
+
+        long bytes = mTC.mPacketizer.getBytesSent();
+        byte[] x = new byte[1024];
+        for (int i = 0; i < x.length; i++) {
+            x[i] = (byte)'x';
+        }
+        chan.getOutputStream().write(x);
+        long bytes2 = mTC.mPacketizer.getBytesSent();
+        assertTrue(bytes2 - bytes < 1024);
+        assertEquals(32, bytes2 - bytes);
+        
+        chan.close();
+        schan.close();
+    }
+    
     
     private Socket mSocketC;
     private Socket mSocketS;

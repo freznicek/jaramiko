@@ -181,6 +181,12 @@ import net.lag.crai.CraiRandom;
         }
     }
     
+    public void
+    setOutboundCompressor (Compressor comp)
+    {
+        mCompressOut = comp;
+    }
+    
     // FIXME: how do i guarantee that nobody's in read() while this is happening?
     public void
     setInboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
@@ -203,6 +209,12 @@ import net.lag.crai.CraiRandom;
         mMacBufferIn = new byte[32];
     }
     
+    public void
+    setInboundCompressor (Compressor comp)
+    {
+        mCompressIn = comp;
+    }
+    
     /**
      * Write an SSH2 message to the stream.  The message will be packetized
      * (padded up to the block size), and if the outbound cipher is on, the
@@ -215,16 +227,26 @@ import net.lag.crai.CraiRandom;
     write (Message msg)
         throws IOException
     {
-        int contentLength = msg.getPosition();
-        msg.packetize(mRandom, mBlockSizeOut, (mBlockEngineOut != null));
-        byte[] packet = msg.toByteArray();
-        int length = msg.getPosition();
-        mLog.debug("Write packet <" + MessageType.getDescription(packet[5]) + ">, length " + contentLength);
-        if (mDumpPackets) {
-            mLog.dump("OUT", packet, 0, length);
-        }
-        
         synchronized (mWriteLock) {
+            int origLength = msg.getPosition();
+            String desc = msg.getCommandDescription();
+            if (mCompressOut != null) {
+                msg.compress(mCompressOut);
+            }
+            int contentLength = msg.getPosition();
+            msg.packetize(mRandom, mBlockSizeOut, (mBlockEngineOut != null));
+            byte[] packet = msg.toByteArray();
+            int length = msg.getPosition();
+            if (origLength != contentLength) {
+                mLog.debug("Write packet <" + desc + ">, length " + contentLength +
+                           " (orig length " + origLength + ")");
+            } else {
+                mLog.debug("Write packet <" + desc + ">, length " + contentLength);
+            }
+            if (mDumpPackets) {
+                mLog.dump("OUT", packet, 0, length);
+            }
+        
             if (mBlockEngineOut != null) {
                 new Message(mMacBufferOut).putInt(mSequenceNumberOut);
                 mMacEngineOut.reset();
@@ -338,9 +360,18 @@ import net.lag.crai.CraiRandom;
             }
         }
 
-        Message msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
+        Message msg = null;
+        if (mCompressIn != null) {
+            byte[] expanded = mCompressIn.uncompress(packet, 0, length - padding - 1);
+            msg = new Message(expanded, 0, expanded.length, mSequenceNumberIn);
+            mLog.debug("Read packet <" + msg.getCommandDescription() + ">, length " + (length - padding - 1) +
+                       " (orig length " + expanded.length + ")");
+        } else {
+            msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
+            mLog.debug("Read packet <" + msg.getCommandDescription() + ">, length " + (length - padding - 1));
+        }
+        
         mSequenceNumberIn++;
-        mLog.debug("Read packet <" + MessageType.getDescription(packet[0]) + ">, length " + (length - padding - 1));
         
         // check for rekey
         mReceivedBytes += length + mMacSizeIn + 4;
@@ -426,6 +457,20 @@ import net.lag.crai.CraiRandom;
         mNeedRekey = rekey;
     }
     
+    // for unit tests
+    /* package */ long
+    getBytesSent ()
+    {
+        return mSentBytes;
+    }
+    
+    // for unit tests
+    /* package */ long
+    getBytesReceived ()
+    {
+        return mReceivedBytes;
+    }
+    
     
     /* READ the secsh RFC's before raising these values.  if anything, they
      * should probably be lower.
@@ -460,6 +505,8 @@ import net.lag.crai.CraiRandom;
     /* package */ int mMacSizeIn;
     private int mSequenceNumberOut;
     private int mSequenceNumberIn;
+    private Compressor mCompressIn;
+    private Compressor mCompressOut;
     
     private long mSentBytes;
     private long mSentPackets;

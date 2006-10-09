@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 7, 2005
  */
 
 package net.lag.jaramiko;
@@ -41,8 +38,6 @@ import net.lag.crai.CraiRandom;
  * SSH2's basic protocol unit, a byte stream that can encode ints, longs,
  * strings, booleans, bytes, and BigIntegers.  This class can build or parse
  * such streams.
- * 
- * @author robey
  */
 public final class Message
 {
@@ -451,6 +446,28 @@ public final class Message
         ensureSpace(padding);
         System.arraycopy(pad, 0, mBuffer, mPosition, padding);
         mPosition += padding;
+    }
+    
+    // call before packetizing
+    /* package */ void
+    compress (Compressor compressor)
+    {
+        byte[] out = compressor.compress(mBuffer, mStart, mPosition - mStart);
+        mPosition = mStart;
+        ensureSpace(out.length);
+        System.arraycopy(out, 0, mBuffer, mStart, out.length);
+        mPosition = mStart + out.length;
+    }
+    
+    /**
+     * Return a description of the command code from this message.  This only
+     * works before the message has been packetized, and is used for logging
+     * from within the packetizer.
+     */
+    /* package */ String
+    getCommandDescription ()
+    {
+        return MessageType.getDescription(mBuffer[mStart]);
     }
     
     private void

@@ -38,8 +38,6 @@ import java.util.List;
  * session (and often are, in the case of port forwardings).  A Transport can
  * operate in either client ({@link ClientTransport}) or server
  * ({@link ServerTransport}) mode.
- * 
- * @author robey
  */
 public interface Transport
 {

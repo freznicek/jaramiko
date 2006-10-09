@@ -282,6 +282,7 @@ import net.lag.crai.Crai;
     {
         mLog.notice("Authentication successful!");
         mAuthenticated = true;
+        mTransport.authTrigger();
         mAuthEvent.set();
     }
     
@@ -368,6 +369,9 @@ import net.lag.crai.Crai;
         mTransport.sendMessage(m);
         if (mFailCount >= 10) {
             disconnectNoMoreAuth();
+        }
+        if (result == AuthError.SUCCESS) {
+            mTransport.authTrigger();
         }
     }
 

@@ -43,23 +43,24 @@ import java.util.List;
  * underlying {@link Transport}, but only if you change them before starting
  * the session.  If you try to add an algorithm that paramiko doesn't
  * recognize, an IllegalArgumentException will be thrown.
- * 
- * @author robey
  */
 public final class SecurityOptions
 {
     /* package */
-    SecurityOptions (String[] knownCiphers, String[] knownMacs, String[] knownKeys, String[] knownKex)
+    SecurityOptions (String[] knownCiphers, String[] knownMacs, String[] knownKeys, String[] knownKex,
+                     String[] knownCompressions)
     {
         mKnownCiphers = knownCiphers;
         mKnownMacs = knownMacs;
         mKnownKeys = knownKeys;
         mKnownKex = knownKex;
+        mKnownCompressions = knownCompressions;
         
         mCiphers = new ArrayList(Arrays.asList(knownCiphers));
         mMacs = new ArrayList(Arrays.asList(knownMacs));
         mKeys = new ArrayList(Arrays.asList(knownKeys));
         mKex = new ArrayList(Arrays.asList(knownKex));
+        mCompressions = new ArrayList(Arrays.asList(knownCompressions));
     }
     
     public void
@@ -86,6 +87,12 @@ public final class SecurityOptions
         setList(mKex, kex, mKnownKex);
     }
     
+    public void
+    setCompressions (List compressions)
+    {
+        setList(mCompressions, compressions, mKnownCompressions);
+    }
+    
     public List
     getCiphers ()
     {
@@ -110,6 +117,12 @@ public final class SecurityOptions
         return new ArrayList(mKex);
     }
     
+    public List
+    getCompressions ()
+    {
+        return new ArrayList(mCompressions);
+    }
+    
     
     private void
     setList (List mine, List theirs, String[] valid)
@@ -128,9 +141,11 @@ public final class SecurityOptions
     private String[] mKnownMacs;
     private String[] mKnownKeys;
     private String[] mKnownKex;
+    private String[] mKnownCompressions;
     
     private List mCiphers;
     private List mMacs;
     private List mKeys;
     private List mKex;
+    private List mCompressions;
 }

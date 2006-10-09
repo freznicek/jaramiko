@@ -407,6 +407,10 @@ public class ServerTransport
         temp = mAgreedLocalMac;
         mAgreedLocalMac = mAgreedRemoteMac;
         mAgreedRemoteMac = temp;
+        
+        temp = mAgreedLocalCompression;
+        mAgreedLocalCompression = mAgreedRemoteCompression;
+        mAgreedRemoteCompression = temp;
     }
 
     /* package */ List

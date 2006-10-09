@@ -81,7 +81,8 @@ import net.lag.crai.*;
         mSocket = socket;
         mInStream = mSocket.getInputStream();
         mOutStream = mSocket.getOutputStream();
-        mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX);
+        mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX, KNOWN_COMPRESSIONS);
+        mSecurityOptions.setCompression(Arrays.asList(new String[] { "none" }));
         
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
@@ -147,6 +148,24 @@ import net.lag.crai.*;
         });
     }
     
+    /**
+     * Turn on/off compression.  This will only have an affect before starting
+     * the transport.  By default, compression is off since it negatively
+     * affects interactive sessions.
+     *
+     * @param compress true to ask the remote client/server to compress
+     *     trafic; false to refuse compression
+     */
+    public void
+    useCompression (boolean compress)
+    {
+        if (compress) {
+            mSecurityOptions.setCompression(Arrays.asList(KNOWN_COMPRESSIONS));
+        } else {
+            mSecurityOptions.setCompression(Arrays.asList(new String[] { "none" }));
+        }
+    }            
+
     public void
     renegotiateKeys (int timeout_ms)
         throws IOException
@@ -305,6 +324,38 @@ import net.lag.crai.*;
         return out;
     }
     
+    private void
+    startInboundCompression ()
+    {
+        mLog.debug("Switching on inbound compression ...");
+
+        Class compressClass = (Class) BaseTransport.sCompressMap.get(mAgreedRemoteCompression);
+        if (compressClass != null) {
+            try {
+                Compressor compress = (Compressor) compressClass.newInstance();
+                mPacketizer.setInboundCompressor(compress);
+            } catch (Exception x) {
+                throw new RuntimeException("Internal java error: " + x);
+            }
+        }
+    }
+    
+    private void
+    startOutboundCompression ()
+    {
+        mLog.debug("Switching on outbound compression ...");
+
+        Class compressClass = (Class) BaseTransport.sCompressMap.get(mAgreedLocalCompression);
+        if (compressClass != null) {
+            try {
+                Compressor compress = (Compressor) compressClass.newInstance();
+                mPacketizer.setOutboundCompressor(compress);
+            } catch (Exception x) {
+                throw new RuntimeException("Internal java error: " + x);
+            }
+        }
+    }
+    
     // ClientTransport & ServerTransport override to set the correct keys
     /* package */ void
     activateInbound ()
@@ -313,6 +364,11 @@ import net.lag.crai.*;
         CipherDescription desc = (CipherDescription) BaseTransport.sCipherMap.get(mAgreedRemoteCipher);
         MacDescription mdesc = (MacDescription) BaseTransport.sMacMap.get(mAgreedRemoteMac);
         activateInbound(desc, mdesc);
+
+        if ((mAgreedRemoteCompression != null) &&
+            (! mAgreedRemoteCompression.equals("zlib@openssh.com") || isAuthenticated())) {
+            startInboundCompression();
+        }
     }
     
     /* package */ abstract void activateInbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
@@ -329,7 +385,12 @@ import net.lag.crai.*;
         CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedLocalCipher);
         MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedLocalMac);
         activateOutbound(desc, mdesc);
-        
+
+        if ((mAgreedLocalCompression != null) &&
+            (! mAgreedLocalCompression.equals("zlib@openssh.com") || isAuthenticated())) {
+            startOutboundCompression();
+        }
+
         if (! mPacketizer.needRekey()) {
             mInKex = false;
         }
@@ -338,6 +399,18 @@ import net.lag.crai.*;
     }
     
     /* package */ abstract void activateOutbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
+    
+    /* package */ void
+    authTrigger ()
+    {
+        // delayed initiation of compression
+        if ((mAgreedLocalCompression != null) && mAgreedLocalCompression.equals("zlib@openssh.com")) {
+            startOutboundCompression();
+        }
+        if ((mAgreedRemoteCompression != null) && mAgreedRemoteCompression.equals("zlib@openssh.com")) {
+            startInboundCompression();
+        }
+    }
     
     /**
      * Send a message, but if we're in key (re)negotation, block until that's
@@ -457,8 +530,8 @@ import net.lag.crai.*;
         m.putList(mSecurityOptions.getCiphers());
         m.putList(mSecurityOptions.getDigests());
         m.putList(mSecurityOptions.getDigests());
-        m.putString("none");
-        m.putString("none");
+        m.putList(mSecurityOptions.getCompressions());
+        m.putList(mSecurityOptions.getCompressions());
         m.putString("");
         m.putString("");
         m.putBoolean(false);
@@ -814,12 +887,12 @@ import net.lag.crai.*;
         m.getBoolean();     // kex follows
         m.getInt();         // unused
     
-        // no compression support (yet?)
-        List supportedCompressions = Arrays.asList(new String[] { "none" });
-        if ((filter(supportedCompressions, clientCompressAlgorithmList) == null) ||
-            (filter(supportedCompressions, serverCompressAlgorithmList) == null)) {
-            throw new SSHException("Incompatible SSH peer");
+        mAgreedLocalCompression = filter(mSecurityOptions.getCompressions(), clientCompressAlgorithmList);
+        mAgreedRemoteCompression = filter(mSecurityOptions.getCompressions(), serverCompressAlgorithmList);
+        if ((mAgreedLocalCompression == null) || (mAgreedRemoteCompression == null)) {
+            throw new SSHException("Incompatible SSH peer (no acceptable compression)");
         }
+
         mAgreedKex = filter(mSecurityOptions.getKex(), kexAlgorithmList);
         if (mAgreedKex == null) {
             throw new SSHException("Incompatible SSH peer (no acceptable kex algorithm)");
@@ -844,7 +917,8 @@ import net.lag.crai.*;
         kexInitHook();
         mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
                    mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
-                   ", remote " + mAgreedRemoteMac);
+                   ", remote " + mAgreedRemoteMac + "; compress: local " + mAgreedLocalCompression +
+                   ", remote " + mAgreedRemoteCompression);
         
         // save for computing hash later...
         /* now wait!  openssh has a bug (and others might too) where there are
@@ -1048,6 +1122,7 @@ import net.lag.crai.*;
     private static Map sMacMap = new HashMap();
     private static Map sKeyMap = new HashMap();
     private static Map sKexMap = new HashMap();
+    private static Map sCompressMap = new HashMap();
     private static volatile boolean sCheckedCiphers = false;
     
     // crypto abstraction (not everyone has JCE)
@@ -1069,13 +1144,21 @@ import net.lag.crai.*;
         sKeyMap.put("ssh-dss", DSSKey.class);
         
         sKexMap.put("diffie-hellman-group1-sha1", KexGroup1.class);
+        
+        sCompressMap.put("zlib", ZlibCompressor.class);
+        sCompressMap.put("zlib@openssh.com", ZlibCompressor.class);
     }
     
     private final String[] KNOWN_CIPHERS = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
     private final String[] KNOWN_MACS = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
     private final String[] KNOWN_KEYS = { "ssh-rsa", "ssh-dss" };
     private final String[] KNOWN_KEX = { "diffie-hellman-group1-sha1" };
-    
+    private final String[] KNOWN_COMPRESSIONS = { "zlib@openssh.com", "zlib", "none" };
+
+    /* zlib@openssh.com is just zlib, but only turned on after a successful
+     * authentication.  openssh servers may only offer this type because
+     * they've had troubles with security holes in zlib in the past.
+     */
 
     /* package */ int mWindowSize = 65536; 
     /* package */ int mMaxPacketSize = 34816;
@@ -1094,6 +1177,8 @@ import net.lag.crai.*;
     /* package */ String mAgreedRemoteCipher;
     /* package */ String mAgreedLocalMac;
     /* package */ String mAgreedRemoteMac;
+    /* package */ String mAgreedLocalCompression;
+    /* package */ String mAgreedRemoteCompression;
     
     // shared transport state:
     /* package */ String mLocalVersion;
