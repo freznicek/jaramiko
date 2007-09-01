@@ -249,7 +249,8 @@ public class ServerTransport
 
     /**
      * Return the next channel opened by the client over this transport.  If
-     * no channel is opened before the given timeout, null is returned.
+     * no channel is opened before the given timeout, or the transport is
+     * closed, null is returned.
      * 
      * @param timeout_ms time (in milliseconds) to wait for a channel, or 0
      *     to wait forever
@@ -269,10 +270,23 @@ public class ServerTransport
                 Thread.currentThread().interrupt();
             }
             
+            if (! mActive) {
+                return null;
+            }
+            
             if (mServerAccepts.size() > 0) {
                 return (Channel) mServerAccepts.remove(0);
             }
             return null;
+        }
+    }
+    
+    public void
+    close ()
+    {
+        super.close();
+        synchronized (mServerAcceptLock) {
+            mServerAcceptLock.notifyAll();
         }
     }
     

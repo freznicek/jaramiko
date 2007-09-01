@@ -744,6 +744,38 @@ public class TransportTest
         schan.close();
     }
     
+    public void
+    testAcceptBreaksOnClose ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        assertEquals(null, mTC.getUsername());
+        assertEquals(null, mTS.getUsername());
+        assertFalse(mTC.isAuthenticated());
+        assertFalse(mTS.isAuthenticated());
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    mTS.accept(0);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        assertFalse(sync.isSet());
+        mTS.close();
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+    }
+    
     
     private Socket mSocketC;
     private Socket mSocketS;

@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- *
- * Created on Jul 2, 2005
  */
 
 package net.lag.jaramiko;
@@ -32,7 +29,8 @@ import java.io.FileInputStream;
 import java.util.List;
 
 /**
- * @author robey
+ * ServerInterface implementation that just records which methods were called
+ * and what parameters were passed in.
  */
 public class FakeServer
     implements ServerInterface
