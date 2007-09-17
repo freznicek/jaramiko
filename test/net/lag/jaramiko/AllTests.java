@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 7, 2005
  */
 
 package net.lag.jaramiko;
@@ -33,9 +30,6 @@ import junit.framework.*;
 import net.lag.craijce.CraiJCE;
 
 
-/**
- * @author robey
- */
 public class AllTests
 {
 
@@ -50,8 +44,6 @@ public class AllTests
         ts.addTestSuite(KexTest.class);
         ts.addTestSuite(PKeyTest.class);
         ts.addTestSuite(TransportTest.class);
-
-        ts.addTestSuite(WeirdNetTest.class);
         
         return ts;
     }
