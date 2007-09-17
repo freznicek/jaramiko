@@ -113,6 +113,21 @@ import net.lag.crai.*;
         mPacketizer.setDumpPackets(dump);
     }
 
+    /**
+     * Set the timeout for receiving the SSH banner from the remote server.
+     * By default, this library will wait 15 seconds for a banner, to account
+     * for high-latency links. You may make this timeout shorter or longer,
+     * if you call this method before starting the transport.
+     * 
+     * @param seconds number of seconds to wait for the SSH banner when
+     *     initiating handshaking
+     */
+    public void
+    setBannerTimeout (int seconds)
+    {
+        mInitialBannerTimeout = seconds * 1000;
+    }
+    
     public SecurityOptions
     getSecurityOptions ()
     {
@@ -467,10 +482,12 @@ import net.lag.crai.*;
         String line = null;
         
         for (int i = 0; i < 5; i++) {
-            // give them 5 seconds for the first line, then just 2 seconds each additional line
-            int timeout = 2000;
+            /* give them 15 seconds for the first line, then just 5 seconds
+             * each additional line. (some links have very high latency.) 
+             */ 
+            int timeout = BANNER_TIMEOUT;
             if (i == 0) {
-                timeout = 5000;
+                timeout = mInitialBannerTimeout;
             }
             try {
                 line = mPacketizer.readline(timeout);
@@ -1118,6 +1135,8 @@ import net.lag.crai.*;
     private static final String PROTO_ID = "2.0";
     private static final String CLIENT_ID = "jaramiko_0.1";
     
+    private static final int BANNER_TIMEOUT = 5000;
+    
     private static Map sCipherMap = new HashMap();
     private static Map sMacMap = new HashMap();
     private static Map sKeyMap = new HashMap();
@@ -1162,6 +1181,7 @@ import net.lag.crai.*;
 
     /* package */ int mWindowSize = 65536; 
     /* package */ int mMaxPacketSize = 34816;
+    private int mInitialBannerTimeout = 15000;
     
     private Socket mSocket;
     private InputStream mInStream;
