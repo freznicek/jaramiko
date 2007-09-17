@@ -1199,15 +1199,15 @@ public class Channel
     private boolean
     handleEOF (Message m)
     {
-        synchronized (mLock) {
-            if (! mEOFReceived) {
-                mEOFReceived = true;
-                synchronized (mInStream.mBufferLock) {
-                    mInStream.mBufferLock.notifyAll();
-                }
-                synchronized (mStderrInStream.mBufferLock) {
-                    mStderrInStream.mBufferLock.notifyAll();
-                }
+        synchronized (mInStream.mBufferLock) {
+            synchronized (mStderrInStream.mBufferLock) {
+            	synchronized (mLock) {
+            		if (! mEOFReceived) {
+            			mEOFReceived = true;
+            			mInStream.mBufferLock.notifyAll();
+            			mStderrInStream.mBufferLock.notifyAll();
+            		}
+            	}
             }
         }
         mLog.debug("EOF received");
