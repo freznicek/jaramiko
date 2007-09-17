@@ -3,6 +3,6 @@
 	<classpathentry output="classes/" kind="src" path="java"/>
 	<classpathentry output="test-classes/" kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Users/robey/code/jaramiko/junit3.8.1.jar"/>
+	<classpathentry kind="lib" path="junit3.8.1.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

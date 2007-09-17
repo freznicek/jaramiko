@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 31, 2005
  */
 
 package net.lag.jaramiko;
@@ -41,8 +38,9 @@ import java.util.Arrays;
 import java.util.List;
 import junit.framework.TestCase;
 
+
 /**
- * @author robey
+ * Test the Transport classes.
  */
 public class TransportTest
     extends TestCase
@@ -744,6 +742,7 @@ public class TransportTest
         schan.close();
     }
     
+    // verify that accept(0) will return if the transport is closed out from under it.
     public void
     testAcceptBreaksOnClose ()
         throws Exception
@@ -774,6 +773,46 @@ public class TransportTest
         mTS.close();
         sync.waitFor(5000);
         assertTrue(sync.isSet());
+    }
+    
+    // verify that we can change the window & max packet sizes
+    public void
+    testChangeWindowSize ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        mTC.setWindowSize(94321);
+        mTC.setMaxPacketSize(65000);
+        final FakeServer server = new FakeServer();
+
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+
+        Channel chan = mTC.openSession(5000);
+        assertTrue(chan.execCommand("yes", 5000));
+        Channel schan = mTS.accept(5000);
+        
+        assertEquals(94321, schan.mOutWindowSize);
+        assertEquals(65000, schan.mOutMaxPacketSize);
+
+        chan.close();
+        schan.close();
     }
     
     

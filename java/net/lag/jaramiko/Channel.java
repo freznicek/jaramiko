@@ -1311,7 +1311,6 @@ public class Channel
     }
     
     
-    
     private int mChanID;
     private int mRemoteChanID;
     private String mKind;
@@ -1330,8 +1329,9 @@ public class Channel
     
     private int mInWindowThreshold;     // bytes we must receive before we bother to send a window update
     private int mInWindowSoFar;
-    private int mOutWindowSize;
-    private int mOutMaxPacketSize;
+    // package-scope for unit tests:
+    /* package */ int mOutWindowSize;
+    /* package */ int mOutMaxPacketSize;
     
     private ChannelInputStream mInStream;
     private ChannelInputStream mStderrInStream;

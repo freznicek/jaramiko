@@ -128,6 +128,59 @@ import net.lag.crai.*;
         mInitialBannerTimeout = seconds * 1000;
     }
     
+    /**
+     * Set the window size to be used on new channels. This is the amount of
+     * un-acked data that can be in transit at once, so for high-latency
+     * links, larger values may be better. This will also affect the size
+     * of retransmit buffers.
+     * 
+     * @param size window size (in bytes) to use for new channels
+     */
+    public void
+    setWindowSize (int size)
+    {
+        mWindowSize = size;
+    }
+    
+    /**
+     * Return the current window size used for new channels.
+     * {@see #setWindowSize(int)}
+     * 
+     * @return window size (in bytes) being used for new channels
+     */
+    public int
+    getWindowSize ()
+    {
+        return mWindowSize;
+    }
+    
+    /**
+     * Set the size of the largest SSH packet we will send. By default, we
+     * will use the largest packet size allowed by the protocol spec, but some
+     * servers will allow larger sizes. Use this with care: some servers will
+     * disconnect if they receive a packet that's "too large". You usually
+     * won't need to change this.
+     * 
+     * @param size the new maximum packet size, in bytes
+     */
+    public void
+    setMaxPacketSize (int size)
+    {
+        mMaxPacketSize = size;
+    }
+    
+    /**
+     * Return the current maximum packet size for the SSH protocol.
+     * {@see #setMaxPacketSize(int)}
+     * 
+     * @return the maximum packet size, in bytes
+     */
+    public int
+    getMaxPacketSize ()
+    {
+        return mMaxPacketSize;
+    }
+    
     public SecurityOptions
     getSecurityOptions ()
     {
@@ -1136,6 +1189,8 @@ import net.lag.crai.*;
     private static final String CLIENT_ID = "jaramiko_0.1";
     
     private static final int BANNER_TIMEOUT = 5000;
+    private static final int DEFAULT_WINDOW_SIZE = 384 * 1024;
+    private static final int DEFAULT_MAX_PACKET_SIZE = 34816;
     
     private static Map sCipherMap = new HashMap();
     private static Map sMacMap = new HashMap();
@@ -1179,8 +1234,8 @@ import net.lag.crai.*;
      * they've had troubles with security holes in zlib in the past.
      */
 
-    /* package */ int mWindowSize = 65536; 
-    /* package */ int mMaxPacketSize = 34816;
+    /* package */ int mWindowSize = DEFAULT_WINDOW_SIZE;
+    /* package */ int mMaxPacketSize = DEFAULT_MAX_PACKET_SIZE;
     private int mInitialBannerTimeout = 15000;
     
     private Socket mSocket;
