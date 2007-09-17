@@ -44,6 +44,7 @@ public class AllTests
         ts.addTestSuite(KexTest.class);
         ts.addTestSuite(PKeyTest.class);
         ts.addTestSuite(TransportTest.class);
+        ts.addTestSuite(ChannelTest.class);
         
         return ts;
     }
