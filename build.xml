@@ -28,11 +28,11 @@
 
     <target name="compile" depends="init">
         <depend srcdir="${src-folder}" destdir="${build-folder}" />
-        <javac source="1.3" target="1.1" debug="yes" srcdir="${src-folder}" destdir="${build-folder}" classpath="${dep-jars}" />
+        <javac source="1.3" target="1.1" debug="true" srcdir="${src-folder}" destdir="${build-folder}" classpath="${dep-jars}" />
     </target>
 
     <target name="compile-tests" depends="jar">
-        <javac debug="yes" srcdir="${test-folder}" destdir="${test-build-folder}" classpath="${test-dep-jars}" />
+        <javac debug="true" srcdir="${test-folder}" destdir="${test-build-folder}" classpath="${test-dep-jars}" />
     </target>
   
     <target name="jar" depends="compile" description="create jaramiko jar">
