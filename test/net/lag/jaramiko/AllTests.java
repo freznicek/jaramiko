@@ -53,4 +53,31 @@ public class AllTests
         
         return ts;
     }
+    
+    public static void
+    main (String[] args)
+    {
+        Test suite = suite();
+        TestResult r = new TestResult();
+        TestListener listener = new TestListener() {
+            public void addError(Test test, java.lang.Throwable t) {
+                System.err.println("ERROR.");
+            }
+
+            public void addFailure(Test test, AssertionFailedError t) {
+                System.err.println("FAILURE.");
+            }
+
+            public void endTest(Test test) {
+                System.err.println("<- " + test);
+            }
+
+            public void startTest(Test test) {
+                System.err.println("-> " + test);
+            }
+        };
+        r.addListener(listener);
+        
+        suite.run(r);
+    }
 }

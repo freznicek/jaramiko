@@ -50,6 +50,10 @@
         </java>
     </target>
     
+    <target name="testv" depends="compile-tests">
+        <java classname="net.lag.jaramiko.AllTests" classpath="${test-dep-jars}:${test-build-folder}" />
+    </target>
+    
     <target name="docs" depends="init">
         <javadoc sourcepath="${src-folder}" destdir="${docs-folder}" packagenames="net.lag.jaramiko.*" classpath="${dep-jars}" />
     </target>
