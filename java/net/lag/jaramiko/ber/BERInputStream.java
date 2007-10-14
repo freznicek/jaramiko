@@ -145,7 +145,16 @@ public class BERInputStream
         return list;
     }
     
-    // helper:
+    /**
+     * Decode a block of byte data which is encoded in BER. Only the first
+     * encoded object is returned, but if the object is a container, its
+     * entire contents will be decoded too. This is just a convenience
+     * method.
+     * 
+     * @param data BER-encoded data
+     * @return a decoded java object
+     * @throws IOException if there was an error in the data
+     */
     public static Object
     decode (byte[] data)
         throws IOException

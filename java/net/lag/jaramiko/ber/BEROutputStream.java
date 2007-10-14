@@ -25,6 +25,7 @@
 
 package net.lag.jaramiko.ber;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
@@ -119,6 +120,22 @@ public class BEROutputStream
             subOut.write(item);
         }
         subOut.writeTerminator();
+    }
+    
+    /**
+     * Encode an object into BER data.  This is just a convenience method.
+     * 
+     * @param a java object of a type with a registered codec
+     * @return BER-encoded data
+     * @throws IOException if there was an error encoding the object
+     */
+    public static byte[]
+    encode (Object obj)
+        throws IOException
+    {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new BEROutputStream(buffer).write(obj);
+        return buffer.toByteArray();
     }
     
     

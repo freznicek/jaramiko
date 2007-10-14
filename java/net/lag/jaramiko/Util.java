@@ -33,10 +33,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import net.lag.jaramiko.ber.BERInputStream;
+import net.lag.jaramiko.ber.BEROutputStream;
 
 
 /**
@@ -201,6 +201,18 @@ public class Util
         BigInteger[] nums = new BigInteger[list.size()];
         list.toArray(nums);
         return nums;
+    }
+    
+    public static byte[]
+    encodeBERSequence (BigInteger[] nums)
+        throws SSHException
+    {
+        List list = Arrays.asList(nums);
+        try {
+            return BEROutputStream.encode(list);
+        } catch (IOException x) {
+            throw new SSHException("BER encoding error: " + x);
+        }
     }
     
     /**
