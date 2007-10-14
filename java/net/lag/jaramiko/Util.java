@@ -28,11 +28,15 @@
 
 package net.lag.jaramiko;
 
+import java.io.InputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.lag.jaramiko.ber.BERInputStream;
 
 
 /**
@@ -179,48 +183,58 @@ public class Util
     decodeBERSequence (byte[] data)
         throws SSHException
     {
-        if ((data.length < 6) || (data[0] != 0x30)) {
-            throw new SSHException("Invalid BER data");
+        Object obj;
+        try {
+            obj = BERInputStream.decode(data);
+        } catch (IOException x) {
+            throw new SSHException("BER decoding error: " + x);
         }
-        int len = data[1], i = 2;
-        if ((len & 0x80) != 0) {
-            int metalen = len & 0x7f;
-            if (metalen > 2) {
-                // encoding more than 16 bits of length for this data is a bit insane
-                throw new SSHException("Invalid BER data");
-            }
-            for (len = 0; metalen > 0; i++, metalen--) {
-                len = (len << 8) | ((int) data[i] & 0xff);
+        if (!(obj instanceof List)) {
+            throw new SSHException("Expected BER sequence");
+        }
+        List list = (List) obj;
+        for (int i = 0; i < list.size(); i++) {
+            if (!(list.get(i) instanceof BigInteger)) {
+                throw new SSHException("Expected integer at BER sequence element " + i);
             }
         }
-        if (len + i > data.length) {
-            throw new SSHException("Invalid BER data");
-        }
-        
-        List nums = new ArrayList();
-        while (len > 0) {
-            if (data[i++] != 2) {
-                throw new SSHException("Invalid BER data");
+        BigInteger[] nums = new BigInteger[list.size()];
+        list.toArray(nums);
+        return nums;
+    }
+    
+    /**
+     * Continue reading from a stream until EOF is reached, or the requested
+     * number of bytes is read.
+     * 
+     * @param in the stream to read from
+     * @param buffer the buffer to fill
+     * @param off offset within the buffer to begin reading into
+     * @param len number of bytes to read
+     * @return number of bytes actually read (will only be less than the
+     *     requested number at EOF)
+     * @throws IOException if an IOException occurred while reading from
+     *     the stream
+     */
+    public static int
+    readAll (InputStream in, byte[] buffer, int off, int len)
+        throws IOException
+    {
+        int soFar = 0;
+        while (soFar < len) {
+            int n = in.read(buffer, off + soFar, len - soFar);
+            if (n < 0) {
+                return soFar;
             }
-            int nlen = data[i++];
-            len -= 2;
-            if ((nlen & 0x80) != 0) {
-                int metalen = nlen & 0x7f;
-                if (metalen > 2) {
-                    throw new SSHException("Invalid BER data");
-                }
-                for (nlen = 0; metalen > 0; i++, metalen--, len--) {
-                    nlen = (nlen << 8) | ((int) data[i] & 0xff);
-                }
-            }
-            
-            byte[] rawnum = new byte[nlen];
-            System.arraycopy(data, i, rawnum, 0, nlen);
-            nums.add(new BigInteger(rawnum));
-            len -= nlen;
-            i += nlen;
+            soFar += n;
         }
-        
-        return (BigInteger[]) nums.toArray(new BigInteger[0]);
+        return len;
+    }
+    
+    public static int
+    readAll (InputStream in, byte[] buffer)
+        throws IOException
+    {
+        return readAll(in, buffer, 0, buffer.length);
     }
 }

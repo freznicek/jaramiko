@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,34 +23,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.lag.jaramiko;
+package net.lag.jaramiko.ber;
 
-import junit.framework.*;
-
-import net.lag.craijce.CraiJCE;
-import net.lag.jaramiko.ber.*;
+import java.io.IOException;
 
 
-public class AllTests
+/**
+ * Exception thrown when decoding garbled BER data.
+ */
+public class BERException
+    extends IOException
 {
-
-    public static Test
-    suite ()
+    public
+    BERException (String description)
     {
-        TestSuite ts = new TestSuite();
-        ClientTransport.setCrai(new CraiJCE());
-        
-        ts.addTestSuite(MessageTest.class);
-        ts.addTestSuite(PacketizerTest.class);
-        ts.addTestSuite(KexTest.class);
-        ts.addTestSuite(PKeyTest.class);
-        ts.addTestSuite(TransportTest.class);
-        ts.addTestSuite(ChannelTest.class);
-        
-        ts.addTestSuite(TagTest.class);
-        ts.addTestSuite(BERInputStreamTest.class);
-        ts.addTestSuite(BEROutputStreamTest.class);
-        
-        return ts;
+        super(description);
     }
 }
