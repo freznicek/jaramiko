@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -34,11 +34,7 @@ import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 //import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import net.lag.crai.*;
 
@@ -46,8 +42,6 @@ import net.lag.crai.*;
 /**
  * Common transport implementation shared by ClientTransport and
  * ServerTransport.
- * 
- * @author robey
  */
 /* package */ abstract class BaseTransport
     implements Transport
@@ -292,13 +286,18 @@ import net.lag.crai.*;
     public void
     close ()
     {
+        Channel[] chans;
+        
         synchronized (mLock) {
             mActive = false;
             mPacketizer.close();
-            for (int i = 0; i < mChannels.length; i++) {
-                if (mChannels[i] != null) {
-                    mChannels[i].unlink();
-                }
+            chans = mChannels;
+            mChannels = new Channel[16];
+        }
+        
+        for (int i = 0; i < chans.length; i++) {
+            if (chans[i] != null) {
+                chans[i].unlink();
             }
         }
     }

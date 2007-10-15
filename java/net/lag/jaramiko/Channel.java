@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on Jun 10, 2005
  */
 
 package net.lag.jaramiko;
@@ -39,6 +36,8 @@ import java.util.List;
 
 /*
  * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
+ * 
+ * channel methods should not be called while holding a transport lock.
  * 
  * mOutBufferLock protects: mOutWindowSize, outbound packets
  * mLock protects: mActive, mClosed, mEOFReceived, mEOFSent, mCombineStderr
@@ -57,8 +56,6 @@ import java.util.List;
  * data you send, calls to <code>write()</code> on the OutputStream may block.
  * This is exactly like a normal network socket behaves, so it shouldn't be
  * too surprising.
- * 
- * @author robey
  */
 public class Channel
 {
@@ -790,10 +787,10 @@ public class Channel
             if (! mActive || mClosed) {
                 return;
             }
-            
+        
             try {
                 sendEOF();
-            
+
                 Message m = new Message();
                 m.putByte(MessageType.CHANNEL_CLOSE);
                 m.putInt(mRemoteChanID);
@@ -801,7 +798,7 @@ public class Channel
             } catch (IOException x) {
                 mLog.debug("I/O exception while sending EOF/close");
             }
-            
+
             mClosed = true;
             /* can't unlink from the Transport yet -- the remote side may
              * still try to send meta-data (exit-status, etc)
