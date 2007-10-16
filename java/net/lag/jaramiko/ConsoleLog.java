@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
  *
@@ -21,23 +21,21 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 10, 2005
  */
 
 package net.lag.jaramiko;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Calendar;
 
 
 /**
- * Simple {@link LogSink} implementation which dumps paramiko's log messages
+ * Simple {@link LogSink} implementation which dumps jaramiko's log messages
  * to java's <code>System.err</code>.  The log level is indicated with a
- * three-letter abbreviation, but no timestamp or other info is provided.
+ * three-letter abbreviation, and the current time and thread ID is attached,
+ * but nothing else fancy is done.
  * 
- * @author robey
+ * <p> No attempt is made to make the logging efficient or useful. This is
+ * only meant for debugging or reference.
  */
 public class ConsoleLog
     implements LogSink
@@ -108,8 +106,12 @@ public class ConsoleLog
     private String
     getThreadID ()
     {
-        String timestamp = sFormat.format(new Date());
-        
+        // don't assume we have SimpleDateFormatter; some embedded devices don't.
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(System.currentTimeMillis());
+        String timestamp = pad(cal.get(Calendar.HOUR_OF_DAY), 2) + ":" + pad(cal.get(Calendar.MINUTE), 2) +
+            ":" + pad(cal.get(Calendar.SECOND), 2) + "." + pad(cal.get(Calendar.MILLISECOND), 3);
+
         int tid = ((Integer) sThreadID.get()).intValue();
         String tidstr = "t" + Integer.toString(tid);
         if (tid < 10) {
@@ -118,6 +120,16 @@ public class ConsoleLog
             tidstr = tidstr + " ";
         }
         return timestamp + " " + tidstr;
+    }
+    
+    private String
+    pad (int num, int places)
+    {
+        String out = Integer.toString(num);
+        while (out.length() < places) {
+            out = "0" + out;
+        }
+        return out;
     }
 
     
@@ -129,6 +141,4 @@ public class ConsoleLog
             }
         }
     };
-    
-    private static SimpleDateFormat sFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 }
