@@ -1,9 +1,9 @@
 Things I want to do, specific to java:
 
+* fix comments that say "paramiko"
+
 * apparently BaseTransport.detectUnsupportedCiphers() isn't really working.
 
-* let ppl import RSAKey from BigIntegers?
- 
 * make this programmatically accessible:
   mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
                    mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
