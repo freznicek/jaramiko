@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 15, 2005
  */
 
 package net.lag.jaramiko;
@@ -40,8 +37,6 @@ import net.lag.crai.CraiPublicKey;
 /**
  * Standard RSA public/private key algorithm for signing and verification.
  * This wraps the java library in some SSH-specific functionality.
- * 
- * @author robey
  */
 public final class RSAKey
     extends PKey
@@ -140,12 +135,12 @@ public final class RSAKey
     }
     
     /**
-     * Generate a new DSS private/public key pair.  This operation may take
+     * Generate a new RSA private/public key pair.  This operation may take
      * a non-trivial amount of time.  The actual key generation is
      * delegated to {@link Crai}.
      * 
      * @param bits bit size of the key to generate
-     * @return a new DSS key
+     * @return a new RSA key
      * @throws SSHException if there's an error within the underlying crypto
      *     library
      */
@@ -166,6 +161,64 @@ public final class RSAKey
         } catch (Exception x) {
             throw new SSHException("Java publickey error: " + x);
         }
+    }
+    
+    /**
+     * Create an RSA private key object from the component integers. This
+     * method assumes the integers have come from some other reliable source.
+     * The parameter names identify the required numbers from the RSA
+     * algorithm.
+     * 
+     * <p> Please don't use this method to generate a new key from scratch.
+     * Picking correct values for these parameters is tricky.
+     * Use {@link #generate(Crai, int)} to generate a new key.
+     * 
+     * @param e the RSA "e"
+     * @param d the RSA "d"
+     * @param n the RSA "n"
+     * @param p the RSA "p"
+     * @param q the RSA "q"
+     * @return an RSA private key object
+     */
+    public static RSAKey
+    build (BigInteger e, BigInteger d, BigInteger n, BigInteger p, BigInteger q)
+    {
+        RSAKey key = new RSAKey();
+        key.mE = e;
+        key.mD = d;
+        key.mN = n;
+        //key.mP = p;
+        //key.mQ = q;
+        return key;
+    }
+    
+    /**
+     * Create an RSA public key object from the component integers. Such a key
+     * can be used only to verify signatures, not sign data.
+     * 
+     * @param e the RSA "e"
+     * @param n the RSA "n"
+     * @return an RSA public key object
+     */
+    public static RSAKey
+    build (BigInteger e, BigInteger n)
+    {
+        RSAKey key = new RSAKey();
+        key.mE = e;
+        key.mN = n;
+        return key;
+    }
+    
+    public CraiPrivateKey
+    toPrivateKey (Crai crai)
+    {
+        return crai.makePrivateRSAKey(mN, mD);
+    }
+    
+    public CraiPublicKey
+    toPublicKey (Crai crai)
+    {
+        return crai.makePublicRSAKey(mN, mE);
     }
     
 

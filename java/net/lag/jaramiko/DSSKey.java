@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 22, 2005
  */
 
 package net.lag.jaramiko;
@@ -40,8 +37,6 @@ import net.lag.crai.CraiPublicKey;
 /**
  * Standard DSS public/private key algorithm for signing and verification.
  * This wraps the java library in some SSH-specific functionality.
- * 
- * @author robey
  */
 public class DSSKey
     extends PKey
@@ -167,8 +162,69 @@ public class DSSKey
         }
     }
 
+    /**
+     * Create a DSS private key object from the component integers. This
+     * method assumes the integers have come from some other reliable source.
+     * The parameter names identify the required numbers from the DSS
+     * algorithm.
+     * 
+     * <p> Please don't use this method to generate a new key from scratch.
+     * Picking correct values for these parameters is tricky.
+     * Use {@link #generate(Crai, int)} to generate a new key.
+     * 
+     * @param p the DSS "p"
+     * @param q the DSS "q"
+     * @param g the DSS "g"
+     * @param y the DSS "y"
+     * @param x the DSS "x"
+     * @return a DSS private key object
+     */
+    public static DSSKey
+    build (BigInteger p, BigInteger q, BigInteger g, BigInteger y, BigInteger x)
+    {
+        DSSKey key = new DSSKey();
+        key.mP = p;
+        key.mQ = q;
+        key.mG = g;
+        key.mY = y;
+        key.mX = x;
+        return key;
+    }
     
+    /**
+     * Create a DSS public key object from the component integers. Such a key
+     * can be used only to verify signatures, not sign data.
+     * 
+     * @param p the DSS "p"
+     * @param q the DSS "q"
+     * @param g the DSS "g"
+     * @param y the DSS "y"
+     * @return a DSS public key object
+     */
+    public static DSSKey
+    build (BigInteger p, BigInteger q, BigInteger g, BigInteger y)
+    {
+        DSSKey key = new DSSKey();
+        key.mP = p;
+        key.mQ = q;
+        key.mG = g;
+        key.mY = y;
+        return key;
+    }
     
+    public CraiPrivateKey
+    toPrivateKey (Crai crai)
+    {
+        return crai.makePrivateDSAKey(mX, mP, mQ, mG);
+    }
+    
+    public CraiPublicKey
+    toPublicKey (Crai crai)
+    {
+        return crai.makePublicDSAKey(mY, mP, mQ, mG);
+    }
+
+
     private BigInteger mP;
     private BigInteger mQ;
     private BigInteger mG;

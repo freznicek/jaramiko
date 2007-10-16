@@ -31,10 +31,12 @@ package net.lag.jaramiko;
 import java.math.BigInteger;
 
 import net.lag.crai.Crai;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
 
 
 /**
- * @author robey
+ * Stub out PKey for some tests.
  */
 public class FakeKey
     extends PKey
@@ -87,5 +89,17 @@ public class FakeKey
     getSSHName ()
     {
         return "none";
+    }
+    
+    public CraiPublicKey
+    toPublicKey (Crai crai)
+    {
+        return null;
+    }
+    
+    public CraiPrivateKey
+    toPrivateKey (Crai crai)
+    {
+        return null;
     }
 }

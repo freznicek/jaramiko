@@ -102,6 +102,24 @@ public abstract class PKey
     public abstract boolean verifySSHSignature (Crai crai, byte[] data, Message sig) throws SSHException;
 
     /**
+     * Convert the public elements of this key into a {@link CraiPublicKey}
+     * object, which will contain the component integers.
+     * 
+     * @param crai the crypto abstraction layer
+     * @return a public key object
+     */
+    public abstract CraiPublicKey toPublicKey (Crai crai);
+    
+    /**
+     * Convert the private elements of this key into a {@link CraiPrivateKey}
+     * object, which will contain the component integers.
+     * 
+     * @param crai the crypto abstraction layer
+     * @return a private key object
+     */
+    public abstract CraiPrivateKey toPrivateKey (Crai crai);
+    
+    /**
      * Return an MD5 fingerprint of the public part of this key.  Nothing
      * secret is revealed.  Effectively this is just the MD5 of the result
      * of {@link #toByteArray}.
@@ -168,7 +186,7 @@ public abstract class PKey
     /**
      * Return a public key from base64 data.  The base64 encoding of a key
      * is SSH-specific and only contains the public key.  It can be fetched
-     * from an existing key via {@link PKey#getBase64}.
+     * from an existing key via {@link #getBase64}.
      * 
      * @param s the string containing the base64 data
      * @return a public key ({@link RSAKey} or {@link DSSKey})

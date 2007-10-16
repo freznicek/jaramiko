@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,24 +21,24 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 21, 2005
  */
 
 package net.lag.jaramiko;
 
 import java.io.FileInputStream;
+import java.math.BigInteger;
 import java.util.Arrays;
 import junit.framework.TestCase;
 
 import net.lag.crai.Crai;
 import net.lag.crai.CraiDigest;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
 import net.lag.craijce.CraiJCE;
 
 
 /**
- * @author robey
+ * Test PKey methods.
  */
 public class PKeyTest
     extends TestCase
@@ -170,6 +170,7 @@ public class PKeyTest
     {
         Crai crai = new CraiJCE();
         RSAKey rsa = RSAKey.generate(crai, 1024);
+
         Message m = rsa.signSSHData(crai, "jerri blank".getBytes());
         m.rewind();
         assertTrue(rsa.verifySSHSignature(crai, "jerri blank".getBytes(), m));
@@ -180,10 +181,47 @@ public class PKeyTest
         throws Exception
     {
         Crai crai = new CraiJCE();
-        DSSKey rsa = DSSKey.generate(crai, 1024);
-        Message m = rsa.signSSHData(crai, "jerri blank".getBytes());
+        DSSKey dss = DSSKey.generate(crai, 1024);
+                
+        Message m = dss.signSSHData(crai, "jerri blank".getBytes());
         m.rewind();
-        assertTrue(rsa.verifySSHSignature(crai, "jerri blank".getBytes(), m));
+        assertTrue(dss.verifySSHSignature(crai, "jerri blank".getBytes(), m));
+    }
+    
+    public void
+    testBuildRSA ()
+        throws Exception
+    {
+        Crai crai = new CraiJCE();
+        BigInteger n = new BigInteger(TEST_RSA_N, 16);
+        BigInteger d = new BigInteger(TEST_RSA_D, 16);
+        BigInteger e = new BigInteger(TEST_RSA_E, 16);
+      
+        RSAKey pubkey = RSAKey.build(e, n);
+        RSAKey privkey = RSAKey.build(e, d, n, null, null);
+        
+        Message m = privkey.signSSHData(crai, "jerri blank".getBytes());
+        m.rewind();
+        assertTrue(pubkey.verifySSHSignature(crai, "jerri blank".getBytes(), m));
+    }
+    
+    public void
+    testBuildDSS ()
+        throws Exception
+    {
+        Crai crai = new CraiJCE();
+        BigInteger g = new BigInteger(TEST_DSS_G, 16);
+        BigInteger p = new BigInteger(TEST_DSS_P, 16);
+        BigInteger q = new BigInteger(TEST_DSS_Q, 16);
+        BigInteger y = new BigInteger(TEST_DSS_Y, 16);
+        BigInteger x = new BigInteger(TEST_DSS_X, 16);
+        
+        DSSKey pubkey = DSSKey.build(p, q, g, y);
+        DSSKey privkey = DSSKey.build(p, q, g, y, x);
+        
+        Message m = privkey.signSSHData(crai, "jerri blank".getBytes());
+        m.rewind();
+        assertTrue(pubkey.verifySSHSignature(crai, "jerri blank".getBytes(), m));
     }
 
     
@@ -212,7 +250,34 @@ public class PKeyTest
         "34738F207728E2941508D891407A8583BF183795DC541A9B88296C73CA38B404" +
         "F156B9F2429D521B2929B44FFDC92DAF47D2407630F363450CD91D43860F1C70" +
         "E2931234F3ACC50A2F14506659F188EEC14AE9D19C4E46F00E476F3874F144A8";
-    //private static final String SIGNED_DSS =
-    //    "5B6835B10278B432E014BBA487CB4D23415FFA87C1FBCC29C23DB51734732E17" +
-    //    "9D6C3542E1527E8D";
+    
+    private static final String TEST_RSA_N =
+        "9b684587c9f15e268904797a201530daa38dee4c4856757ec07ed8a41250f7ee" +
+        "eba3756458dc55fc343ddff4f8ff4c16dcba26b88dffa9c59f353cf66f1d50b3" + 
+        "e01ecc2078b0f82afec76e59354a4db0299ceaa6a56c0a5265ec14b39a94f7f6" +
+        "0e2d50f9290eadc6be8547c9e1d322bbd09e45a9da33fb93ddfa9d254c1736eb";
+    private static final String TEST_RSA_E = "10001";
+    private static final String TEST_RSA_D =
+        "8394054ab2f06986b6fbd2de53cb9d5180a8eada2b65089608e55d078d7a8071" +
+        "09919c131a2973a3d5978dc71c0b0ba14fc14c8775b2c14b5141021ca4776d9b" +
+        "89b1fe5c40b40cd2d8bc1d4085c09d3da364ea8708a71843dd6bc13eae59aad6" +
+        "da69eda55e87db04313683d22c1898665a414af0568a35e0ffd4e36e63adac1";
+    
+    private static final String TEST_DSS_G =
+        "f7e1a085d69b3ddecbbcab5c36b857b97994afbbfa3aea82f9574c0b3d078267" +
+        "5159578ebad4594fe67107108180b449167123e84c281613b7cf09328cc8a6e1" +
+        "3c167a8b547c8d28e0a3ae1e2bb3a675916ea37f0bfa213562f1fb627a01243b" +
+        "cca4f1bea8519089a883dfe15ae59f06928b665e807b552564014c3bfecf492a";
+    private static final String TEST_DSS_P =
+        "fd7f53811d75122952df4a9c2eece4e7f611b7523cef4400c31e3f80b6512669" +
+        "455d402251fb593d8d58fabfc5f5ba30f6cb9b556cd7813b801d346ff26660b7" +
+        "6b9950a5a49f9fe8047b1022c24fbba9d7feb7c61bf83b57e7c6a8a6150f04fb" +
+        "83f6d3c51ec3023554135a169132f675f3ae2b61d72aeff22203199dd14801c7";
+    private static final String TEST_DSS_Q = "9760508f15230bccb292b982a2eb840bf0581cf5";
+    private static final String TEST_DSS_Y =
+        "65a65aadf4db090574f5e24f684a472fdde100ecef4cf624dc3a5fb1838f1056" +
+        "8eafc7c12a3fa07f74b44789468ff73e334558fda135be0042094ce2dab055fb" +
+        "224109993ecbadcfed223ec28940295f71c501ac5f902ed1526ca6b02f4eadc4" +
+        "cb1c3bc4411d8abc2267fa5f80a1142dc17bafb897188760a5a751fbb0dfcc80";
+    private static final String TEST_DSS_X = "746248f49944ab19cc412f7c69fe57efed225ca3";
 }
