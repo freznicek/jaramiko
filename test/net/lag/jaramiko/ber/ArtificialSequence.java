@@ -66,10 +66,10 @@ public class ArtificialSequence
         implements BEROutputStream.Encoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
-            BEROutputStream.writeContainer(out, TAG, ((ArtificialSequence) obj).mList);
+            BEROutputStream.writeContainer(out, TAG, ((ArtificialSequence) obj).mList, useIndefiniteLength);
         }
     }
     

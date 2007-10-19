@@ -35,14 +35,21 @@ public class BEROutputStream
 {
     public static interface Encoder
     {
-        public void encode (OutputStream out, Object obj) throws IOException;
+        public void encode (OutputStream out, Object obj, boolean useIndefiniteLength) throws IOException;
     }
     
     
     public
-    BEROutputStream (OutputStream out)
+    BEROutputStream (OutputStream out, boolean useIndefiniteLength)
     {
         mOutStream = out;
+        mUseIndefiniteLength = useIndefiniteLength;
+    }
+    
+    public
+    BEROutputStream (OutputStream out)
+    {
+        this(out, true);
     }
     
     public static void
@@ -99,7 +106,7 @@ public class BEROutputStream
         if (encoder == null) {
             throw new BERException("Can't encode object of type " + item.getClass().getName());
         }
-        encoder.encode(mOutStream, item);
+        encoder.encode(mOutStream, item, mUseIndefiniteLength);
     }
     
     /* package */ void
@@ -110,22 +117,55 @@ public class BEROutputStream
     }
     
     public static void
-    writeContainer (OutputStream out, Tag tag, Iterable sequence)
+    writeContainer (OutputStream out, Tag tag, Iterable sequence, boolean useIndefiniteLength)
         throws IOException
     {
-        tag.write(out);
-        BEROutputStream subOut = new BEROutputStream(out);
-        for (Iterator iter = sequence.iterator(); iter.hasNext(); ) {
-            Object item = iter.next();
-            subOut.write(item);
+        if (useIndefiniteLength) {
+            tag.write(out);
+            BEROutputStream subOut = new BEROutputStream(out, useIndefiniteLength);
+            for (Iterator iter = sequence.iterator(); iter.hasNext(); ) {
+                Object item = iter.next();
+                subOut.write(item);
+            }
+            subOut.writeTerminator();
+        } else {
+            // write the contents into a buffer, then dump that buffer into the stream.
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            BEROutputStream subOut = new BEROutputStream(buffer, useIndefiniteLength);
+            for (Iterator iter = sequence.iterator(); iter.hasNext(); ) {
+                Object item = iter.next();
+                subOut.write(item);
+            }
+            byte[] dump = buffer.toByteArray();
+            
+            tag.asSize(dump.length).write(out);
+            out.write(dump);
         }
-        subOut.writeTerminator();
+    }
+
+    /**
+     * Encode an object into BER data.  This is just a convenience method.
+     * 
+     * @param obj a java object of a type with a registered codec
+     * @param useIndefinitelength true if containers should be encoded as
+     *     indefinite-length (the normal mode); false if containers should be
+     *     buffered as they're written, to track lengths8
+     * @return BER-encoded data
+     * @throws IOException if there was an error encoding the object
+     */
+    public static byte[]
+    encode (Object obj, boolean useIndefiniteLength)
+        throws IOException
+    {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new BEROutputStream(buffer, useIndefiniteLength).write(obj);
+        return buffer.toByteArray();
     }
     
     /**
      * Encode an object into BER data.  This is just a convenience method.
      * 
-     * @param a java object of a type with a registered codec
+     * @param obj a java object of a type with a registered codec
      * @return BER-encoded data
      * @throws IOException if there was an error encoding the object
      */
@@ -133,13 +173,12 @@ public class BEROutputStream
     encode (Object obj)
         throws IOException
     {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(obj);
-        return buffer.toByteArray();
+        return encode(obj, true);
     }
     
     
     private OutputStream mOutStream;
+    private boolean mUseIndefiniteLength = true;
     
     private static Map sEncoderTable = new HashMap();   // class name -> Encoder
     

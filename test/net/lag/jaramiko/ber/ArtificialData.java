@@ -47,7 +47,7 @@ public class ArtificialData
         implements BEROutputStream.Encoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             ArtificialData data = (ArtificialData) obj;

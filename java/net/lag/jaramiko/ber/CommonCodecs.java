@@ -24,7 +24,7 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             BOOLEAN_TYPE.asSize(1).write(out);
@@ -55,7 +55,7 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             if (obj instanceof Integer) {
@@ -85,7 +85,7 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             byte[] buffer = (byte[]) obj;
@@ -110,7 +110,7 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             NULL_TYPE.asSize(0).write(out);
@@ -127,7 +127,7 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
             byte[] buffer = ((String) obj).getBytes("UTF-8");
@@ -152,10 +152,10 @@ import net.lag.jaramiko.Util;
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
         public void
-        encode (OutputStream out, Object obj)
+        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
             throws IOException
         {
-            BEROutputStream.writeContainer(out, LIST_TYPE, (List) obj);
+            BEROutputStream.writeContainer(out, LIST_TYPE, (List) obj, useIndefiniteLength);
         }
 
         public Object

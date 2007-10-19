@@ -86,6 +86,23 @@ public class BEROutputStreamTest
         new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }), Boolean.TRUE }));
         assertEquals("3080020123308002010A00000101FF0000", Util.encodeHex(buffer.toByteArray()));
     }
+    
+    public void
+    testDefiniteLengthList ()
+        throws Exception
+    {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new BEROutputStream(buffer, false).write(new ArrayList());
+        assertEquals("3000", Util.encodeHex(buffer.toByteArray()));
+
+        buffer = new ByteArrayOutputStream();
+        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] { 0x23, new byte[] { -1 }, Boolean.TRUE }));
+        assertEquals("30090201230401FF0101FF", Util.encodeHex(buffer.toByteArray()));
+
+        buffer = new ByteArrayOutputStream();
+        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] { 0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }), Boolean.TRUE }));
+        assertEquals("300B020123300302010A0101FF", Util.encodeHex(buffer.toByteArray()));
+    }
 
     public void
     testEncodeData ()
