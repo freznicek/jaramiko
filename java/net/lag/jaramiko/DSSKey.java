@@ -25,6 +25,8 @@
 
 package net.lag.jaramiko;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 
 import net.lag.crai.Crai;
@@ -129,6 +131,20 @@ public class DSSKey
         mQ = m.getMPZ();
         mG = m.getMPZ();
         mY = m.getMPZ();
+    }
+    
+    public void
+    writePrivateKeyToStream (OutputStream os, String password)
+        throws IOException 
+    {
+        BigInteger[] nums = new BigInteger[6];
+        nums[0] = BigInteger.ZERO;
+        nums[1] = mP;
+        nums[2] = mQ;
+        nums[3] = mG;
+        nums[4] = mY;
+        nums[5] = mX;
+        writePrivateKeyToStream("DSA", os, nums, password);
     }
     
     /**

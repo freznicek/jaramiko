@@ -25,6 +25,8 @@
 
 package net.lag.jaramiko;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 
 import net.lag.crai.Crai;
@@ -47,8 +49,8 @@ public final class RSAKey
         mD = null;
         mE = null;
         mN = null;
-        //mP = null;
-        //mQ = null;
+        mP = null;
+        mQ = null;
     }
     
     public String
@@ -84,7 +86,7 @@ public final class RSAKey
         throws SSHException
     {
         try {
-            CraiPrivateKey rsa = crai.makePrivateRSAKey(mN, mD);
+            CraiPrivateKey rsa = crai.makePrivateRSAKey(mN, mD, mP, mQ);
             Message m = new Message();
             m.putString(getSSHName());
             m.putByteString(rsa.sign(data, 0, data.length));
@@ -122,8 +124,8 @@ public final class RSAKey
         mN = ints[1];
         mE = ints[2];
         mD = ints[3];
-        //mP = ints[4];
-        //mQ = ints[5];
+        mP = ints[4];
+        mQ = ints[5];
     }
     
     protected void
@@ -132,6 +134,24 @@ public final class RSAKey
     {
         mE = m.getMPZ();
         mN = m.getMPZ();
+    }
+    
+    public void
+    writePrivateKeyToStream (OutputStream os, String password)
+        throws IOException 
+    {
+        BigInteger[] nums = new BigInteger[9];
+        nums[0] = BigInteger.ZERO;
+        nums[1] = mN;
+        nums[2] = mE;
+        nums[3] = mD;
+        nums[4] = mP;
+        nums[5] = mQ;
+        BigInteger one = new BigInteger("1");
+        nums[6] = mD.mod(mP.subtract(one));
+        nums[7] = mD.mod(mQ.subtract(one));
+        nums[8] = mQ.modInverse(mP);
+        writePrivateKeyToStream("RSA", os, nums, password);
     }
     
     /**
@@ -157,6 +177,8 @@ public final class RSAKey
             key.mE = pub.getE();
             key.mN = pub.getN();
             key.mD = priv.getD();
+            key.mP = priv.getP();
+            key.mQ = priv.getQ();
             return key;
         } catch (Exception x) {
             throw new SSHException("Java publickey error: " + x);
@@ -187,8 +209,8 @@ public final class RSAKey
         key.mE = e;
         key.mD = d;
         key.mN = n;
-        //key.mP = p;
-        //key.mQ = q;
+        key.mP = p;
+        key.mQ = q;
         return key;
     }
     
@@ -212,7 +234,7 @@ public final class RSAKey
     public CraiPrivateKey
     toPrivateKey (Crai crai)
     {
-        return crai.makePrivateRSAKey(mN, mD);
+        return crai.makePrivateRSAKey(mN, mD, mP, mQ);
     }
     
     public CraiPublicKey
@@ -225,6 +247,6 @@ public final class RSAKey
     private BigInteger mE;
     private BigInteger mD;
     private BigInteger mN;
-    //private BigInteger mP;
-    //private BigInteger mQ;
+    private BigInteger mP;
+    private BigInteger mQ;
 }

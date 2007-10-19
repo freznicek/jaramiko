@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -39,6 +39,7 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.DSAPrivateKeySpec;
@@ -56,8 +57,6 @@ import net.lag.jaramiko.Util;
 
 /**
  * Default Crai implementation that just wraps java's JCE classes.
- * 
- * @author robey
  */
 public class CraiJCE
     implements Crai
@@ -86,10 +85,12 @@ public class CraiJCE
         implements CraiPrivateKey
     {
         public
-        JCEPrivateRSAKey (BigInteger n, BigInteger d)
+        JCEPrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
         {
             mN = n;
             mD = d;
+            mP = p;
+            mQ = q;
         }
         
         public byte[]
@@ -121,12 +122,22 @@ public class CraiJCE
                 public BigInteger getD() {
                     return mD;
                 }
+                
+                public BigInteger getP() {
+                    return mP;
+                }
+                
+                public BigInteger getQ() {
+                    return mQ;
+                }
             };
         }
         
         
         private BigInteger mN;
         private BigInteger mD;
+        private BigInteger mP;
+        private BigInteger mQ;
     }
     
     
@@ -367,6 +378,7 @@ public class CraiJCE
         private MessageDigest mDigest;
     }
     
+    
     private static class JCEHMAC
         implements CraiDigest
     {
@@ -482,9 +494,9 @@ public class CraiJCE
     }
     
     public CraiPrivateKey
-    makePrivateRSAKey (BigInteger n, BigInteger d)
+    makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
     {
-        return new JCEPrivateRSAKey(n, d);
+        return new JCEPrivateRSAKey(n, d, p, q);
     }
     
     public CraiPrivateKey
@@ -528,7 +540,9 @@ public class CraiJCE
         BigInteger n = priv.getModulus();
         BigInteger d = priv.getPrivateExponent();
         BigInteger e = pub.getPublicExponent();
-        return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(n, d));
+        BigInteger p = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv).getPrimeP() : null;
+        BigInteger q = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv).getPrimeQ() : null;
+        return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(n, d, p, q));
     }
     
     public CraiKeyPair

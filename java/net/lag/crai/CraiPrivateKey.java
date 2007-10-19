@@ -52,6 +52,8 @@ public interface CraiPrivateKey
     {
         public BigInteger getN();
         public BigInteger getD();
+        public BigInteger getP();
+        public BigInteger getQ();
     }
     
     

@@ -326,6 +326,56 @@ public abstract class PKey
     }
     
     /**
+     * Write a private key to a standard SSH2 key file (ASCII). If a password
+     * is given, the key will be encrypted with that password.
+     * 
+     * @param os the stream to write the key file to
+     * @param password (null-ok) a password to use if the file should be
+     *     encrypted
+     * @throws IOException if there was an error writing the key file
+     */
+    public abstract void writePrivateKeyToStream (OutputStream os, String password) throws IOException;
+
+    protected void 
+    writePrivateKeyToStream (String tag, OutputStream os, BigInteger[] contents, String password)
+        throws IOException 
+    {
+        byte[] data = Util.encodeBERSequence(contents);
+        
+        StringBuffer sb = new StringBuffer();
+        sb.append("-----BEGIN " + tag + " PRIVATE KEY-----\n");
+        if (password != null) {
+            Crai crai = BaseTransport.getCrai();
+
+            // since we only support one cipher here, just hardcode it. :/
+            final String cipherName = "DES-EDE3-CBC";
+            final int saltSize = 8;
+            
+            byte[] salt = new byte[saltSize];
+            crai.getPRNG().getBytes(salt);
+            data = this.encryptKeyFile(data, cipherName, password, salt);
+            
+            sb.append("Proc-Type: 4,ENCRYPTED\n");
+            sb.append("DEK-Info: " + cipherName + "," + Util.encodeHex(salt).toUpperCase() + "\n");
+            sb.append("\n");
+        }
+     
+        // Base64 would break lines at a different length than 64 :(
+        String s = Base64.encodeBytes(data, 0, data.length, Base64.DONT_BREAK_LINES);
+        while (s.length() > 64) {
+            sb.append(s.substring(0, 64));
+            sb.append("\n");
+            s = s.substring(64);
+        }
+
+        sb.append(s);
+        sb.append("\n");
+        sb.append("-----END " + tag + " PRIVATE KEY-----\n");
+     
+        os.write(sb.toString().getBytes());
+    }
+    
+    /**
      * Given a password, passphrase, or other human-source key, scramble it
      * through a secure hash into some keyworthy bytes.  This specific
      * algorithm is used for encrypting/decrypting private key files.
@@ -398,6 +448,38 @@ public abstract class PKey
         }
     }
     
+    private static byte[]
+    encryptKeyFile (byte[] data, String cipherName, String password, byte[] salt)
+        throws SSHException
+    {
+        CipherDescription cdesc = (CipherDescription) sCipherMap.get(cipherName);
+        if (cdesc == null) {
+            throw new SSHException("Unknown private key cipher '" + cipherName + "'");
+        }
+        
+        try {
+            Crai crai = BaseTransport.getCrai();
+            CraiDigest md5 = crai.makeMD5();
+            CraiCipher c = crai.getCipher(cdesc.mAlgorithm);
+            byte[] key = generateKeyBytes(md5, salt, password.getBytes(), cdesc.mKeySize);
+            c.initEncrypt(key, salt);
+            
+            if ((data.length % cdesc.mBlockSize) != 0) {
+                int n = cdesc.mBlockSize - (data.length % cdesc.mBlockSize);
+                byte[] newbuf = new byte[data.length + n];
+                System.arraycopy(data, 0, newbuf, 0, data.length);
+                // leave the extra bytes as zero.
+                data = newbuf;
+            }
+            
+            byte[] out = new byte[data.length];
+            c.process(data, 0, data.length, out, 0);
+            return out;
+        } catch (CraiException x) {
+            throw new SSHException("Unable to initialize cipher '" + cdesc.mAlgorithm + "' due to internal java error: " + x);
+        }
+    }
+
     
     private static Map sNameMap = new HashMap();
     private static Map sBannerMap = new HashMap();

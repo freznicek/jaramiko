@@ -26,6 +26,8 @@
 package net.lag.jaramiko;
 
 import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import junit.framework.TestCase;
@@ -80,6 +82,42 @@ public class PKeyTest
     }
     
     public void
+    testSaveRSA ()
+        throws Exception
+    {
+        PKey rsa = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        assertEquals(RSA_FINGERPRINT, Util.encodeHex(rsa.getFingerprint()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        rsa.writePrivateKeyToStream(out, null);
+        
+        FileInputStream in = new FileInputStream("test/test_rsa.key");
+        ByteArrayOutputStream exp = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        while (true) {
+            int n = in.read(buffer);
+            if (n <= 0) {
+                break;
+            }
+            exp.write(buffer, 0, n);
+        }
+        
+        assertEquals(Util.encodeHex(out.toByteArray()), Util.encodeHex(exp.toByteArray()));
+    }
+
+    public void
+    testSaveRSAPassword ()
+        throws Exception
+    {
+        PKey rsa = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa_password.key"), "television");
+        assertEquals(RSA_FINGERPRINT, Util.encodeHex(rsa.getFingerprint()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        rsa.writePrivateKeyToStream(out, "skeletor");
+        
+        rsa = PKey.readPrivateKeyFromStream(new ByteArrayInputStream(out.toByteArray()), "skeletor");
+        assertEquals(RSA_FINGERPRINT, Util.encodeHex(rsa.getFingerprint()));
+    }
+
+    public void
     testLoadDSS ()
         throws Exception
     {
@@ -105,6 +143,42 @@ public class PKeyTest
         assertEquals(1024, dss.getBits());
     }
     
+    public void
+    testSaveDSS ()
+        throws Exception
+    {
+        PKey dss = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
+        assertEquals(DSS_FINGERPRINT, Util.encodeHex(dss.getFingerprint()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        dss.writePrivateKeyToStream(out, null);
+        
+        FileInputStream in = new FileInputStream("test/test_dss.key");
+        ByteArrayOutputStream exp = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        while (true) {
+            int n = in.read(buffer);
+            if (n <= 0) {
+                break;
+            }
+            exp.write(buffer, 0, n);
+        }
+        
+        assertEquals(Util.encodeHex(out.toByteArray()), Util.encodeHex(exp.toByteArray()));
+    }
+
+    public void
+    testSaveDSSPassword ()
+        throws Exception
+    {
+        PKey dss = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss_password.key"), "television");
+        assertEquals(DSS_FINGERPRINT, Util.encodeHex(dss.getFingerprint()));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        dss.writePrivateKeyToStream(out, "skeletor");
+        
+        dss = PKey.readPrivateKeyFromStream(new ByteArrayInputStream(out.toByteArray()), "skeletor");
+        assertEquals(DSS_FINGERPRINT, Util.encodeHex(dss.getFingerprint()));
+    }
+
     // verify that the public & private keys compare equal
     public void
     testCompareRSA ()

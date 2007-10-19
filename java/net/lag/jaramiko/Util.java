@@ -209,7 +209,7 @@ public class Util
     {
         List list = Arrays.asList(nums);
         try {
-            return BEROutputStream.encode(list);
+            return BEROutputStream.encode(list, false);
         } catch (IOException x) {
             throw new SSHException("BER encoding error: " + x);
         }

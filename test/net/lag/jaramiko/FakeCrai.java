@@ -51,9 +51,9 @@ public class FakeCrai
     }
     
     public CraiPrivateKey
-    makePrivateRSAKey (BigInteger n, BigInteger d)
+    makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
     {
-        return mCraiJCE.makePrivateRSAKey(n, d);
+        return mCraiJCE.makePrivateRSAKey(n, d, p, q);
     }
     
     public CraiPrivateKey
