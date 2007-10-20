@@ -396,7 +396,7 @@ import net.lag.crai.*;
     {
         mLog.debug("Switching on inbound compression ...");
 
-        Class compressClass = (Class) BaseTransport.sCompressMap.get(mAgreedRemoteCompression);
+        Class compressClass = (Class) BaseTransport.sCompressMap.get(mDescription.mRemoteCompression);
         if (compressClass != null) {
             try {
                 Compressor compress = (Compressor) compressClass.newInstance();
@@ -412,7 +412,7 @@ import net.lag.crai.*;
     {
         mLog.debug("Switching on outbound compression ...");
 
-        Class compressClass = (Class) BaseTransport.sCompressMap.get(mAgreedLocalCompression);
+        Class compressClass = (Class) BaseTransport.sCompressMap.get(mDescription.mLocalCompression);
         if (compressClass != null) {
             try {
                 Compressor compress = (Compressor) compressClass.newInstance();
@@ -428,12 +428,12 @@ import net.lag.crai.*;
     activateInbound ()
         throws SSHException
     {
-        CipherDescription desc = (CipherDescription) BaseTransport.sCipherMap.get(mAgreedRemoteCipher);
-        MacDescription mdesc = (MacDescription) BaseTransport.sMacMap.get(mAgreedRemoteMac);
+        CipherDescription desc = mDescription.mRemoteCipher;
+        MacDescription mdesc = mDescription.mRemoteMac;
         activateInbound(desc, mdesc);
 
-        if ((mAgreedRemoteCompression != null) &&
-            (! mAgreedRemoteCompression.equals("zlib@openssh.com") || isAuthenticated())) {
+        if ((mDescription.mRemoteCompression != null) &&
+            (! mDescription.mRemoteCompression.equals("zlib@openssh.com") || isAuthenticated())) {
             startInboundCompression();
         }
     }
@@ -449,12 +449,12 @@ import net.lag.crai.*;
         m.putByte(MessageType.NEW_KEYS);
         sendMessage(m);
         
-        CipherDescription desc = (CipherDescription) sCipherMap.get(mAgreedLocalCipher);
-        MacDescription mdesc = (MacDescription) sMacMap.get(mAgreedLocalMac);
+        CipherDescription desc = mDescription.mLocalCipher;
+        MacDescription mdesc = mDescription.mLocalMac;
         activateOutbound(desc, mdesc);
 
-        if ((mAgreedLocalCompression != null) &&
-            (! mAgreedLocalCompression.equals("zlib@openssh.com") || isAuthenticated())) {
+        if ((mDescription.mLocalCompression != null) &&
+            (! mDescription.mLocalCompression.equals("zlib@openssh.com") || isAuthenticated())) {
             startOutboundCompression();
         }
 
@@ -471,10 +471,10 @@ import net.lag.crai.*;
     authTrigger ()
     {
         // delayed initiation of compression
-        if ((mAgreedLocalCompression != null) && mAgreedLocalCompression.equals("zlib@openssh.com")) {
+        if ((mDescription.mLocalCompression != null) && mDescription.mLocalCompression.equals("zlib@openssh.com")) {
             startOutboundCompression();
         }
-        if ((mAgreedRemoteCompression != null) && mAgreedRemoteCompression.equals("zlib@openssh.com")) {
+        if ((mDescription.mRemoteCompression != null) && mDescription.mRemoteCompression.equals("zlib@openssh.com")) {
             startInboundCompression();
         }
     }
@@ -956,38 +956,49 @@ import net.lag.crai.*;
         m.getBoolean();     // kex follows
         m.getInt();         // unused
     
-        mAgreedLocalCompression = filter(mSecurityOptions.getCompressions(), clientCompressAlgorithmList);
-        mAgreedRemoteCompression = filter(mSecurityOptions.getCompressions(), serverCompressAlgorithmList);
-        if ((mAgreedLocalCompression == null) || (mAgreedRemoteCompression == null)) {
+        String agreedLocalCompression = filter(mSecurityOptions.getCompressions(), clientCompressAlgorithmList);
+        String agreedRemoteCompression = filter(mSecurityOptions.getCompressions(), serverCompressAlgorithmList);
+        if ((agreedLocalCompression == null) || (agreedRemoteCompression == null)) {
             throw new SSHException("Incompatible SSH peer (no acceptable compression)");
         }
 
-        mAgreedKex = filter(mSecurityOptions.getKex(), kexAlgorithmList);
-        if (mAgreedKex == null) {
+        String agreedKex = filter(mSecurityOptions.getKex(), kexAlgorithmList);
+        if (agreedKex == null) {
             throw new SSHException("Incompatible SSH peer (no acceptable kex algorithm)");
         }
-        mAgreedServerKey = filter(mSecurityOptions.getKeys(), serverKeyAlgorithmList);
-        if (mAgreedServerKey == null) {
+        String agreedServerKey = filter(mSecurityOptions.getKeys(), serverKeyAlgorithmList);
+        if (agreedServerKey == null) {
             throw new SSHException("Incompatible SSH peer (no acceptable host key)");
         }
 
-        mAgreedLocalCipher = filter(mSecurityOptions.getCiphers(), clientEncryptAlgorithmList);
-        mAgreedRemoteCipher = filter(mSecurityOptions.getCiphers(), serverEncryptAlgorithmList);
-        if ((mAgreedLocalCipher == null) || (mAgreedRemoteCipher == null)) {
+        String agreedLocalCipher = filter(mSecurityOptions.getCiphers(), clientEncryptAlgorithmList);
+        String agreedRemoteCipher = filter(mSecurityOptions.getCiphers(), serverEncryptAlgorithmList);
+        if ((agreedLocalCipher == null) || (agreedRemoteCipher == null)) {
             throw new SSHException("Incompatible SSH peer (no acceptable ciphers)");
         }
         
-        mAgreedLocalMac = filter(mSecurityOptions.getDigests(), clientMacAlgorithmList);
-        mAgreedRemoteMac = filter(mSecurityOptions.getDigests(), serverMacAlgorithmList);
-        if ((mAgreedLocalMac == null) || (mAgreedRemoteMac == null)) {
+        String agreedLocalMac = filter(mSecurityOptions.getDigests(), clientMacAlgorithmList);
+        String agreedRemoteMac = filter(mSecurityOptions.getDigests(), serverMacAlgorithmList);
+        if ((agreedLocalMac == null) || (agreedRemoteMac == null)) {
             throw new SSHException("Incompatible SSH peer (no accpetable macs)");
         }
 
+        TransportDescription d = mDescription = new TransportDescription();
+        d.mKexName = agreedKex;
+        d.mServerKeyType = agreedServerKey;
+        d.mLocalCipherName = agreedLocalCipher;
+        d.mLocalCipher = (CipherDescription) sCipherMap.get(agreedLocalCipher);
+        d.mRemoteCipherName = agreedRemoteCipher;
+        d.mRemoteCipher = (CipherDescription) sCipherMap.get(agreedRemoteCipher);
+        d.mLocalMacAlgorithm = agreedLocalMac;
+        d.mLocalMac = (MacDescription) sMacMap.get(agreedLocalMac);
+        d.mRemoteMacAlgorithm = agreedRemoteMac;
+        d.mRemoteMac = (MacDescription) sMacMap.get(agreedRemoteMac);
+        d.mLocalCompression = agreedLocalCompression;
+        d.mRemoteCompression = agreedRemoteCompression;
+
         kexInitHook();
-        mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
-                   mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
-                   ", remote " + mAgreedRemoteMac + "; compress: local " + mAgreedLocalCompression +
-                   ", remote " + mAgreedRemoteCompression);
+        mLog.debug(d.toString());
         
         // save for computing hash later...
         /* now wait!  openssh has a bug (and others might too) where there are
@@ -999,9 +1010,9 @@ import net.lag.crai.*;
         mRemoteKexInit = new byte[m.getPosition()];
         System.arraycopy(data, 0, mRemoteKexInit, 0, m.getPosition());
         
-        Class kexClass = (Class) sKexMap.get(mAgreedKex);
+        Class kexClass = (Class) sKexMap.get(agreedKex);
         if (kexClass == null) {
-            throw new SSHException("Oops!  Negotiated kex " + mAgreedKex + " which I don't implement");
+            throw new SSHException("Oops!  Negotiated kex " + agreedKex + " which I don't implement");
         }
         try {
             mKexEngine = (Kex) kexClass.newInstance();
@@ -1245,14 +1256,7 @@ import net.lag.crai.*;
     private Kex mKexEngine;
     
     // negotiation:
-    private String mAgreedKex;
-    /* package */ String mAgreedServerKey;
-    /* package */ String mAgreedLocalCipher;
-    /* package */ String mAgreedRemoteCipher;
-    /* package */ String mAgreedLocalMac;
-    /* package */ String mAgreedRemoteMac;
-    /* package */ String mAgreedLocalCompression;
-    /* package */ String mAgreedRemoteCompression;
+    protected TransportDescription mDescription = null;
     
     // shared transport state:
     /* package */ String mLocalVersion;

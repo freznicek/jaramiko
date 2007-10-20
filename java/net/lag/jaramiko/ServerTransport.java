@@ -408,23 +408,29 @@ public class ServerTransport
     kexInitHook ()
         throws SSHException
     {
-        mServerKey = (PKey) mServerKeyMap.get(mAgreedServerKey);
+        mServerKey = (PKey) mServerKeyMap.get(mDescription.mServerKeyType);
         if (mServerKey == null) {
             throw new SSHException("Incompatible SSH peer (can't match requested host key type");
         }
         
         // swap sense of "local" and "remote"
-        String temp = mAgreedLocalCipher;
-        mAgreedLocalCipher = mAgreedRemoteCipher;
-        mAgreedRemoteCipher = temp;
+        String temp = mDescription.mLocalCipherName;
+        mDescription.mLocalCipherName = mDescription.mRemoteCipherName;
+        mDescription.mRemoteCipherName = temp;
+        CipherDescription tempd = mDescription.mLocalCipher;
+        mDescription.mLocalCipher = mDescription.mRemoteCipher;
+        mDescription.mRemoteCipher = tempd;
         
-        temp = mAgreedLocalMac;
-        mAgreedLocalMac = mAgreedRemoteMac;
-        mAgreedRemoteMac = temp;
+        temp = mDescription.mLocalMacAlgorithm;
+        mDescription.mLocalMacAlgorithm = mDescription.mRemoteMacAlgorithm;
+        mDescription.mRemoteMacAlgorithm = temp;
+        MacDescription tempd2 = mDescription.mLocalMac;
+        mDescription.mLocalMac = mDescription.mRemoteMac;
+        mDescription.mRemoteMac = tempd2;
         
-        temp = mAgreedLocalCompression;
-        mAgreedLocalCompression = mAgreedRemoteCompression;
-        mAgreedRemoteCompression = temp;
+        temp = mDescription.mLocalCompression;
+        mDescription.mLocalCompression = mDescription.mRemoteCompression;
+        mDescription.mRemoteCompression = temp;
     }
 
     /* package */ List

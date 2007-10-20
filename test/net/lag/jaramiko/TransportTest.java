@@ -197,8 +197,10 @@ public class TransportTest
         sync.waitFor(5000);
 
         assertTrue(mTS.isActive());
-        assertEquals("aes128-cbc", mTC.mAgreedLocalCipher);
-        assertEquals("aes128-cbc", mTC.mAgreedRemoteCipher);
+        assertEquals("aes128-cbc", mTC.mDescription.getLocalCipherName());
+        assertEquals("aes128-cbc", mTC.mDescription.getRemoteCipherName());
+        assertEquals(128, mTC.mDescription.getLocalCipherBits());
+        assertEquals(128, mTC.mDescription.getRemoteCipherBits());
         assertEquals(12, mTC.mPacketizer.mMacSizeOut);
         assertEquals(12, mTC.mPacketizer.mMacSizeIn);
         
