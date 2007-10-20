@@ -291,13 +291,14 @@ public class Channel
      * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
      * @param width width (in characters) of the terminal screen
      * @param height height (in characters) of the terminal screen
+     * @param modes any requested terminal modes, or null if none are desired
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
      * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
     public boolean
-    getPTY (String term, int width, int height, int timeout_ms)
+    getPTY (String term, int width, int height, TerminalModes modes, int timeout_ms)
         throws IOException
     {
         synchronized (mLock) {
@@ -316,7 +317,11 @@ public class Channel
             // pixel height, width (usually useless)
             m.putInt(0);
             m.putInt(0);
-            m.putString("");
+            if (modes == null) {
+                m.putByteString(new byte[0]);
+            } else {
+                m.putByteString(modes.toBytes());
+            }
             
             mEvent.clear();
             mTransport.sendUserMessage(m, -1);
@@ -330,7 +335,33 @@ public class Channel
         }
         return true;
     }
-    
+
+    /**
+     * Request a pseudo-terminal from the server.  This is usually used right
+     * after creating a client channel, to ask the server to provide some
+     * basic terminal semantics for a shell invoked with {@link #invokeShell}.
+     * It isn't necessary (or desirable) to call this method if you're going
+     * to execute a single command with {@link #execCommand}.
+     * 
+     * <p>Normally this method will wait for a server response to verify
+     * that it succeeded.  You may pass a timeout of <code>0</code> to make
+     * the request without waiting for a response.
+     * 
+     * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
+     * @param width width (in characters) of the terminal screen
+     * @param height height (in characters) of the terminal screen
+     * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
+     *     wait forever; 0 to avoid waiting for a response
+     * @return true if the operation succeeded; false if not
+     * @throws IOException if an exception occurred while making the request
+     */
+    public boolean
+    getPTY (String term, int width, int height, int timeout_ms)
+        throws IOException
+    {
+        return getPTY(term, width, height, null, timeout_ms);
+    }
+
     /**
      * Request an interactive shell session on this channel.  If the server
      * allows it, the channel will then be directly connected to the stdin,
@@ -1242,7 +1273,7 @@ public class Channel
             int height = m.getInt();
             int pixelWidth = m.getInt();
             int pixelHeight = m.getInt();
-            String modes = m.getString();
+            TerminalModes modes = TerminalModes.fromBytes(m.getByteString());
             if (mServer != null) {
                 ok = mServer.checkChannelPTYRequest(this, term, width, height, pixelWidth, pixelHeight, modes);
             } else {

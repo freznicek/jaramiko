@@ -301,6 +301,58 @@ public class ChannelTest
         schan.close();
     }
     
+    // verify that a pty request works
+    public void
+    testPTY ()
+        throws Exception
+    {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+        PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
+        mTS.addServerKey(hostKey);
+        final FakeServer server = new FakeServer();
+        
+        final Event sync = new Event();
+        new Thread(new Runnable() {
+            public void run () {
+                try {
+                    mTS.start(server, 15000);
+                    sync.set();
+                } catch (IOException x) { }
+            }
+        }).start();
+        
+        mTC.start(publicHostKey, 15000);
+        mTC.authPassword("slowdive", "pygmalion", 15000);
+        
+        sync.waitFor(5000);
+        assertTrue(sync.isSet());
+        assertTrue(mTS.isActive());
+        
+        Channel chan = mTC.openSession(5000);
+        TerminalModes modes = new TerminalModes();
+        modes.put(TerminalModes.ECHO, 23);
+        modes.put(TerminalModes.IXOFF, 900);
+        assertTrue(chan.getPTY("vt100", 80, 24, modes, 5000));
+        assertTrue(chan.invokeShell(5000));
+        Channel schan = mTS.accept(5000);
+
+        assertEquals("vt100", server.mPTYTerm);
+        assertEquals(80, server.mPTYWidth);
+        assertEquals(24, server.mPTYHeight);
+        assertEquals(23, server.mPTYModes.get(TerminalModes.ECHO));
+        assertEquals(900, server.mPTYModes.get(TerminalModes.IXOFF));
+        assertFalse(server.mPTYModes.contains(TerminalModes.IXON));
+        
+        chan.getOutputStream().write("communist j. cat\n".getBytes());
+        assertFalse(chan.isClosed());
+        chan.close();
+        assertTrue(chan.isClosed());
+        
+        BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
+        assertEquals("communist j. cat", r.readLine());
+        schan.close();
+    }
+    
 
     private Socket mSocketC;
     private Socket mSocketS;

@@ -149,9 +149,13 @@ public class FakeServer
     public boolean
     checkChannelPTYRequest (Channel c, String term, int width,
                             int height, int pixelWidth,
-                            int pixelHeight, String modes)
+                            int pixelHeight, TerminalModes modes)
     {
-        return false;
+        mPTYTerm = term;
+        mPTYWidth = width;
+        mPTYHeight = height;
+        mPTYModes = modes;
+        return true;
     }
 
     public boolean
@@ -189,4 +193,9 @@ public class FakeServer
     public PKey mParanoidKey;
     public String mGlobalRequest;
     public String mUsername;
+    
+    public String mPTYTerm;
+    public int mPTYWidth;
+    public int mPTYHeight;
+    public TerminalModes mPTYModes;
 }

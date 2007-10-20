@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -29,13 +29,11 @@ import java.util.List;
 
 
 /**
- * Interface for controlling the behavior of paramiko in server mode.
+ * Interface for controlling the behavior of jaramiko in server mode.
  * 
- * <p>Methods on this class are called from paramiko's primary thread, so you
+ * <p>Methods on this class are called from jaramiko's primary thread, so you
  * shouldn't do too much work in them (certainly nothing that blocks or
  * sleeps).
- * 
- * @author robey
  */
 public interface ServerInterface
 {
@@ -108,7 +106,7 @@ public interface ServerInterface
      * {@link AuthError}.
      * 
      * <p>Note that you don't have to actually verify any key signature here.
-     * If this method returns {@link AuthError#SUCCESS}, paramiko will do the
+     * If this method returns {@link AuthError#SUCCESS}, jaramiko will do the
      * signature verification, and only accept the key if the signature is
      * valid.
      * 
@@ -191,12 +189,12 @@ public interface ServerInterface
      *     <code>0</code> if unknown)
      * @param pixelHeight height of screen in pixels, if known (may be
      *     <code>0</code> if unknown)
-     * @param modes terminal modes (undocumented)
+     * @param modes terminal modes as requested by the client
      * @return true if the pty has been allocated; false otherwise
      */
     public boolean
     checkChannelPTYRequest (Channel c, String term, int width, int height, int pixelWidth, int pixelHeight,
-                            String modes);
+                            TerminalModes modes);
     
     /**
      * Determine if a shell will be provided to the client on the given
