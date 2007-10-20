@@ -893,7 +893,7 @@ public class Channel
     public Transport
     getTransport ()
     {
-        return mTransport.getTransport();
+        return mTransport;
     }
 
     
@@ -940,7 +940,7 @@ public class Channel
     }
     
     /* package */ void
-    setTransport (ChannelTransportInterface t, LogSink log)
+    setTransport (BaseTransport t, LogSink log)
     {
         mTransport = t;
         mLog = log;
@@ -1319,7 +1319,7 @@ public class Channel
     private boolean mCombineStderr;
     private Object mLock;
     private Event mEvent;
-    private ChannelTransportInterface mTransport;
+    private BaseTransport mTransport;
     private LogSink mLog;
     private ServerInterface mServer;
     private Object mNotifyObject;
