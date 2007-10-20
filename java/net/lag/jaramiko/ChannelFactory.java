@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -27,14 +27,13 @@ package net.lag.jaramiko;
 
 import java.util.List;
 
+
 /**
  * Simple interface for a factory to create Channels.  You only need to use
  * this if you are creating custom channel types that need special features
  * like ChannelRequests -- in other words, implementing new protocols over
  * SSH.  Use {@link Transport#registerChannelKind} to register the factory
  * with your Transport.
- *
- * @author msullivan
  */
 public interface ChannelFactory
 {

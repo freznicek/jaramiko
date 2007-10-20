@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on Jul 1, 2005
  */
 
 package net.lag.jaramiko;
@@ -41,7 +38,7 @@ import java.util.List;
  * 
  * <p>Changing the contents and/or order of these fields affects the
  * underlying {@link Transport}, but only if you change them before starting
- * the session.  If you try to add an algorithm that paramiko doesn't
+ * the session.  If you try to add an algorithm that jaramiko doesn't
  * recognize, an IllegalArgumentException will be thrown.
  */
 public final class SecurityOptions

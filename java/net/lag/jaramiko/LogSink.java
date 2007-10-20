@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,26 +21,22 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
- * Created on May 8, 2005
  */
 
 package net.lag.jaramiko;
 
+
 /**
- * Interface for controlling the logging done by paramiko.  Java has an
+ * Interface for controlling the logging done by jaramiko.  Java has an
  * embarrassment of riches when it comes to logging packages, and no clear
  * standard, so this interface defines only the simplest logging requirements
- * that paramiko has.
+ * that jaramiko has.
  * 
  * <p>If you use a logging package, you should be able to create a small class
  * that implements these methods by calling into your real logger.  Two simple
  * implementations are provided: {@link ConsoleLog} dumps logs to the java
  * console, and {@link NullLog} absorbs the logs and prevents them from being
  * written anywhere.
- * 
- * @author robey
  */
 public interface LogSink
 {

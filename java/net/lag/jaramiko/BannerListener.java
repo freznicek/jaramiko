@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -25,11 +25,10 @@
 
 package net.lag.jaramiko;
 
+
 /**
  * A listener for receiving informational banners from an SSH server during
  * authentication.
- * 
- * @author robey
  */
 public interface BannerListener
 {

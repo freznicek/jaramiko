@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005-2006 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -101,7 +101,7 @@ public class ServerTransport
             throws SSHException
         {
             // no remote server key in server mode
-            throw new SSHException("internal paramiko error");
+            throw new SSHException("internal jaramiko error");
         }
 
         public void
@@ -264,13 +264,13 @@ public class ServerTransport
     }
     
     /**
-     * Set a crypto library provider for paramiko.  This setting affects all
+     * Set a crypto library provider for jaramiko.  This setting affects all
      * Transport objects (both ClientTransport and ServerTransport), present
      * and future, and usually will only need to be set once (or never).
      * The only time you really need to set this is if you're using a
      * non-standard crypto provider (like on an embedded platform).
      * 
-     * <p>If no crypto provider is set, paramiko will attempt to use JCE,
+     * <p>If no crypto provider is set, jaramiko will attempt to use JCE,
      * which comes standard with java 1.4 and up.
      * 
      * @param crai the crypto provider to use

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -30,8 +30,6 @@ package net.lag.jaramiko;
  * An exception raised when an attempt to open a channel (via
  * {@link ClientTransport#openSession} or {@link ClientTransport#openChannel}) fails.
  * The exception contains an error code from the SSH server.
- * 
- * @author robey
  */
 public class ChannelException
     extends SSHException

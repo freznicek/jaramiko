@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * 
- * Created on Jul 2, 2005
  */
 
 package net.lag.jaramiko;
@@ -33,8 +30,6 @@ package net.lag.jaramiko;
  * Error codes returned by an SSH2 server when it rejects an authentication
  * request.  These are used by the various authentication methods in
  * {@link ServerInterface}.
- * 
- * @author robey
  */
 public final class AuthError
 {

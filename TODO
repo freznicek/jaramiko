@@ -1,16 +1,10 @@
 Things I want to do, specific to java:
 
 * fix comments that say "paramiko"
-
 * apparently BaseTransport.detectUnsupportedCiphers() isn't really working.
+* add a unit test for a public key file with no blank line between the header & baes64.
 
-* make this programmatically accessible:
-  mLog.debug("using kex " + mAgreedKex + "; server key type " + mAgreedServerKey + "; cipher: local " +
-                   mAgreedLocalCipher + ", remote " + mAgreedRemoteCipher + "; mac: local " + mAgreedLocalMac +
-                   ", remote " + mAgreedRemoteMac);
-  -- split cipher names into string(name) and int(bits)
-* add ability to WRITE key files too
-  
+
 Things I didn't port from paramiko (yet?):
 
 * kex-gex aka group-exchange kex
