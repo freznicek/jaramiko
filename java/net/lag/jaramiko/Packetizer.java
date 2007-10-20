@@ -187,7 +187,7 @@ import net.lag.crai.CraiRandom;
         mCompressOut = comp;
     }
     
-    // FIXME: how do i guarantee that nobody's in read() while this is happening?
+    // this is always called from the same thread that would be doing a read().
     public void
     setInboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
     {
