@@ -241,6 +241,8 @@ public class TransportTest
 
         assertTrue(mTC.isActive());
         assertTrue(mTS.isActive());
+        assertEquals("ssh-dss", mTC.getDescription().getServerKeyType());
+        assertEquals("ssh-dss", mTS.getDescription().getServerKeyType());
     }
     
     // verify that the keepalive will be sent

@@ -353,7 +353,6 @@ public class ServerTransport
         }
     }
 
-    // FIXME this needs a unit test
     /* package */ void
     sendKexInitHook ()
     {
