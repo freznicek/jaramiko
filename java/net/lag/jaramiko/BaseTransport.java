@@ -301,6 +301,20 @@ import net.lag.crai.*;
             }
         }
     }
+    
+    /**
+     * Return an object containing negotiated parameters of this SSH
+     * transport. These parameters include the MAC algorithm, encryption,
+     * and compression in both directions. This object will be null until
+     * a transport is initiated.
+     * 
+     * @return the negotiated parameters
+     */
+    public TransportDescription
+    getDescription ()
+    {
+        return mDescription;
+    }
         
     
     // -----  package
