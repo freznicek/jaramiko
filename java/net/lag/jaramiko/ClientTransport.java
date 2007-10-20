@@ -116,33 +116,6 @@ public class ClientTransport
     }
     
     
-    // FIXME: this isn't actually different from client to server
-    private class MyChannelTransportInterface
-        implements ChannelTransportInterface
-    {
-        public void
-        sendUserMessage (Message m, int timeout_ms)
-            throws IOException
-        {
-            ClientTransport.this.sendUserMessage(m, timeout_ms);
-        }
-        
-        public void
-        unlinkChannel (int chanID)
-        {
-            synchronized (mLock) {
-                mChannels[chanID] = null;
-            }
-        }
-        
-        public Transport
-        getTransport ()
-        {
-            return ClientTransport.this;
-        }
-    }
-    
-    
     /**
      * Create a new SSH client session over an existing socket.  This only
      * initializes the ClientTransport object; it doesn't begin negotiating
@@ -503,7 +476,7 @@ public class ClientTransport
             mChannels[chanid] = c;
             e = new Event();
             mChannelEvents[chanid] = e;
-            c.setTransport(new MyChannelTransportInterface(), mLog);
+            c.setTransport(this, mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             
             sendUserMessage(m, timeout_ms);
@@ -571,7 +544,7 @@ public class ClientTransport
         return new MyKexTransportInterface();
     }
 
-    /* package */ final void
+    protected final void
     activateInbound (CipherDescription desc, MacDescription mdesc)
         throws SSHException
     {
@@ -587,7 +560,7 @@ public class ClientTransport
              */
             key = computeKey((byte)'F', mdesc.mNaturalSize);
             CraiDigest inMac = null;
-            if (mdesc.mName == "MD5") {
+            if (mdesc.mName.equals("MD5")) {
                 inMac = sCrai.makeMD5HMAC(key);
             } else {
                 inMac = sCrai.makeSHA1HMAC(key);
@@ -598,7 +571,7 @@ public class ClientTransport
         }
     }
     
-    /* package */ final void
+    protected final void
     activateOutbound (CipherDescription desc, MacDescription mdesc)
         throws SSHException
     {

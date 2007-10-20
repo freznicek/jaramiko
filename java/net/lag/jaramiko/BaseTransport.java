@@ -437,7 +437,6 @@ import net.lag.crai.*;
         }
     }
     
-    // ClientTransport & ServerTransport override to set the correct keys
     /* package */ void
     activateInbound ()
         throws SSHException
@@ -452,7 +451,8 @@ import net.lag.crai.*;
         }
     }
     
-    /* package */ abstract void activateInbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
+    // ClientTransport & ServerTransport override to set the correct keys
+    protected abstract void activateInbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
     
     // switch on newly negotiated encryption parameters for outbound traffic
     /* package */ final void
@@ -479,7 +479,7 @@ import net.lag.crai.*;
         mExpectedPacket = MessageType.NEW_KEYS;
     }
     
-    /* package */ abstract void activateOutbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
+    protected abstract void activateOutbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
     
     /* package */ void
     authTrigger ()
@@ -1153,6 +1153,14 @@ import net.lag.crai.*;
         mChannelEvents = ne;
         
         return old;
+    }
+    
+    protected void
+    unlinkChannel (int chanID)
+    {
+        synchronized (mLock) {
+            mChannels[chanID] = null;
+        }
     }
     
     private void

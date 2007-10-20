@@ -119,33 +119,6 @@ public class ServerTransport
     }
 
     
-    // FIXME: this isn't actually different from client to server
-    private class MyChannelTransportInterface
-        implements ChannelTransportInterface
-    {
-        public void
-        sendUserMessage (Message m, int timeout_ms)
-            throws IOException
-        {
-            ServerTransport.this.sendUserMessage(m, timeout_ms);
-        }
-        
-        public void
-        unlinkChannel (int chanID)
-        {
-            synchronized (mLock) {
-                mChannels[chanID] = null;
-            }
-        }
-        
-        public Transport
-        getTransport ()
-        {
-            return ServerTransport.this;
-        }
-    }
-
-    
     public
     ServerTransport (Socket socket)
         throws IOException
@@ -325,7 +298,7 @@ public class ServerTransport
         return super.filter(serverPrefs, clientPrefs);
     }
 
-    /* package */ final void
+    protected final void
     activateInbound (CipherDescription desc, MacDescription mdesc)
         throws SSHException
     {
@@ -341,7 +314,7 @@ public class ServerTransport
              */
             key = computeKey((byte)'E', mdesc.mNaturalSize);
             CraiDigest inMac = null;
-            if (mdesc.mName == "MD5") {
+            if (mdesc.mName.equals("MD5")) {
                 inMac = sCrai.makeMD5HMAC(key);
             } else {
                 inMac = sCrai.makeSHA1HMAC(key);
@@ -352,7 +325,7 @@ public class ServerTransport
         }
     }
 
-    /* package */ final void
+    protected final void
     activateOutbound (CipherDescription desc, MacDescription mdesc)
         throws SSHException
     {
@@ -483,7 +456,7 @@ public class ServerTransport
         }
         
         synchronized (mLock) {
-            c.setTransport(new MyChannelTransportInterface(), mLog);
+            c.setTransport(this, mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
             c.setServer(mServer);
