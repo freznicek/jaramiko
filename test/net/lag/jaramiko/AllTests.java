@@ -46,6 +46,7 @@ public class AllTests
         ts.addTestSuite(PKeyTest.class);
         ts.addTestSuite(TransportTest.class);
         ts.addTestSuite(ChannelTest.class);
+        ts.addTestSuite(ModulusPackTest.class);
         
         ts.addTestSuite(TagTest.class);
         ts.addTestSuite(BERInputStreamTest.class);

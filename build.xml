@@ -6,6 +6,7 @@
     <property name="docs-folder" location="docs" />
     <property name="test-folder" location="test" />
     <property name="test-build-folder" location="test-classes" />
+    <property name="resource-folder" location="resources" />
 
     <property name="dep-jars" value="" />
 
@@ -41,6 +42,9 @@
             <attribute name="Build-Date" value="${TODAY}" />
             <attribute name="Build-Time" value="${TSTAMP}" />
         </manifest>
+        <copy todir="${build-folder}/resources">
+            <fileset dir="${resource-folder}" />
+        </copy>
         <jar jarfile="${jaramiko-jar}" basedir="${build-folder}" manifest="${manifest-file}" />
     </target>
 

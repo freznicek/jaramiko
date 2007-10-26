@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2007 Robey Pointer <robey@lag.net>
  *
  * This file is part of jaramiko.
  *
@@ -25,29 +25,34 @@
 
 package net.lag.jaramiko;
 
-import java.io.IOException;
 import java.math.BigInteger;
 
+import net.lag.crai.Crai;
 
-/**
- * This makes it easier to unit-test the Kex implementations, by letting the
- * Transport interface be easily stubbed out.
- */
-/* package */ interface KexTransportInterface
+
+public class FakeModulusPack 
+    extends ModulusPack
 {
-    public String getLocalVersion ();
-    public String getRemoteVersion ();
-    public byte[] getLocalKexInit ();
-    public byte[] getRemoteKexInit ();
-
-    public void registerMessageHandler (byte ptype, MessageHandler handler);
-    public void expectPacket (byte ptype);
-    public void expectPacket (byte ptype1, byte ptype2);
-    public void sendMessage (Message m) throws IOException;
-
-    public LogSink getLog ();
-    public PKey getServerKey ();
-    public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
-    public void setKH (BigInteger k, byte[] h);
-    public void kexComplete () throws IOException;
+    public ModulusPair
+    get (Crai crai, int min, int prefer, int max)
+        throws SSHException
+    {
+        return new ModulusPair(sG, sP);
+    }
+    
+    public int
+    size ()
+    {
+        return 1;
+    }
+    
+    
+    private static final String P_TEXT =
+        "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088" +
+        "A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B30" +
+        "2B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A63" +
+        "7ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE64928" +
+        "6651ECE65381FFFFFFFFFFFFFFFF";
+    public static final BigInteger sP = new BigInteger(P_TEXT, 16);
+    public static final int sG = 2;
 }

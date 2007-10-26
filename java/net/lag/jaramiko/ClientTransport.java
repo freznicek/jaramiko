@@ -81,6 +81,12 @@ public class ClientTransport
         }
         
         public void
+        expectPacket (byte ptype1, byte ptype2)
+        {
+            ClientTransport.this.expectPacket(ptype1, ptype2);
+        }
+        
+        public void
         sendMessage (Message m)
             throws IOException
         {
@@ -112,6 +118,12 @@ public class ClientTransport
             throws IOException
         {
             ClientTransport.this.activateOutbound();
+        }
+        
+        public LogSink
+        getLog ()
+        {
+            return mLog;
         }
     }
     

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2005 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
- * This file is part of paramiko.
+ * This file is part of jaramiko.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,9 +21,6 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- *  
- * Created on May 23, 2005
  */
 
 package net.lag.jaramiko;
@@ -32,7 +29,7 @@ import java.math.BigInteger;
 
 
 /**
- * @author robey
+ * Stubbed-out KexTransportInterface for testing key-exchange implementations.
  */
 public class FakeKexTransport
     implements KexTransportInterface
@@ -70,7 +67,15 @@ public class FakeKexTransport
     public void
     expectPacket (byte expect)
     {
-        mExpect = expect;
+        mExpect1 = expect;
+        mExpect2 = 0;
+    }
+    
+    public void
+    expectPacket (byte expect1, byte expect2)
+    {
+        mExpect1 = expect1;
+        mExpect2 = expect2;
     }
 
     public void
@@ -109,10 +114,17 @@ public class FakeKexTransport
         mActivated = true;
     }
     
+    public LogSink
+    getLog ()
+    {
+        return new NullLog();
+    }
+    
     
     public Message mMessage;
     public Message mUserMessage;
-    public byte mExpect;
+    public byte mExpect1;
+    public byte mExpect2;
     public BigInteger mK;
     public byte[] mH;
     public byte[] mVerifyKey;

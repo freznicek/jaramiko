@@ -83,7 +83,8 @@ import net.lag.crai.*;
         
         mSocket.setSoTimeout(100);
         mPacketizer = new Packetizer(mInStream, mOutStream, sCrai.getPRNG());
-        mExpectedPacket = 0;
+        mExpectedPacket1 = 0;
+        mExpectedPacket2 = 0;
         mInitialKexDone = false;
         
         mLocalVersion = "SSH-" + PROTO_ID + "-" + CLIENT_ID;
@@ -329,7 +330,14 @@ import net.lag.crai.*;
     /* package */ void
     expectPacket (byte ptype)
     {
-        mExpectedPacket = ptype;
+        mExpectedPacket1 = ptype;
+    }
+
+    /* package */ void
+    expectPacket (byte ptype1, byte ptype2)
+    {
+        mExpectedPacket1 = ptype1;
+        mExpectedPacket2 = ptype2;
     }
 
     /* package */ void
@@ -476,7 +484,7 @@ import net.lag.crai.*;
             mInKex = false;
         }
         // we always expect to receive NEW_KEYS now
-        mExpectedPacket = MessageType.NEW_KEYS;
+        mExpectedPacket1 = MessageType.NEW_KEYS;
     }
     
     protected abstract void activateOutbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
@@ -529,6 +537,18 @@ import net.lag.crai.*;
     getCrai ()
     {
         return sCrai;
+    }
+    
+    /* package */ static ModulusPack
+    getModulusPack ()
+    {
+        synchronized (BaseTransport.class) {
+            if (sModulusPack == null) {
+                sModulusPack = new ModulusPack();
+                sModulusPack.readStandardResource();
+            }
+            return sModulusPack;
+        }
     }
     
     /* package */ byte[] 
@@ -700,7 +720,7 @@ import net.lag.crai.*;
             mPacketizer.writeline(mLocalVersion + "\r\n");
             checkBanner();
             sendKexInit();
-            mExpectedPacket = MessageType.KEX_INIT;
+            mExpectedPacket1 = MessageType.KEX_INIT;
             
             while (mActive) {
                 if (mPacketizer.needRekey() && ! mInKex) {
@@ -730,12 +750,19 @@ import net.lag.crai.*;
                     continue;
                 }
                 
-                if (mExpectedPacket != 0) {
-                    if (ptype != mExpectedPacket) {
-                        throw new SSHException("Expecting packet " + MessageType.getDescription(mExpectedPacket) +
-                                               ", got " + MessageType.getDescription(ptype));
+                if (mExpectedPacket1 != 0) {
+                    if ((ptype != mExpectedPacket1) && (ptype != mExpectedPacket2)) {
+                        if (mExpectedPacket2 != 0) {
+                            throw new SSHException("Expecting packet " + MessageType.getDescription(mExpectedPacket1) +
+                                                   " or " + MessageType.getDescription(mExpectedPacket2) +
+                                                   ", got " + MessageType.getDescription(ptype));
+                        } else {
+                            throw new SSHException("Expecting packet " + MessageType.getDescription(mExpectedPacket1) +
+                                                   ", got " + MessageType.getDescription(ptype));
+                        }
                     }
-                    mExpectedPacket = 0;
+                    mExpectedPacket1 = 0;
+                    mExpectedPacket2 = 0;
                 }
                 
                 if (! parsePacket(ptype, m)) {
@@ -1234,6 +1261,9 @@ import net.lag.crai.*;
     // crypto abstraction (not everyone has JCE)
     /* package */ static Crai sCrai = null;
     
+    // prime moduli used for kex-gex
+    /* package */ static ModulusPack sModulusPack = null;
+    
     static {
         // mappings from SSH protocol names to java implementation details
         sCipherMap.put("aes128-cbc", new CipherDescription(CraiCipherAlgorithm.AES_CBC, 16, 16));
@@ -1250,6 +1280,7 @@ import net.lag.crai.*;
         sKeyMap.put("ssh-dss", DSSKey.class);
         
         sKexMap.put("diffie-hellman-group1-sha1", KexGroup1.class);
+        sKexMap.put("diffie-hellman-group-exchange-sha1", KexGex.class);
         
         sCompressMap.put("zlib", ZlibCompressor.class);
         sCompressMap.put("zlib@openssh.com", ZlibCompressor.class);
@@ -1258,7 +1289,7 @@ import net.lag.crai.*;
     private final String[] KNOWN_CIPHERS = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
     private final String[] KNOWN_MACS = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
     private final String[] KNOWN_KEYS = { "ssh-rsa", "ssh-dss" };
-    private final String[] KNOWN_KEX = { "diffie-hellman-group1-sha1" };
+    private final String[] KNOWN_KEX = { "diffie-hellman-group1-sha1", "diffie-hellman-group-exchange-sha1" };
     private final String[] KNOWN_COMPRESSIONS = { "zlib@openssh.com", "zlib", "none" };
 
     /* zlib@openssh.com is just zlib, but only turned on after a successful
@@ -1285,7 +1316,8 @@ import net.lag.crai.*;
     /* package */ String mRemoteVersion;
     /* package */ byte[] mLocalKexInit;
     /* package */ byte[] mRemoteKexInit;
-    /* package */ byte mExpectedPacket;
+    /* package */ byte mExpectedPacket1;
+    /* package */ byte mExpectedPacket2;
     /* package */ boolean mInKex;
     /* package */ boolean mInitialKexDone;
     /* package */ byte[] mSessionID;

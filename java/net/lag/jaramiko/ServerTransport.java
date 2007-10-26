@@ -84,6 +84,12 @@ public class ServerTransport
         }
         
         public void
+        expectPacket (byte ptype1, byte ptype2)
+        {
+            ServerTransport.this.expectPacket(ptype1, ptype2);
+        }
+        
+        public void
         sendMessage (Message m)
             throws IOException
         {
@@ -115,6 +121,12 @@ public class ServerTransport
             throws IOException
         {
             ServerTransport.this.activateOutbound();
+        }
+        
+        public LogSink
+        getLog ()
+        {
+            return mLog;
         }
     }
 
@@ -365,6 +377,13 @@ public class ServerTransport
             }
         }
         mSecurityOptions.setKeys(keyTypes);
+        
+        // if we don't have any moduli loaded, we can't do group-exchange kex
+        if (getModulusPack().size() == 0) {
+            List kexTypes = mSecurityOptions.getKex();
+            kexTypes.remove("diffie-hellman-group-exchange-sha1");
+            mSecurityOptions.setKex(kexTypes);
+        }
     }
     
     /* package */ void

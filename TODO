@@ -1,8 +1,7 @@
 Things I want to do, specific to java:
 
-* fix comments that say "paramiko"
 * apparently BaseTransport.detectUnsupportedCiphers() isn't really working.
-* add a unit test for a public key file with no blank line between the header & baes64.
+* add a unit test for a public key file with no blank line between the header & base64.
 
 
 Things I didn't port from paramiko (yet?):

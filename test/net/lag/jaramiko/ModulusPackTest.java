@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
+ * Copyright (C) 2007 Robey Pointer <robey@lag.net>
  *
  * This file is part of jaramiko.
  *
@@ -25,29 +25,23 @@
 
 package net.lag.jaramiko;
 
-import java.io.IOException;
-import java.math.BigInteger;
+import junit.framework.TestCase;
 
 
-/**
- * This makes it easier to unit-test the Kex implementations, by letting the
- * Transport interface be easily stubbed out.
- */
-/* package */ interface KexTransportInterface
+public class ModulusPackTest
+    extends TestCase
 {
-    public String getLocalVersion ();
-    public String getRemoteVersion ();
-    public byte[] getLocalKexInit ();
-    public byte[] getRemoteKexInit ();
 
-    public void registerMessageHandler (byte ptype, MessageHandler handler);
-    public void expectPacket (byte ptype);
-    public void expectPacket (byte ptype1, byte ptype2);
-    public void sendMessage (Message m) throws IOException;
-
-    public LogSink getLog ();
-    public PKey getServerKey ();
-    public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
-    public void setKH (BigInteger k, byte[] h);
-    public void kexComplete () throws IOException;
+    public void
+    testLoad ()
+        throws Exception
+    {
+        ModulusPack pack = new ModulusPack();
+        assertEquals(198, pack.readStandardResource());
+        assertEquals(0, pack.getDiscarded().size());
+        
+        ModulusPack.ModulusPair mod = pack.get(new FakeCrai(), 1024, 1024, 2048);
+        assertTrue((mod.mGenerator == 5) || (mod.mGenerator == 2));
+        assertEquals(mod.mModulus.bitLength(), 1024);
+    }
 }

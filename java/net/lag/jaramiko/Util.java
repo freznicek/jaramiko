@@ -32,6 +32,7 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.*;
 
+import net.lag.crai.Crai;
 import net.lag.jaramiko.ber.BERInputStream;
 import net.lag.jaramiko.ber.BEROutputStream;
 
@@ -115,6 +116,16 @@ public class Util
         StringWriter sw = new StringWriter();
         x.printStackTrace(new PrintWriter(sw));
         return splitString(sw.toString(), "\n");
+    }
+    
+    public static int
+    fuzzyInt (String s)
+    {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException x) {
+            return 0;
+        }
     }
     
     /**
@@ -245,5 +256,34 @@ public class Util
         throws IOException
     {
         return readAll(in, buffer, 0, buffer.length);
+    }
+    
+    // return a random # from 0 to N-1.
+    // i think this might be overkill.
+    public static BigInteger
+    rollRandom (Crai crai, BigInteger max)
+    {
+        int bits = max.subtract(BigInteger.ONE).bitLength();
+        int bytes = (bits + 7) / 8;
+        int hbyte_mask = (1 << (bits % 8)) - 1;
+        
+        /* so here's the plan:
+         * we fetch as many random bits as we'd need to fit N-1, and if the
+         * generated number is >= N, we try again. in the worst case (N-1 is
+         * a power of 2), we have slightly better than 50% odds of getting one
+         * that fits. so i can't guarantee that this loop will ever finish,
+         * but the odds of it looping forever should be infinitesimal.
+         */
+        while (true) {
+            byte[] x = new byte[bytes];
+            crai.getPRNG().getBytes(x);
+            if (hbyte_mask > 0) {
+                x[0] = (byte) (x[0] & hbyte_mask);
+            }
+            BigInteger num = new BigInteger(1, x);
+            if (num.compareTo(max) < 0) {
+                return num;
+            }
+        }
     }
 }
