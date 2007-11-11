@@ -286,4 +286,25 @@ public class Util
             }
         }
     }
+    
+    public static String
+    strip (String s)
+    {
+        int len = s.length();
+        int start = 0;
+        while ((start < len) && Character.isWhitespace(s.charAt(start))) {
+            start++;
+        }
+        int end = len - 1;
+        while ((end >= start) && Character.isWhitespace(s.charAt(end))) {
+            end--;
+        }
+        if (end < start) {
+            return "";
+        }
+        if ((end == len - 1) && (start == 0)) {
+            return s;
+        }
+        return s.substring(start, end + 1);
+    }
 }
