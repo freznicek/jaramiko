@@ -6,8 +6,6 @@ Things I want to do, specific to java:
 
 Things I didn't port from paramiko (yet?):
 
-* kex-gex aka group-exchange kex
-	would require porting the list of primes
 * sftp client support (mediumly likely)
 * sftp server support (unlikely)
 

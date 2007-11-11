@@ -40,6 +40,8 @@ public class AllTests
         TestSuite ts = new TestSuite();
         ClientTransport.setCrai(new CraiJCE());
         
+        ts.addTestSuite(UtilTest.class);
+        
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);
         ts.addTestSuite(KexTest.class);
@@ -47,6 +49,7 @@ public class AllTests
         ts.addTestSuite(TransportTest.class);
         ts.addTestSuite(ChannelTest.class);
         ts.addTestSuite(ModulusPackTest.class);
+        ts.addTestSuite(HostKeysTest.class);
         
         ts.addTestSuite(TagTest.class);
         ts.addTestSuite(BERInputStreamTest.class);
