@@ -147,7 +147,7 @@ public class BEROutputStream
      * Encode an object into BER data.  This is just a convenience method.
      * 
      * @param obj a java object of a type with a registered codec
-     * @param useIndefinitelength true if containers should be encoded as
+     * @param useIndefiniteLength true if containers should be encoded as
      *     indefinite-length (the normal mode); false if containers should be
      *     buffered as they're written, to track lengths8
      * @return BER-encoded data
