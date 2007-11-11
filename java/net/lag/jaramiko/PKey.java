@@ -165,6 +165,12 @@ public abstract class PKey
         return Arrays.equals(toByteArray(), other.toByteArray());
     }
     
+    public String
+    toString ()
+    {
+        return "<" + getClass().getName() + " " + Util.encodeHex(getFingerprint()) + ">";
+    }
+    
     /**
      * Initialize a key from an array of BigIntegers (decoded from a BER
      * stream).  This data has usually been read from a private key file,
