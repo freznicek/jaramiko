@@ -8,10 +8,27 @@ jaramiko
 :Homepage: http://www.lag.net/jaramiko/
 
 
-build xxx
-=========
+build 151 (12 Nov 2007)
+=======================
 
-FIXME about this release.
+Yikes, it's been a year since the last release! Here's what's new:
+
+    - now supports group-exchange key exchange
+    - can now write a private key out to a file in standard SSH format
+    - pty requests can now send/receive terminal modes
+    - new ``TransportDescription`` can be used for programmatic access to the
+      encryption parameters after an encrypted session begins
+    - new ``HostKeys`` implementation for reading, writing, and testing
+      entries in an openssh ``known_hosts`` file
+    - easier API for converting raw key data to/from a jaramiko PKey
+    - many Channel methods now throw an exception on failure instead of
+      returning a boolean
+    - new demo app!
+    - better defaults for some parameters and timeouts
+    - several bug fixes (including a deadlock fix)
+
+Thanks to John McNair and Robert Colquhoun for sending patches and bug
+reports for several of these changes.
 
 
 What

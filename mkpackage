@@ -3,6 +3,11 @@ revno=$(bzr revno)
 pkgname="jaramiko-$revno"
 cd ..
 cp -r jaramiko $pkgname
-zip -r $pkgname.zip $pkgname/build.xml $pkgname/LICENSE $pkgname/TODO $pkgname/java $pkgname/junit3.8.1.jar $pkgname/test
+interesting="build.xml LICENSE README TODO java junit3.8.1.jar test resources demo demo.sh"
+pkg_include=""
+for fn in $interesting; do
+    pkg_include="$pkg_include $pkgname/$fn"
+done
+zip -r $pkgname.zip $pkg_include
 rm -rf $pkgname
 
