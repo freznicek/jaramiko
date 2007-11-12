@@ -29,12 +29,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * An SSH Transport attaches to a socket, negotiates an encrypted session,
- * authenticates, and then creates stream tunnels, called {@link Channel}s,
- * across the session.  Multiple channels can be multiplexed across a single
- * session (and often are, in the case of port forwardings).  A Transport can
- * operate in either client ({@link ClientTransport}) or server
- * ({@link ServerTransport}) mode.
+ * Shared interface of {@link ClientTransport} and {@link ServerTransport}.
  */
 public interface Transport
 {

@@ -139,7 +139,7 @@ import net.lag.crai.*;
     
     /**
      * Return the current window size used for new channels.
-     * {@see #setWindowSize(int)}
+     * (see {@link #setWindowSize(int)})
      * 
      * @return window size (in bytes) being used for new channels
      */
@@ -166,7 +166,7 @@ import net.lag.crai.*;
     
     /**
      * Return the current maximum packet size for the SSH protocol.
-     * {@see #setMaxPacketSize(int)}
+     * (see {@link #setMaxPacketSize(int)})
      * 
      * @return the maximum packet size, in bytes
      */

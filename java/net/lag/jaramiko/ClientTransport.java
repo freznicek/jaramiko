@@ -37,6 +37,11 @@ import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
 
 
+/**
+ * A client-side SSH transport, used for initiating SSH over an existing
+ * socket. Once a transport has negotiated encryption and authenticated,
+ * tunnels (called {@link Channel}s) can be created across the session.
+ */
 public class ClientTransport
     extends BaseTransport
 {
