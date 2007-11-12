@@ -32,7 +32,7 @@ import net.lag.crai.Crai;
 import net.lag.crai.CraiDigest;
 
 
-public class KexGex
+/* package */ class KexGex
     implements Kex
 {
     public

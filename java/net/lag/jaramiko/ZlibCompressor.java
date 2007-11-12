@@ -28,7 +28,7 @@ package net.lag.jaramiko;
 import com.jcraft.jzlib.*;
 
 
-public class ZlibCompressor
+/* package */ class ZlibCompressor
     implements Compressor
 {
     public
