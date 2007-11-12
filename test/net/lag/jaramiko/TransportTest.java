@@ -482,7 +482,7 @@ public class TransportTest
         assertTrue(mTS.isActive());
 
         Channel chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         Channel schan = mTS.accept(5000);
 
         mTC.mPacketizer.setRekeyBytes(16384);
@@ -538,7 +538,7 @@ public class TransportTest
         assertTrue(mTS.isActive());
 
         Channel chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         Channel schan = mTS.accept(5000);
 
         long bytes = mTC.mPacketizer.getBytesSent();

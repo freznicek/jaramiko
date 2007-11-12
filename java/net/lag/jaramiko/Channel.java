@@ -294,10 +294,9 @@ public class Channel
      * @param modes any requested terminal modes, or null if none are desired
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     getPTY (String term, int width, int height, TerminalModes modes, int timeout_ms)
         throws IOException
     {
@@ -327,13 +326,9 @@ public class Channel
             mTransport.sendUserMessage(m, -1);
         }
         
-        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+        if (timeout_ms != 0) {
+            waitForEvent(mEvent, timeout_ms);
         }
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -352,14 +347,13 @@ public class Channel
      * @param height height (in characters) of the terminal screen
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     getPTY (String term, int width, int height, int timeout_ms)
         throws IOException
     {
-        return getPTY(term, width, height, null, timeout_ms);
+        getPTY(term, width, height, null, timeout_ms);
     }
 
     /**
@@ -377,10 +371,9 @@ public class Channel
      * 
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     invokeShell (int timeout_ms)
         throws IOException
     {
@@ -399,13 +392,9 @@ public class Channel
             mTransport.sendUserMessage(m, -1);
         }
         
-        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+        if (timeout_ms != 0) {
+            waitForEvent(mEvent, timeout_ms);
         }
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
     
     /**
@@ -420,10 +409,9 @@ public class Channel
      * @param command a shell command to execute
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     execCommand (String command, int timeout_ms)
         throws IOException
     {
@@ -443,13 +431,9 @@ public class Channel
             mTransport.sendUserMessage(m, -1);
         }
         
-        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+        if (timeout_ms != 0) {
+            waitForEvent(mEvent, timeout_ms);
         }
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -464,10 +448,9 @@ public class Channel
      * @param subsystem name of the subsystem being requested
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded, false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     invokeSubsystem (String subsystem, int timeout_ms)
         throws IOException
     {
@@ -487,13 +470,9 @@ public class Channel
             mTransport.sendUserMessage(m, -1);
         }
         
-        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+        if (timeout_ms != 0) {
+            waitForEvent(mEvent, timeout_ms);
         }
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
     
     /**
@@ -509,10 +488,9 @@ public class Channel
      * @param height new height (in characters) of the terminal
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded, false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     resizePTY (int width, int height, int timeout_ms)
         throws IOException
     {
@@ -535,13 +513,9 @@ public class Channel
             mTransport.sendUserMessage(m, timeout_ms);
         }
         
-        if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-            return false;
+        if (timeout_ms != 0) {
+            waitForEvent(mEvent, timeout_ms);
         }
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -561,9 +535,7 @@ public class Channel
     getExitStatus (int timeout_ms)
         throws SSHException
     {
-        if (! waitForEvent(mStatusEvent, timeout_ms)) {
-            throw new SSHException("Timeout fetching exit status");
-        }
+        waitForEvent(mStatusEvent, timeout_ms);
         return mExitStatus;
     }
     
@@ -607,10 +579,9 @@ public class Channel
      *     extra data is to be sent)
      * @param timeout_ms time (in milliseconds) to wait to send the message;
      *     -1 to wait forever; 0 to avoid waiting for a response
-     * @return true if the operation succeeded; false if not
      * @throws IOException if an exception occurred while making the request
      */
-    public boolean
+    public void
     sendChannelRequest (String type, List data, int timeout_ms) 
         throws IOException
     {
@@ -630,15 +601,10 @@ public class Channel
 
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
-            if ((timeout_ms != 0) && ! waitForEvent(mEvent, timeout_ms)) {
-                return false;
+            if (timeout_ms != 0) {
+                waitForEvent(mEvent, timeout_ms);
             }
         }
-
-        if (mClosed) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -1068,18 +1034,18 @@ public class Channel
      * @param e the event to wait on
      * @param timeout_ms maximum time to wait (in milliseconds); -1 to wait
      *     forever
-     * @return true if the event was triggered or the transport died; false if
-     *     the timeout occurred or the thread was interrupted
+     * @throws SSHException if the timeout occurs or the socket is closed
      */
-    private boolean
+    private void
     waitForEvent (Event e, int timeout_ms)
+        throws SSHException
     {
         long deadline = System.currentTimeMillis() + timeout_ms;
         while (! e.isSet()) {
             try {
                 int span = (timeout_ms >= 0) ? (int)(deadline - System.currentTimeMillis()) : 100;
                 if (span < 0) {
-                    return false;
+                    throw new SSHException("timeout");
                 }
                 if (span > 100) {
                     span = 100;
@@ -1090,16 +1056,15 @@ public class Channel
             } catch (InterruptedException x) {
                 // just remember it
                 Thread.currentThread().interrupt();
-                return false;
+                return;
             }
 
             synchronized (mLock) {
                 if (mClosed) {
-                    return true;
+                    throw new SSHException("Request failed");
                 }
             }
         }
-        return true;
     }
     
     // you're already holding mInBufferLock

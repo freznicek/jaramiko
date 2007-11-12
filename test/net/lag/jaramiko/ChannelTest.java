@@ -106,12 +106,17 @@ public class ChannelTest
         
         Channel chan = mTC.openSession(5000);
         Channel schan = mTS.accept(5000);
-        assertFalse(chan.execCommand("no", 5000));
+        try {
+            chan.execCommand("no", 5000);
+            fail("expected exception");
+        } catch (IOException x) {
+            // pass
+        }
         chan.close();
         schan.close();
         
         chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         schan = mTS.accept(5000);
         
         schan.getOutputStream().write("Hello there.\n".getBytes());
@@ -128,7 +133,7 @@ public class ChannelTest
         
         // now try it with combined stdout/stderr
         chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         schan = mTS.accept(5000);
         schan.getOutputStream().write("Hello there\n".getBytes());
         schan.getStderrOutputStream().write("This is on stderr.\n".getBytes());
@@ -170,7 +175,7 @@ public class ChannelTest
         assertTrue(mTS.isActive());
         
         Channel chan = mTC.openSession(5000);
-        assertTrue(chan.invokeShell(5000));
+        chan.invokeShell(5000);
         Channel schan = mTS.accept(5000);
         chan.getOutputStream().write("communist j. cat\n".getBytes());
         assertFalse(chan.isClosed());
@@ -245,7 +250,7 @@ public class ChannelTest
         assertTrue(mTS.isActive());
 
         Channel chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         Channel schan = mTS.accept(5000);
         schan.getOutputStream().write("Hello there.\n".getBytes());
         // trigger an EOF
@@ -291,7 +296,7 @@ public class ChannelTest
         assertTrue(mTS.isActive());
 
         Channel chan = mTC.openSession(5000);
-        assertTrue(chan.execCommand("yes", 5000));
+        chan.execCommand("yes", 5000);
         Channel schan = mTS.accept(5000);
         
         assertEquals(94321, schan.mOutWindowSize);
@@ -332,8 +337,8 @@ public class ChannelTest
         TerminalModes modes = new TerminalModes();
         modes.put(TerminalModes.ECHO, 23);
         modes.put(TerminalModes.IXOFF, 900);
-        assertTrue(chan.getPTY("vt100", 80, 24, modes, 5000));
-        assertTrue(chan.invokeShell(5000));
+        chan.getPTY("vt100", 80, 24, modes, 5000);
+        chan.invokeShell(5000);
         Channel schan = mTS.accept(5000);
 
         assertEquals("vt100", server.mPTYTerm);
