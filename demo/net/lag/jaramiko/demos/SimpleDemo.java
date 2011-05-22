@@ -1,3 +1,5 @@
+package net.lag.jaramiko.demos;
+
 /*
  * Copyright (C) 2005-2007 Robey Pointer <robey@lag.net>
  *
@@ -23,21 +25,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.lag.jaramiko.demos;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 
-import net.lag.jaramiko.Channel;
 import net.lag.jaramiko.ClientTransport;
 import net.lag.jaramiko.HostKeys;
 import net.lag.jaramiko.PKey;
+import net.lag.jaramiko.sftp.Client;
 
 
 public class SimpleDemo
@@ -63,7 +64,7 @@ public class SimpleDemo
                 throw new IOException("Auth too complex: " + Arrays.asList(next));
             }
             System.out.println("--- Executing...");
-            Channel channel = transport.openSession(15000);
+            /*Channel channel = transport.openSession(15000);
             channel.execCommand(command, 15000);
             InputStream chanIn = channel.getInputStream();
             byte[] buffer = new byte[512];
@@ -80,7 +81,34 @@ public class SimpleDemo
                     break;
                 }
             }
-            channel.close();
+            channel.close();*/
+            
+            Client SFTP = Client.fromTransport(transport);
+            try {
+            	for (String name : SFTP.listdir("/")) {
+            		System.out.println(name);
+            	}
+            	
+            	InputStream stream = SFTP.openInputStream("/hello");
+            	
+            	try {
+            		InputStreamReader reader = new InputStreamReader(stream);
+            		
+            		
+            		char[] buffer = new char[32768];
+            		int readCount = 0;
+            		
+            		while ((readCount = reader.read(buffer)) > 0) {
+            			System.out.print(new String(buffer, 0, readCount));
+            		}
+            		// System.out << stream;
+            	} finally {
+            		stream.close();
+            	}
+            } finally {
+            	SFTP.close();
+            }
+            
             System.out.println();
             System.out.println("--- Done.");
         } catch (IOException x) {
@@ -92,9 +120,7 @@ public class SimpleDemo
         }
     }
     
-    public static void
-    main (String[] args)
-        throws Exception
+    public static void main (String[] args) throws Exception
     {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         
@@ -103,21 +129,21 @@ public class SimpleDemo
         System.out.println("password, and execute a single command.");
         System.out.println();
 
-        System.out.print("Server [localhost]: ");
-        String serverName = in.readLine();
+        //System.out.print("Server [localhost]: ");
+        String serverName = "sion.f000.d0188.sd.spardat.at"; // in.readLine();
         if (serverName.length() == 0) {
             serverName = "localhost";
         }
-        System.out.print("Username: ");
-        String username = in.readLine();
-        String password = new String(PasswordInput.getPassword(System.in, "Password: "));
-        System.out.print("Hostkeys file location [/home/" + username + "/.ssh/known_hosts]: ");
-        String hostkeysFilename = in.readLine();
+        //System.out.print("Username: ");
+        String username = "test"; // FIXME in.readLine();
+        String password = "test"; // FIXME new String(PasswordInput.getPassword(System.in, "Password: "));
+        //System.out.print("Hostkeys file location [/home/" + username + "/.ssh/known_hosts]: ");
+        String hostkeysFilename = ""; // in.readLine();
         if (hostkeysFilename.length() == 0) {
             hostkeysFilename = "/home/" + username + "/.ssh/known_hosts";
         }
-        System.out.print("Command [ls]: ");
-        String command = in.readLine();
+        //System.out.print("Command [ls]: ");
+        String command = ""; // in.readLine();
         if (command.length() == 0) {
             command = "ls";
         }
