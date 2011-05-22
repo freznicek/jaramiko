@@ -67,7 +67,6 @@ import com.jcraft.jzlib.ZStream;
         return out;
     }
 
-    @Override
     public byte[] compress(byte[] data, int offset, int length) {
         byte[] out = null;
 
@@ -91,7 +90,6 @@ import com.jcraft.jzlib.ZStream;
         return out;
     }
 
-    @Override
     public byte[] uncompress(byte[] data, int offset, int length) {
         byte[] out = null;
 

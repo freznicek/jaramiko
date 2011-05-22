@@ -185,7 +185,7 @@ public interface ServerInterface {
      * @return a list of data to attach to the response (on success), or null on
      *         failure
      */
-    public List checkGlobalRequest(String kind, Message m);
+    public List<Object> checkGlobalRequest(String kind, Message m);
 
     /**
      * Determine if a pseudo-terminal of the given dimensions (usually requested

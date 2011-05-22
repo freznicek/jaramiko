@@ -41,7 +41,6 @@ import net.lag.jaramiko.Util;
 /* package */class CommonCodecs {
     public static class BooleanCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             BOOLEAN_TYPE.asSize(1).write(out);
@@ -52,7 +51,6 @@ import net.lag.jaramiko.Util;
             }
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             if (tag.getSize() != 1) {
                 throw new BERException("Unexpected size of boolean: "
@@ -68,7 +66,6 @@ import net.lag.jaramiko.Util;
 
     public static class IntegerCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             if (obj instanceof Integer) {
@@ -81,7 +78,6 @@ import net.lag.jaramiko.Util;
             out.write(buffer);
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             byte[] buffer = new byte[tag.getSize()];
             if (Util.readAll(in, buffer) < buffer.length) {
@@ -93,7 +89,6 @@ import net.lag.jaramiko.Util;
 
     public static class BytesCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             byte[] buffer = (byte[]) obj;
@@ -101,7 +96,6 @@ import net.lag.jaramiko.Util;
             out.write(buffer);
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             byte[] buffer = new byte[tag.getSize()];
             if (Util.readAll(in, buffer) < buffer.length) {
@@ -113,13 +107,11 @@ import net.lag.jaramiko.Util;
 
     public static class NullCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             NULL_TYPE.asSize(0).write(out);
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) {
             return null;
         }
@@ -127,7 +119,6 @@ import net.lag.jaramiko.Util;
 
     public static class StringCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             byte[] buffer = ((String) obj).getBytes("UTF-8");
@@ -135,7 +126,6 @@ import net.lag.jaramiko.Util;
             out.write(buffer);
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             byte[] buffer = new byte[tag.getSize()];
             if (Util.readAll(in, buffer) < buffer.length) {
@@ -147,17 +137,15 @@ import net.lag.jaramiko.Util;
 
     public static class ListCodec implements BEROutputStream.Encoder,
             BERInputStream.Decoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
-            BEROutputStream.writeContainer(out, LIST_TYPE, (List) obj,
+            BEROutputStream.writeContainer(out, LIST_TYPE, (List<Object>) obj,
                     useIndefiniteLength);
         }
 
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             BERInputStream subIn = new BERInputStream(in);
-            List ret = new ArrayList();
+            List<Object> ret = new ArrayList<Object>();
             while (subIn.hasNext()) {
                 ret.add(subIn.next());
             }

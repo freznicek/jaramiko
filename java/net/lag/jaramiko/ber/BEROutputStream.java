@@ -47,7 +47,7 @@ public class BEROutputStream {
         this(out, true);
     }
 
-    public static void register(Class c, Encoder e) {
+    public static void register(Class<?> c, Encoder e) {
         if (c == null) {
             sEncoderTable.put("null", e);
         } else {
@@ -57,12 +57,12 @@ public class BEROutputStream {
 
     private static Encoder getEncoder(Object obj) {
         if (obj == null) {
-            return (Encoder) sEncoderTable.get("null");
+            return sEncoderTable.get("null");
         }
 
         Class c = obj.getClass();
         while (c != null) {
-            Encoder encoder = (Encoder) sEncoderTable.get(c.getName());
+            Encoder encoder = sEncoderTable.get(c.getName());
             if (encoder != null) {
                 return encoder;
             }
@@ -72,7 +72,7 @@ public class BEROutputStream {
             // on each iteration.
             Class[] ifaces = c.getInterfaces();
             for (int i = 0; i < ifaces.length; i++) {
-                encoder = (Encoder) sEncoderTable.get(ifaces[i].getName());
+                encoder = sEncoderTable.get(ifaces[i].getName());
                 if (encoder != null) {
                     return encoder;
                 }
@@ -102,14 +102,14 @@ public class BEROutputStream {
     }
 
     public static void writeContainer(OutputStream out, Tag tag,
-            Iterable sequence, boolean useIndefiniteLength) throws IOException {
+            Iterable<Object> sequence, boolean useIndefiniteLength)
+            throws IOException {
         if (useIndefiniteLength) {
             tag.write(out);
             BEROutputStream subOut = new BEROutputStream(out,
                     useIndefiniteLength);
-            for (Iterator iter = sequence.iterator(); iter.hasNext();) {
-                Object item = iter.next();
-                subOut.write(item);
+            for (Iterator<Object> iter = sequence.iterator(); iter.hasNext();) {
+                subOut.write(iter.next());
             }
             subOut.writeTerminator();
         } else {
@@ -165,7 +165,10 @@ public class BEROutputStream {
     private OutputStream mOutStream;
     private boolean mUseIndefiniteLength = true;
 
-    private static Map sEncoderTable = new HashMap(); // class name -> Encoder
+    private static Map<String, Encoder> sEncoderTable = new HashMap<String, Encoder>(); // class
+                                                                                        // name
+                                                                                        // ->
+                                                                                        // Encoder
 
     static {
         CommonCodecs.register();

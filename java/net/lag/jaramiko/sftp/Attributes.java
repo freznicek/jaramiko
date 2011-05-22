@@ -199,7 +199,6 @@ public class Attributes implements Comparable<Attributes> {
         return (getFormat() & S_ISVTX) != 0;
     }
 
-    @Override
     public int compareTo(Attributes o) {
         int result = (st_size == o.st_size) ? 0 : st_size.compareTo(o.st_size);
         if (result == 0) {

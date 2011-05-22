@@ -55,14 +55,12 @@ import java.util.List;
  */
 public class Channel {
     /* package */static class Factory implements ChannelFactory {
-        @Override
         public Channel createChannel(String kind, int chanid, List params) {
             return new Channel(chanid, kind, params);
         }
 
-        @Override
         public Channel createChannel(String kind, int chanid, Message params) {
-            return new Channel(chanid, kind, (List) null);
+            return new Channel(chanid, kind, null);
         }
     }
 
@@ -569,8 +567,8 @@ public class Channel {
      * @throws IOException
      *             if an exception occurred while making the request
      */
-    public void sendChannelRequest(String type, List data, int timeout_ms)
-            throws IOException {
+    public void sendChannelRequest(String type, List<Object> data,
+            int timeout_ms) throws IOException {
         synchronized (mLock) {
             if (mClosed || mEOFReceived || mEOFSent || !mActive) {
                 throw new SSHException("Channel is not open");

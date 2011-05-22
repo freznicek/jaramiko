@@ -83,7 +83,7 @@ public class Util {
 
     // replacement for String.split() in java 4.
     public static final String[] splitString(String orig, String delim, int max) {
-        List out = new ArrayList();
+        List<String> out = new ArrayList<String>();
         while (true) {
             if (out.size() == max - 1) {
                 break;
@@ -96,7 +96,7 @@ public class Util {
             orig = orig.substring(n + delim.length());
         }
         out.add(orig);
-        return (String[]) out.toArray(new String[0]);
+        return out.toArray(new String[0]);
     }
 
     public static final String[] splitString(String orig, String delim) {
@@ -181,7 +181,7 @@ public class Util {
         if (!(obj instanceof List)) {
             throw new SSHException("Expected BER sequence");
         }
-        List list = (List) obj;
+        List<?> list = (List<?>) obj;
         for (int i = 0; i < list.size(); i++) {
             if (!(list.get(i) instanceof BigInteger)) {
                 throw new SSHException(
@@ -195,7 +195,7 @@ public class Util {
 
     public static byte[] encodeBERSequence(BigInteger[] nums)
             throws SSHException {
-        List list = Arrays.asList(nums);
+        List<BigInteger> list = Arrays.asList(nums);
         try {
             return BEROutputStream.encode(list, false);
         } catch (IOException x) {

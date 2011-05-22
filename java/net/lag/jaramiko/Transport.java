@@ -160,8 +160,8 @@ public interface Transport {
      * @throws IOException
      *             if an I/O exception occurred on the socket
      */
-    public Message sendGlobalRequest(String requestName, List parameters,
-            int timeout_ms) throws IOException;
+    public Message sendGlobalRequest(String requestName,
+            List<Object> parameters, int timeout_ms) throws IOException;
 
     /**
      * Close this session, and any open channels.

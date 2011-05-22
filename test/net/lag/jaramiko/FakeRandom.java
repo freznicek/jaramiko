@@ -34,7 +34,6 @@ import net.lag.crai.CraiRandom;
  * @author robey
  */
 public class FakeRandom implements CraiRandom {
-    @Override
     public void getBytes(byte[] b) {
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) 0xcc;

@@ -57,9 +57,9 @@ import net.lag.crai.Crai;
     }
 
     public ModulusPack() {
-        mDiscarded = new ArrayList();
+        mDiscarded = new ArrayList<BigInteger>();
         // map of: bit length -> List<ModulusPair>
-        mPack = new HashMap();
+        mPack = new HashMap<Integer, List<ModulusPair>>();
     }
 
     private boolean parseModulus(String line) {
@@ -99,9 +99,9 @@ import net.lag.crai.Crai;
             mDiscarded.add(modulus);
             return false;
         }
-        List list = (List) mPack.get(Integer.valueOf(bl));
+        List<ModulusPair> list = mPack.get(Integer.valueOf(bl));
         if (list == null) {
-            list = new ArrayList();
+            list = new ArrayList<ModulusPair>();
             mPack.put(Integer.valueOf(bl), list);
         }
         list.add(new ModulusPair(generator, modulus));
@@ -151,14 +151,14 @@ import net.lag.crai.Crai;
 
     public ModulusPair get(Crai crai, int min, int prefer, int max)
             throws SSHException {
-        List bitsizesList = new ArrayList(mPack.keySet());
+        List<Integer> bitsizesList = new ArrayList<Integer>(mPack.keySet());
         Collections.sort(bitsizesList);
         if (bitsizesList.size() == 0) {
             throw new SSHException("no moduli available");
         }
         int[] bitsizes = new int[bitsizesList.size()];
         for (int i = 0; i < bitsizes.length; i++) {
-            bitsizes[i] = ((Integer) bitsizesList.get(i)).intValue();
+            bitsizes[i] = bitsizesList.get(i).intValue();
         }
 
         int good = -1;
@@ -195,25 +195,26 @@ import net.lag.crai.Crai;
         }
 
         // now pick a random modulus of this bitsize.
-        List list = (List) mPack.get(Integer.valueOf(good));
+        List<ModulusPair> list = mPack.get(Integer.valueOf(good));
         int n = Util.rollRandom(crai, BigInteger.valueOf(list.size()))
                 .intValue();
-        return (ModulusPair) list.get(n);
+        return list.get(n);
     }
 
-    public List getDiscarded() {
+    public List<BigInteger> getDiscarded() {
         return mDiscarded;
     }
 
     public int size() {
         int size = 0;
-        for (Iterator iter = mPack.keySet().iterator(); iter.hasNext();) {
-            Integer key = (Integer) iter.next();
-            size += ((List) mPack.get(key)).size();
+        for (Iterator<Integer> iter = mPack.keySet().iterator(); iter.hasNext();) {
+            Integer key = iter.next();
+            size += mPack.get(key).size();
         }
         return size;
     }
 
-    private List mDiscarded; // List<BigInteger>
-    private Map mPack; // Map<int, List<ModulusPair>>
+    private List<BigInteger> mDiscarded; // List<BigInteger>
+    private Map<Integer, List<ModulusPair>> mPack; // Map<int,
+                                                   // List<ModulusPair>>
 }

@@ -63,22 +63,18 @@ public class AllTests {
         Test suite = suite();
         TestResult r = new TestResult();
         TestListener listener = new TestListener() {
-            @Override
             public void addError(Test test, java.lang.Throwable t) {
                 System.err.println("ERROR.");
             }
 
-            @Override
             public void addFailure(Test test, AssertionFailedError t) {
                 System.err.println("FAILURE.");
             }
 
-            @Override
             public void endTest(Test test) {
                 System.err.println("<- " + test);
             }
 
-            @Override
             public void startTest(Test test) {
                 System.err.println("-> " + test);
             }

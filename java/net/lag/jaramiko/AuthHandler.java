@@ -110,7 +110,6 @@ import net.lag.crai.Crai;
         }
     }
 
-    @Override
     public boolean handleMessage(byte ptype, Message m) throws IOException {
         switch (ptype) {
         case MessageType.SERVICE_REQUEST:
@@ -219,9 +218,8 @@ import net.lag.crai.Crai;
     }
 
     private void parseAuthFailure(Message m) {
-        List authList = m.getList();
-        String[] auths = (String[]) authList
-                .toArray(new String[authList.size()]);
+        List<String> authList = m.getList();
+        String[] auths = authList.toArray(new String[authList.size()]);
         boolean partial = m.getBoolean();
         if (partial) {
             mLog.notice("Authentication continues...");
@@ -465,8 +463,8 @@ import net.lag.crai.Crai;
             }
         } else if (method.equals("keyboard-interactive")) {
             m.getString(); // lang
-            List l = m.getList();
-            String[] submethods = (String[]) l.toArray(new String[l.size()]);
+            List<String> l = m.getList();
+            String[] submethods = l.toArray(new String[l.size()]);
             InteractiveQuery query = mServer.checkAuthInteractive(username,
                     submethods);
             if (query != null) {

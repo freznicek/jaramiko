@@ -63,7 +63,7 @@ public class HostKeysTest extends TestCase {
         assertEquals(2, hk.size());
         assertEquals(1, hk.lookup("secure.example.com").size());
         assertEquals(0, hk.lookup("not.example.com").size());
-        PKey key = (PKey) hk.lookup("secure.example.com").get("ssh-rsa");
+        PKey key = hk.lookup("secure.example.com").get("ssh-rsa");
         assertEquals("E6684DB30E109B67B70FF1DC5C7F1363",
                 Util.encodeHex(key.getFingerprint()).toUpperCase());
     }
@@ -75,7 +75,7 @@ public class HostKeysTest extends TestCase {
         hk.add("|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c=",
                 key);
         assertEquals(3, hk.size());
-        PKey key2 = (PKey) hk.lookup("foo.example.com").get("ssh-rsa");
+        PKey key2 = hk.lookup("foo.example.com").get("ssh-rsa");
         assertEquals("7EC91BB336CB6D810B124B1353C32396",
                 Util.encodeHex(key2.getFingerprint()));
         assertTrue(hk.check("foo.example.com", key));
@@ -91,13 +91,11 @@ public class HostKeysTest extends TestCase {
         hk.add("foo.example.com", dkey);
 
         assertEquals(4, hk.size());
-        Map m = hk.lookup("foo.example.com");
+        Map<String, PKey> m = hk.lookup("foo.example.com");
         assertEquals(2, m.size());
-        assertEquals(
-                Util.encodeHex(((PKey) m.get("ssh-rsa")).getFingerprint()),
+        assertEquals(Util.encodeHex((m.get("ssh-rsa")).getFingerprint()),
                 Util.encodeHex(rkey.getFingerprint()));
-        assertEquals(
-                Util.encodeHex(((PKey) m.get("ssh-dss")).getFingerprint()),
+        assertEquals(Util.encodeHex((m.get("ssh-dss")).getFingerprint()),
                 Util.encodeHex(dkey.getFingerprint()));
     }
 }

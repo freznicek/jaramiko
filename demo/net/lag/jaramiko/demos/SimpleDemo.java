@@ -142,13 +142,13 @@ public class SimpleDemo {
             FileInputStream hostkeysFile = new FileInputStream(hostkeysFilename);
             HostKeys keys = new HostKeys();
             keys.load(hostkeysFile);
-            Map keymap = keys.lookup(serverName);
+            Map<String, PKey> keymap = keys.lookup(serverName);
             if (keymap.size() == 0) {
                 System.out.println("!!! Couldn't find hostkey for "
                         + serverName);
             } else {
                 // just grab the first one.
-                hostkey = (PKey) keymap.values().iterator().next();
+                hostkey = keymap.values().iterator().next();
             }
         } catch (IOException x) {
             System.out.println("!!! Couldn't open hostkeys file: " + x);

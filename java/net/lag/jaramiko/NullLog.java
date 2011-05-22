@@ -30,27 +30,22 @@ package net.lag.jaramiko;
  * messages.
  */
 public class NullLog implements LogSink {
-    @Override
     public void error(String text) {
         // pass
     }
 
-    @Override
     public void warning(String text) {
         // pass
     }
 
-    @Override
     public void notice(String text) {
         // pass
     }
 
-    @Override
     public void debug(String text) {
         // pass
     }
 
-    @Override
     public void dump(String text, byte[] data, int offset, int length) {
         // pass
     }

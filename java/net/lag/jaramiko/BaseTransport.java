@@ -89,8 +89,8 @@ import net.lag.crai.CraiException;
         mLocalVersion = "SSH-" + PROTO_ID + "-" + CLIENT_ID;
         mRemoteVersion = null;
 
-        mMessageHandlers = new HashMap();
-        mChannelFactoryMap = new HashMap();
+        mMessageHandlers = new HashMap<Byte, MessageHandler>();
+        mChannelFactoryMap = new HashMap<String, ChannelFactory>();
         mChannelFactoryMap.put("session", new Channel.Factory());
     }
 
@@ -234,8 +234,8 @@ import net.lag.crai.CraiException;
         sendUserMessage(m, timeout_ms);
     }
 
-    public Message sendGlobalRequest(String requestName, List parameters,
-            int timeout_ms) throws IOException {
+    public Message sendGlobalRequest(String requestName,
+            List<Object> parameters, int timeout_ms) throws IOException {
         if (timeout_ms > 0) {
             mCompletionEvent = new Event();
         }
@@ -367,11 +367,11 @@ import net.lag.crai.CraiException;
     private void startInboundCompression() {
         mLog.debug("Switching on inbound compression ...");
 
-        Class compressClass = (Class) BaseTransport.sCompressMap
+        Class<? extends Compressor> compressClass = BaseTransport.sCompressMap
                 .get(mDescription.mRemoteCompression);
         if (compressClass != null) {
             try {
-                Compressor compress = (Compressor) compressClass.newInstance();
+                Compressor compress = compressClass.newInstance();
                 mPacketizer.setInboundCompressor(compress);
             } catch (Exception x) {
                 throw new RuntimeException("Internal java error: " + x);
@@ -382,11 +382,11 @@ import net.lag.crai.CraiException;
     private void startOutboundCompression() {
         mLog.debug("Switching on outbound compression ...");
 
-        Class compressClass = (Class) BaseTransport.sCompressMap
+        Class<? extends Compressor> compressClass = BaseTransport.sCompressMap
                 .get(mDescription.mLocalCompression);
         if (compressClass != null) {
             try {
-                Compressor compress = (Compressor) compressClass.newInstance();
+                Compressor compress = compressClass.newInstance();
                 mPacketizer.setOutboundCompressor(compress);
             } catch (Exception x) {
                 throw new RuntimeException("Internal java error: " + x);
@@ -597,9 +597,9 @@ import net.lag.crai.CraiException;
 
     // return the first string from localPrefs that's in remotePrefs
     // (server mode overrides this to reverse the sense)
-    /* package */String filter(List localPrefs, List remotePrefs) {
-        for (Iterator i = localPrefs.iterator(); i.hasNext();) {
-            String c = (String) i.next();
+    /* package */String filter(List<String> localPrefs, List<String> remotePrefs) {
+        for (Iterator<String> i = localPrefs.iterator(); i.hasNext();) {
+            String c = i.next();
             if (remotePrefs.contains(c)) {
                 return c;
             }
@@ -775,8 +775,7 @@ import net.lag.crai.CraiException;
     }
 
     private boolean parsePacket(byte ptype, Message m) throws IOException {
-        MessageHandler handler = (MessageHandler) mMessageHandlers
-                .get(new Byte(ptype));
+        MessageHandler handler = mMessageHandlers.get(new Byte(ptype));
         if (handler != null) {
             return handler.handleMessage(ptype, m);
         }
@@ -876,7 +875,7 @@ import net.lag.crai.CraiException;
         boolean wantReply = m.getBoolean();
         mLog.debug("Received global request '" + kind + "'");
 
-        List response = checkGlobalRequest(kind, m);
+        List<Object> response = checkGlobalRequest(kind, m);
         if (wantReply) {
             Message mx = new Message();
             if (response != null) {
@@ -889,7 +888,7 @@ import net.lag.crai.CraiException;
         }
     }
 
-    /* package */List checkGlobalRequest(String kind, Message m) {
+    /* package */List<Object> checkGlobalRequest(String kind, Message m) {
         // ServerTransport will override this
         return null;
     }
@@ -912,14 +911,14 @@ import net.lag.crai.CraiException;
 
         // there's no way to avoid this being a huge function, so here goes:
         m.getBytes(16); // cookie
-        List kexAlgorithmList = m.getList();
-        List serverKeyAlgorithmList = m.getList();
-        List clientEncryptAlgorithmList = m.getList();
-        List serverEncryptAlgorithmList = m.getList();
-        List clientMacAlgorithmList = m.getList();
-        List serverMacAlgorithmList = m.getList();
-        List clientCompressAlgorithmList = m.getList();
-        List serverCompressAlgorithmList = m.getList();
+        List<String> kexAlgorithmList = m.getList();
+        List<String> serverKeyAlgorithmList = m.getList();
+        List<String> clientEncryptAlgorithmList = m.getList();
+        List<String> serverEncryptAlgorithmList = m.getList();
+        List<String> clientMacAlgorithmList = m.getList();
+        List<String> serverMacAlgorithmList = m.getList();
+        List<String> clientCompressAlgorithmList = m.getList();
+        List<String> serverCompressAlgorithmList = m.getList();
         m.getList(); // client lang list
         m.getList(); // server lang list
         m.getBoolean(); // kex follows
@@ -968,14 +967,13 @@ import net.lag.crai.CraiException;
         d.mKexName = agreedKex;
         d.mServerKeyType = agreedServerKey;
         d.mLocalCipherName = agreedLocalCipher;
-        d.mLocalCipher = (CipherDescription) sCipherMap.get(agreedLocalCipher);
+        d.mLocalCipher = sCipherMap.get(agreedLocalCipher);
         d.mRemoteCipherName = agreedRemoteCipher;
-        d.mRemoteCipher = (CipherDescription) sCipherMap
-                .get(agreedRemoteCipher);
+        d.mRemoteCipher = sCipherMap.get(agreedRemoteCipher);
         d.mLocalMacAlgorithm = agreedLocalMac;
-        d.mLocalMac = (MacDescription) sMacMap.get(agreedLocalMac);
+        d.mLocalMac = sMacMap.get(agreedLocalMac);
         d.mRemoteMacAlgorithm = agreedRemoteMac;
-        d.mRemoteMac = (MacDescription) sMacMap.get(agreedRemoteMac);
+        d.mRemoteMac = sMacMap.get(agreedRemoteMac);
         d.mLocalCompression = agreedLocalCompression;
         d.mRemoteCompression = agreedRemoteCompression;
 
@@ -993,13 +991,13 @@ import net.lag.crai.CraiException;
         mRemoteKexInit = new byte[m.getPosition()];
         System.arraycopy(data, 0, mRemoteKexInit, 0, m.getPosition());
 
-        Class kexClass = (Class) sKexMap.get(agreedKex);
+        Class<? extends Kex> kexClass = sKexMap.get(agreedKex);
         if (kexClass == null) {
             throw new SSHException("Oops!  Negotiated kex " + agreedKex
                     + " which I don't implement");
         }
         try {
-            mKexEngine = (Kex) kexClass.newInstance();
+            mKexEngine = kexClass.newInstance();
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
@@ -1071,7 +1069,7 @@ import net.lag.crai.CraiException;
 
     /* package */Channel getChannelForKind(int chanid, String kind,
             Message params) {
-        ChannelFactory factory = (ChannelFactory) mChannelFactoryMap.get(kind);
+        ChannelFactory factory = mChannelFactoryMap.get(kind);
         // If we don't know what channel factory to use, use the default Channel
         if (factory == null) {
             mLog.notice("Cannot find a ChannelFactory for the channel kind '"
@@ -1082,7 +1080,7 @@ import net.lag.crai.CraiException;
     }
 
     /* package */Channel getChannelForKind(int chanid, String kind, List params) {
-        ChannelFactory factory = (ChannelFactory) mChannelFactoryMap.get(kind);
+        ChannelFactory factory = mChannelFactoryMap.get(kind);
         // If we don't know what channel factory to use, use the default Channel
         if (factory == null) {
             mLog.notice("Cannot find a ChannelFactory for the channel kind '"
@@ -1139,10 +1137,11 @@ import net.lag.crai.CraiException;
         boolean giveAdvice = false;
 
         synchronized (BaseTransport.class) {
-            for (Iterator i = sCipherMap.entrySet().iterator(); i.hasNext();) {
-                Map.Entry entry = (Map.Entry) i.next();
-                String name = (String) entry.getKey();
-                CipherDescription desc = (CipherDescription) entry.getValue();
+            for (Iterator<Map.Entry<String, CipherDescription>> i = sCipherMap
+                    .entrySet().iterator(); i.hasNext();) {
+                Map.Entry<String, CipherDescription> entry = i.next();
+                String name = entry.getKey();
+                CipherDescription desc = entry.getValue();
                 try {
                     CraiCipher cipher = sCrai.getCipher(desc.mAlgorithm);
                     cipher.initEncrypt(new byte[desc.mKeySize],
@@ -1175,11 +1174,11 @@ import net.lag.crai.CraiException;
     private static final int DEFAULT_WINDOW_SIZE = 384 * 1024;
     private static final int DEFAULT_MAX_PACKET_SIZE = 34816;
 
-    private static Map sCipherMap = new HashMap();
-    private static Map sMacMap = new HashMap();
-    private static Map sKeyMap = new HashMap();
-    private static Map sKexMap = new HashMap();
-    private static Map sCompressMap = new HashMap();
+    private static Map<String, CipherDescription> sCipherMap = new HashMap<String, CipherDescription>();
+    private static Map<String, MacDescription> sMacMap = new HashMap<String, MacDescription>();
+    private static Map<String, Class<? extends PKey>> sKeyMap = new HashMap<String, Class<? extends PKey>>();
+    private static Map<String, Class<? extends Kex>> sKexMap = new HashMap<String, Class<? extends Kex>>();
+    private static Map<String, Class<? extends Compressor>> sCompressMap = new HashMap<String, Class<? extends Compressor>>();
     private static volatile boolean sCheckedCiphers = false;
 
     // crypto abstraction (not everyone has JCE)
@@ -1269,7 +1268,11 @@ import net.lag.crai.CraiException;
     private IOException mSavedException;
     /* package */AuthHandler mAuthHandler;
     private Message mGlobalResponse;
-    private Map mMessageHandlers; // Map<byte, MessageHandler>
-    private Map mChannelFactoryMap; // Map<String, Class> of registered channel
-                                    // types
+    private Map<Byte, MessageHandler> mMessageHandlers; // Map<byte,
+                                                        // MessageHandler>
+    private Map<String, ChannelFactory> mChannelFactoryMap; // Map<String,
+                                                            // Class> of
+                                                            // registered
+                                                            // channel
+    // types
 }

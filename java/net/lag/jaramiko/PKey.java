@@ -246,13 +246,13 @@ public abstract class PKey {
      */
     public static PKey createFromMessage(Message m) throws SSHException {
         String name = m.getString();
-        Class keyClass = (Class) sNameMap.get(name);
+        Class<? extends PKey> keyClass = sNameMap.get(name);
         if (keyClass == null) {
             throw new SSHException("Unknown key type " + name);
         }
         PKey key = null;
         try {
-            key = (PKey) keyClass.newInstance();
+            key = keyClass.newInstance();
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
@@ -282,7 +282,7 @@ public abstract class PKey {
     public static PKey readPrivateKeyFromStream(InputStream is, String password)
             throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        Class keyClass = null;
+        Class<? extends PKey> keyClass = null;
 
         while (true) {
             String line = reader.readLine();
@@ -292,7 +292,7 @@ public abstract class PKey {
             if (line.startsWith("-----BEGIN ")
                     && line.endsWith(" PRIVATE KEY-----")) {
                 String name = line.substring(11, line.length() - 17);
-                keyClass = (Class) sBannerMap.get(name);
+                keyClass = sBannerMap.get(name);
                 if (keyClass == null) {
                     throw new SSHException("Unknown key type " + name);
                 }
@@ -301,7 +301,7 @@ public abstract class PKey {
         }
 
         boolean inHeaders = true;
-        Map headers = new HashMap();
+        Map<String, String> headers = new HashMap<String, String>();
         ByteArrayOutputStream keyData = new ByteArrayOutputStream();
 
         while (true) {
@@ -339,7 +339,7 @@ public abstract class PKey {
 
         PKey pkey = null;
         try {
-            pkey = (PKey) keyClass.newInstance();
+            pkey = keyClass.newInstance();
         } catch (Exception x) {
             throw new SSHException("Internal java error: " + x);
         }
@@ -438,18 +438,18 @@ public abstract class PKey {
         return keydata;
     }
 
-    private static byte[] decryptKeyFile(byte[] data, Map headers,
-            String password) throws SSHException {
-        String procType = (String) headers.get("proc-type");
+    private static byte[] decryptKeyFile(byte[] data,
+            Map<String, String> headers, String password) throws SSHException {
+        String procType = headers.get("proc-type");
         if (!procType.equals("4,ENCRYPTED")) {
             throw new SSHException("Unknown private key structure '" + procType
                     + "'");
         }
-        String[] dek = Util.splitString((String) headers.get("dek-info"), ",");
+        String[] dek = Util.splitString(headers.get("dek-info"), ",");
         if (dek.length != 2) {
             throw new SSHException("Can't parse DEK-info in private key");
         }
-        CipherDescription cdesc = (CipherDescription) sCipherMap.get(dek[0]);
+        CipherDescription cdesc = sCipherMap.get(dek[0]);
         if (cdesc == null) {
             throw new SSHException("Unknown private key cipher '" + dek[0]
                     + "'");
@@ -480,8 +480,7 @@ public abstract class PKey {
 
     private static byte[] encryptKeyFile(byte[] data, String cipherName,
             String password, byte[] salt) throws SSHException {
-        CipherDescription cdesc = (CipherDescription) sCipherMap
-                .get(cipherName);
+        CipherDescription cdesc = sCipherMap.get(cipherName);
         if (cdesc == null) {
             throw new SSHException("Unknown private key cipher '" + cipherName
                     + "'");
@@ -512,9 +511,9 @@ public abstract class PKey {
         }
     }
 
-    private static Map sNameMap = new HashMap();
-    private static Map sBannerMap = new HashMap();
-    private static Map sCipherMap = new HashMap();
+    private static Map<String, Class<? extends PKey>> sNameMap = new HashMap<String, Class<? extends PKey>>();
+    private static Map<String, Class<? extends PKey>> sBannerMap = new HashMap<String, Class<? extends PKey>>();
+    private static Map<String, CipherDescription> sCipherMap = new HashMap<String, CipherDescription>();
 
     static {
         sNameMap.put("ssh-rsa", RSAKey.class);

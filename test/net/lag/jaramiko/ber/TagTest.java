@@ -183,8 +183,8 @@ public class TagTest extends TestCase {
                 .decodeHex("8D00"))), t);
 
         assertEquals(t.hashCode(), Tag.create(Tag.CONTEXT, 13, 0).hashCode());
-        Map m = new HashMap();
+        Map<Tag, Integer> m = new HashMap<Tag, Integer>();
         m.put(t, new Integer(23));
-        assertEquals(23, m.get(Tag.create(Tag.CONTEXT, 13, 0)));
+        assertEquals(23, (int) m.get(Tag.create(Tag.CONTEXT, 13, 0)));
     }
 }

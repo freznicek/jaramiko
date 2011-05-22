@@ -48,71 +48,58 @@ public class FakeCrai implements Crai {
         mCraiJCE.mCraiRandom = new FakeRandom();
     }
 
-    @Override
     public CraiRandom getPRNG() {
         return new FakeRandom();
     }
 
-    @Override
     public CraiPrivateKey makePrivateRSAKey(BigInteger n, BigInteger d,
             BigInteger p, BigInteger q) {
         return mCraiJCE.makePrivateRSAKey(n, d, p, q);
     }
 
-    @Override
     public CraiPrivateKey makePrivateDSAKey(BigInteger x, BigInteger p,
             BigInteger q, BigInteger g) {
         return mCraiJCE.makePrivateDSAKey(x, p, q, g);
     }
 
-    @Override
     public CraiPublicKey makePublicRSAKey(BigInteger n, BigInteger e) {
         return mCraiJCE.makePublicRSAKey(n, e);
     }
 
-    @Override
     public CraiPublicKey makePublicDSAKey(BigInteger y, BigInteger p,
             BigInteger q, BigInteger g) {
         return mCraiJCE.makePublicDSAKey(y, p, q, g);
     }
 
-    @Override
     public CraiKeyPair generateRSAKeyPair(int bits) {
         return mCraiJCE.generateRSAKeyPair(bits);
     }
 
-    @Override
     public CraiKeyPair generateDSAKeyPair(int bits) {
         return mCraiJCE.generateDSAKeyPair(bits);
     }
 
-    @Override
     public CraiDigest makeSHA1() {
         return mCraiJCE.makeSHA1();
     }
 
-    @Override
     public CraiDigest makeMD5() {
         return mCraiJCE.makeMD5();
     }
 
-    @Override
     public CraiDigest makeSHA1HMAC(byte[] key) {
         return mCraiJCE.makeSHA1HMAC(key);
     }
 
-    @Override
     public CraiDigest makeMD5HMAC(byte[] key) {
         return mCraiJCE.makeMD5HMAC(key);
     }
 
-    @Override
     public CraiCipher getCipher(CraiCipherAlgorithm algorithm)
             throws CraiException {
         return mCraiJCE.getCipher(algorithm);
     }
 
-    @Override
     public BigInteger modPow(BigInteger b, BigInteger e, BigInteger m) {
         return mCraiJCE.modPow(b, e, m);
     }

@@ -58,7 +58,6 @@ public class ArtificialSequence {
     private static Tag TAG = Tag.createContainer(Tag.APPLICATION, 200);
 
     private static class Encoder implements BEROutputStream.Encoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             BEROutputStream.writeContainer(out, TAG,
@@ -67,7 +66,6 @@ public class ArtificialSequence {
     }
 
     private static class Decoder implements BERInputStream.Decoder {
-        @Override
         public Object decode(InputStream in, Tag tag) throws IOException {
             return new ArtificialSequence(BERInputStream.decodeContainer(in));
         }

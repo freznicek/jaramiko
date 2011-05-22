@@ -31,49 +31,40 @@ import java.math.BigInteger;
  * Stubbed-out KexTransportInterface for testing key-exchange implementations.
  */
 public class FakeKexTransport implements KexTransportInterface {
-    @Override
     public String getRemoteVersion() {
         return "SSH-2.0-lame";
     }
 
-    @Override
     public String getLocalVersion() {
         return "SSH-2.0-paramiko_1.0";
     }
 
-    @Override
     public byte[] getRemoteKexInit() {
         return "remote-kex-init".getBytes();
     }
 
-    @Override
     public byte[] getLocalKexInit() {
         return "local-kex-init".getBytes();
     }
 
-    @Override
     public void registerMessageHandler(byte ptype, MessageHandler handler) {
         // pass
     }
 
-    @Override
     public void expectPacket(byte expect) {
         mExpect1 = expect;
         mExpect2 = 0;
     }
 
-    @Override
     public void expectPacket(byte expect1, byte expect2) {
         mExpect1 = expect1;
         mExpect2 = expect2;
     }
 
-    @Override
     public void sendMessage(Message m) {
         mMessage = m;
     }
 
-    @Override
     public PKey getServerKey() {
         if (mServerMode) {
             return new FakeKey();
@@ -82,24 +73,20 @@ public class FakeKexTransport implements KexTransportInterface {
         }
     }
 
-    @Override
     public void verifyKey(byte[] key, byte[] sig) {
         mVerifyKey = key;
         mVerifySig = sig;
     }
 
-    @Override
     public void setKH(BigInteger k, byte[] h) {
         mK = k;
         mH = h;
     }
 
-    @Override
     public void kexComplete() {
         mActivated = true;
     }
 
-    @Override
     public LogSink getLog() {
         return new NullLog();
     }

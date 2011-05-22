@@ -47,68 +47,55 @@ import net.lag.crai.CraiException;
 public class ServerTransport extends BaseTransport {
     // clean interface between Kex and Transport for unit testing
     private class MyKexTransportInterface implements KexTransportInterface {
-        @Override
         public String getLocalVersion() {
             return mLocalVersion;
         }
 
-        @Override
         public String getRemoteVersion() {
             return mRemoteVersion;
         }
 
-        @Override
         public byte[] getLocalKexInit() {
             return mLocalKexInit;
         }
 
-        @Override
         public byte[] getRemoteKexInit() {
             return mRemoteKexInit;
         }
 
-        @Override
         public void registerMessageHandler(byte ptype, MessageHandler handler) {
             ServerTransport.this.registerMessageHandler(ptype, handler);
         }
 
-        @Override
         public void expectPacket(byte ptype) {
             ServerTransport.this.expectPacket(ptype);
         }
 
-        @Override
         public void expectPacket(byte ptype1, byte ptype2) {
             ServerTransport.this.expectPacket(ptype1, ptype2);
         }
 
-        @Override
         public void sendMessage(Message m) throws IOException {
             ServerTransport.this.sendMessage(m);
         }
 
-        @Override
         public PKey getServerKey() {
             return ServerTransport.this.getServerKey();
         }
 
-        @Override
         public void verifyKey(byte[] hostKey, byte[] sig) throws SSHException {
             // no remote server key in server mode
             throw new SSHException("internal jaramiko error");
         }
 
-        @Override
         public void setKH(BigInteger k, byte[] h) {
             ServerTransport.this.setKH(k, h);
         }
 
-        @Override
         public void kexComplete() throws IOException {
             ServerTransport.this.activateOutbound();
         }
 
-        @Override
         public LogSink getLog() {
             return mLog;
         }
@@ -118,8 +105,8 @@ public class ServerTransport extends BaseTransport {
         super(socket);
 
         mServerAcceptLock = new Object();
-        mServerAccepts = new ArrayList();
-        mServerKeyMap = new HashMap();
+        mServerAccepts = new ArrayList<Channel>();
+        mServerKeyMap = new HashMap<String, PKey>();
     }
 
     /**
@@ -155,7 +142,6 @@ public class ServerTransport extends BaseTransport {
         mCompletionEvent = new Event();
         mActive = true;
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 mLog.debug("starting thread (server mode): "
                         + Integer.toHexString(this.hashCode()));
@@ -225,7 +211,7 @@ public class ServerTransport extends BaseTransport {
     public Channel accept(int timeout_ms) {
         synchronized (mServerAcceptLock) {
             if (mServerAccepts.size() > 0) {
-                return (Channel) mServerAccepts.remove(0);
+                return mServerAccepts.remove(0);
             }
 
             try {
@@ -239,7 +225,7 @@ public class ServerTransport extends BaseTransport {
             }
 
             if (mServerAccepts.size() > 0) {
-                return (Channel) mServerAccepts.remove(0);
+                return mServerAccepts.remove(0);
             }
             return null;
         }
@@ -281,7 +267,7 @@ public class ServerTransport extends BaseTransport {
     // in server mode, flip the args around so the client's prefs take
     // precedence
     /* package */@Override
-    String filter(List clientPrefs, List serverPrefs) {
+    String filter(List<String> clientPrefs, List<String> serverPrefs) {
         return super.filter(serverPrefs, clientPrefs);
     }
 
@@ -348,9 +334,9 @@ public class ServerTransport extends BaseTransport {
     void sendKexInitHook() {
         // need to remove key-types from the SecurityOptions if we don't have
         // corresponding keys
-        List keyTypes = mSecurityOptions.getKeys();
-        for (Iterator i = keyTypes.iterator(); i.hasNext();) {
-            String keyType = (String) i.next();
+        List<String> keyTypes = mSecurityOptions.getKeys();
+        for (Iterator<String> i = keyTypes.iterator(); i.hasNext();) {
+            String keyType = i.next();
             if (!mServerKeyMap.containsKey(keyType)) {
                 i.remove();
             }
@@ -359,7 +345,7 @@ public class ServerTransport extends BaseTransport {
 
         // if we don't have any moduli loaded, we can't do group-exchange kex
         if (getModulusPack().size() == 0) {
-            List kexTypes = mSecurityOptions.getKex();
+            List<String> kexTypes = mSecurityOptions.getKex();
             kexTypes.remove("diffie-hellman-group-exchange-sha1");
             mSecurityOptions.setKex(kexTypes);
         }
@@ -375,7 +361,7 @@ public class ServerTransport extends BaseTransport {
 
     /* package */@Override
     void kexInitHook() throws SSHException {
-        mServerKey = (PKey) mServerKeyMap.get(mDescription.mServerKeyType);
+        mServerKey = mServerKeyMap.get(mDescription.mServerKeyType);
         if (mServerKey == null) {
             throw new SSHException(
                     "Incompatible SSH peer (can't match requested host key type");
@@ -402,7 +388,7 @@ public class ServerTransport extends BaseTransport {
     }
 
     /* package */@Override
-    List checkGlobalRequest(String kind, Message m) {
+    List<Object> checkGlobalRequest(String kind, Message m) {
         return mServer.checkGlobalRequest(kind, m);
     }
 
@@ -471,10 +457,11 @@ public class ServerTransport extends BaseTransport {
     }
 
     private ServerInterface mServer;
-    private Map mServerKeyMap; // Map<String, PKey> of available keys
+    private Map<String, PKey> mServerKeyMap; // Map<String, PKey> of available
+                                             // keys
     private PKey mServerKey; // server key that was used for this session
     private String mBanner;
 
     private Object mServerAcceptLock;
-    private List mServerAccepts;
+    private List<Channel> mServerAccepts;
 }

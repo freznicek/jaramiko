@@ -72,7 +72,6 @@ public class TransportTest extends TestCase implements BannerListener {
         mSocketS.close();
     }
 
-    @Override
     public void authenticationBannerEvent(String banner) {
         mBanner = banner;
     }
@@ -81,17 +80,17 @@ public class TransportTest extends TestCase implements BannerListener {
     public void testSecurityOptions() throws IOException {
         SecurityOptions o = mTC.getSecurityOptions();
 
-        List ciphers = o.getCiphers();
+        List<String> ciphers = o.getCiphers();
         assertTrue(ciphers.size() > 2);
         ciphers.clear();
         ciphers.add("aes256-cbc");
         ciphers.add("blowfish-cbc");
         o.setCiphers(ciphers);
 
-        List c2 = o.getCiphers();
+        List<String> c2 = o.getCiphers();
         assertEquals(2, c2.size());
-        assertEquals("aes256-cbc", (String) c2.get(0));
-        assertEquals("blowfish-cbc", (String) c2.get(1));
+        assertEquals("aes256-cbc", c2.get(0));
+        assertEquals("blowfish-cbc", c2.get(1));
 
         try {
             ciphers.clear();
@@ -130,7 +129,6 @@ public class TransportTest extends TestCase implements BannerListener {
         mTS.setServerBanner("Hello there!");
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -166,7 +164,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -207,7 +204,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -240,7 +236,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -276,7 +271,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -309,7 +303,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -343,7 +336,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -377,7 +369,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -390,7 +381,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         String[] remain = mTC.authInteractive("commie",
                 new InteractiveHandler() {
-                    @Override
                     public String[] handleInteractiveRequest(
                             InteractiveQuery query) {
                         mGotQuery = query;
@@ -419,7 +409,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -447,7 +436,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -503,7 +491,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -552,7 +539,6 @@ public class TransportTest extends TestCase implements BannerListener {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);

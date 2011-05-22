@@ -44,68 +44,55 @@ import net.lag.crai.CraiException;
 public class ClientTransport extends BaseTransport {
     // clean interface between Kex and Transport for unit testing
     private class MyKexTransportInterface implements KexTransportInterface {
-        @Override
         public String getLocalVersion() {
             return mLocalVersion;
         }
 
-        @Override
         public String getRemoteVersion() {
             return mRemoteVersion;
         }
 
-        @Override
         public byte[] getLocalKexInit() {
             return mLocalKexInit;
         }
 
-        @Override
         public byte[] getRemoteKexInit() {
             return mRemoteKexInit;
         }
 
-        @Override
         public void registerMessageHandler(byte ptype, MessageHandler handler) {
             ClientTransport.this.registerMessageHandler(ptype, handler);
         }
 
-        @Override
         public void expectPacket(byte ptype) {
             ClientTransport.this.expectPacket(ptype);
         }
 
-        @Override
         public void expectPacket(byte ptype1, byte ptype2) {
             ClientTransport.this.expectPacket(ptype1, ptype2);
         }
 
-        @Override
         public void sendMessage(Message m) throws IOException {
             ClientTransport.this.sendMessage(m);
         }
 
-        @Override
         public PKey getServerKey() {
             // no server key in client mode
             return null;
         }
 
-        @Override
         public void verifyKey(byte[] hostKey, byte[] sig) throws SSHException {
             ClientTransport.this.verifyKey(hostKey, sig);
         }
 
-        @Override
         public void setKH(BigInteger k, byte[] h) {
             ClientTransport.this.setKH(k, h);
         }
 
-        @Override
         public void kexComplete() throws IOException {
             ClientTransport.this.activateOutbound();
         }
 
-        @Override
         public LogSink getLog() {
             return mLog;
         }
@@ -169,7 +156,6 @@ public class ClientTransport extends BaseTransport {
         mCompletionEvent = new Event();
         mActive = true;
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 mLog.debug("starting thread (client mode): "
                         + Integer.toHexString(this.hashCode()));
@@ -326,7 +312,7 @@ public class ClientTransport extends BaseTransport {
         } catch (BadAuthenticationType x) {
             // if password auth isn't allowed, but keyboard-interactive *is*,
             // try to fudge it
-            List allowed = Arrays.asList(x.getAllowedTypes());
+            List<String> allowed = Arrays.asList(x.getAllowedTypes());
             if (!allowed.contains("keyboard-interactive")) {
                 fallback = false;
             }
@@ -336,7 +322,6 @@ public class ClientTransport extends BaseTransport {
 
             try {
                 return authInteractive(username, new InteractiveHandler() {
-                    @Override
                     public String[] handleInteractiveRequest(
                             InteractiveQuery query) throws SSHException {
                         if (query.prompts.length > 1) {
@@ -493,8 +478,8 @@ public class ClientTransport extends BaseTransport {
      *             if there was an error making the request, or it was rejected
      *             by the server
      */
-    public Channel openChannel(String kind, List parameters, int timeout_ms)
-            throws IOException {
+    public Channel openChannel(String kind, List<Object> parameters,
+            int timeout_ms) throws IOException {
         if (!mActive) {
             throw new SSHException("No existing session.");
         }

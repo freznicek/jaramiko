@@ -113,13 +113,13 @@ public class HostKeys {
      * scheme that openssh uses. we may not know that an entry is for hostname
      * "george" until someone asks and we check if any of the hashes match.
      */
-    private List mEntries;
+    private List<Entry> mEntries;
 
     /**
      * Create a new, empty HostKeys object.
      */
     public HostKeys() {
-        mEntries = new ArrayList();
+        mEntries = new ArrayList<Entry>();
     }
 
     /**
@@ -132,8 +132,8 @@ public class HostKeys {
      *            the key to add
      */
     public void add(String hostname, PKey key) {
-        for (Iterator iter = mEntries.iterator(); iter.hasNext();) {
-            Entry e = (Entry) iter.next();
+        for (Iterator<Entry> iter = mEntries.iterator(); iter.hasNext();) {
+            Entry e = iter.next();
             if (Arrays.asList(e.mHostnames).contains(hostname)
                     && e.mKey.getSSHName().equals(key.getSSHName())) {
                 e.mKey = key;
@@ -190,8 +190,8 @@ public class HostKeys {
      */
     public void save(OutputStream out) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(out);
-        for (Iterator iter = mEntries.iterator(); iter.hasNext();) {
-            Entry e = (Entry) iter.next();
+        for (Iterator<Entry> iter = mEntries.iterator(); iter.hasNext();) {
+            Entry e = iter.next();
             writer.write(e.toLine());
         }
     }
@@ -206,11 +206,11 @@ public class HostKeys {
      *            hostname (or IP) to lookup
      * @return a map of keytype-to-key for the host
      */
-    public Map lookup(String hostname) {
-        Map out = new HashMap();
+    public Map<String, PKey> lookup(String hostname) {
+        Map<String, PKey> out = new HashMap<String, PKey>();
 
-        for (Iterator iter = mEntries.iterator(); iter.hasNext();) {
-            Entry e = (Entry) iter.next();
+        for (Iterator<Entry> iter = mEntries.iterator(); iter.hasNext();) {
+            Entry e = iter.next();
             for (int i = 0; i < e.mHostnames.length; i++) {
                 if (e.mHostnames[i].equals(hostname)) {
                     out.put(e.mKey.getSSHName(), e.mKey);
@@ -237,7 +237,7 @@ public class HostKeys {
      * @return true if the ey is associated with the hostname; false if not
      */
     public boolean check(String hostname, PKey key) {
-        PKey hkey = (PKey) lookup(hostname).get(key.getSSHName());
+        PKey hkey = lookup(hostname).get(key.getSSHName());
         if (hkey == null) {
             return false;
         }

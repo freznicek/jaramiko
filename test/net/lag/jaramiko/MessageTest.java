@@ -102,11 +102,11 @@ public class MessageTest extends TestCase {
         assertEquals(true, m.getBoolean());
         assertEquals(false, m.getBoolean());
         assertEquals((byte) 0xf3, m.getByte());
-        List l = m.getList();
+        List<String> l = m.getList();
         assertEquals(3, l.size());
-        assertEquals("huey", l.get(0).toString());
-        assertEquals("dewey", l.get(1).toString());
-        assertEquals("louie", l.get(2).toString());
+        assertEquals("huey", l.get(0));
+        assertEquals("dewey", l.get(1));
+        assertEquals("louie", l.get(2));
     }
 
     public void testEncode3() {
@@ -137,7 +137,7 @@ public class MessageTest extends TestCase {
 
     public void testEncodeAll() {
         Message m = new Message();
-        List l = new ArrayList();
+        List<Object> l = new ArrayList<Object>();
         l.add(new Integer(63));
         l.add(new Boolean(false));
         l.add(new String("knoxville"));

@@ -42,66 +42,66 @@ import java.util.List;
  * IllegalArgumentException will be thrown.
  */
 public final class SecurityOptions {
-    /* package */
     SecurityOptions(String[] knownCiphers, String[] knownMacs,
             String[] knownKeys, String[] knownKex, String[] knownCompressions) {
+
         mKnownCiphers = knownCiphers;
         mKnownMacs = knownMacs;
         mKnownKeys = knownKeys;
         mKnownKex = knownKex;
         mKnownCompressions = knownCompressions;
 
-        mCiphers = new ArrayList(Arrays.asList(knownCiphers));
-        mMacs = new ArrayList(Arrays.asList(knownMacs));
-        mKeys = new ArrayList(Arrays.asList(knownKeys));
-        mKex = new ArrayList(Arrays.asList(knownKex));
-        mCompressions = new ArrayList(Arrays.asList(knownCompressions));
+        mCiphers = new ArrayList<String>(Arrays.asList(knownCiphers));
+        mMacs = new ArrayList<String>(Arrays.asList(knownMacs));
+        mKeys = new ArrayList<String>(Arrays.asList(knownKeys));
+        mKex = new ArrayList<String>(Arrays.asList(knownKex));
+        mCompressions = new ArrayList<String>(Arrays.asList(knownCompressions));
     }
 
-    public void setCiphers(List ciphers) {
+    public void setCiphers(List<String> ciphers) {
         setList(mCiphers, ciphers, mKnownCiphers);
     }
 
-    public void setDigests(List macs) {
+    public void setDigests(List<String> macs) {
         setList(mMacs, macs, mKnownMacs);
     }
 
-    public void setKeys(List keys) {
+    public void setKeys(List<String> keys) {
         setList(mKeys, keys, mKnownKeys);
     }
 
-    public void setKex(List kex) {
+    public void setKex(List<String> kex) {
         setList(mKex, kex, mKnownKex);
     }
 
-    public void setCompressions(List compressions) {
+    public void setCompressions(List<String> compressions) {
         setList(mCompressions, compressions, mKnownCompressions);
     }
 
-    public List getCiphers() {
-        return new ArrayList(mCiphers);
+    public List<String> getCiphers() {
+        return new ArrayList<String>(mCiphers);
     }
 
-    public List getDigests() {
-        return new ArrayList(mMacs);
+    public List<String> getDigests() {
+        return new ArrayList<String>(mMacs);
     }
 
-    public List getKeys() {
-        return new ArrayList(mKeys);
+    public List<String> getKeys() {
+        return new ArrayList<String>(mKeys);
     }
 
-    public List getKex() {
-        return new ArrayList(mKex);
+    public List<String> getKex() {
+        return new ArrayList<String>(mKex);
     }
 
-    public List getCompressions() {
-        return new ArrayList(mCompressions);
+    public List<String> getCompressions() {
+        return new ArrayList<String>(mCompressions);
     }
 
-    private void setList(List mine, List theirs, String[] valid) {
+    private void setList(List<String> mine, List<String> theirs, String[] valid) {
         mine.clear();
-        for (Iterator i = theirs.iterator(); i.hasNext();) {
-            String x = (String) i.next();
+        for (Iterator<String> i = theirs.iterator(); i.hasNext();) {
+            String x = i.next();
             if (!Arrays.asList(valid).contains(x)) {
                 throw new IllegalArgumentException();
             }
@@ -115,9 +115,9 @@ public final class SecurityOptions {
     private String[] mKnownKex;
     private String[] mKnownCompressions;
 
-    private List mCiphers;
-    private List mMacs;
-    private List mKeys;
-    private List mKex;
-    private List mCompressions;
+    private List<String> mCiphers;
+    private List<String> mMacs;
+    private List<String> mKeys;
+    private List<String> mKex;
+    private List<String> mCompressions;
 }

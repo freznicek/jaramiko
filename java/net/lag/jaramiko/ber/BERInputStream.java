@@ -105,7 +105,7 @@ public class BERInputStream {
         Tag tag = mAdvanceTag;
         mAdvanceTag = null;
 
-        Decoder decoder = (Decoder) sDecoderTable.get(tag);
+        Decoder decoder = sDecoderTable.get(tag);
         if (decoder == null) {
             System.err.println(sDecoderTable);
             throw new BERException("Can't decode object of type " + tag);
@@ -123,8 +123,9 @@ public class BERInputStream {
         return ret;
     }
 
-    public static List decodeContainer(InputStream in) throws IOException {
-        List list = new ArrayList();
+    public static List<Object> decodeContainer(InputStream in)
+            throws IOException {
+        List<Object> list = new ArrayList<Object>();
         BERInputStream subIn = new BERInputStream(in);
         while (subIn.hasNext()) {
             list.add(subIn.next());
@@ -151,7 +152,9 @@ public class BERInputStream {
     private boolean mHitEOF;
     private Tag mAdvanceTag;
 
-    private static Map sDecoderTable = new HashMap(); // Tag -> Decoder
+    private static Map<Tag, Decoder> sDecoderTable = new HashMap<Tag, Decoder>(); // Tag
+                                                                                  // ->
+                                                                                  // Decoder
 
     static {
         CommonCodecs.register();

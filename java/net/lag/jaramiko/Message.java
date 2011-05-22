@@ -256,8 +256,8 @@ public final class Message {
      * @param l
      *            the list of objects to add to this Message
      */
-    public void putAll(List l) {
-        for (Iterator i = l.iterator(); i.hasNext();) {
+    public void putAll(List<Object> l) {
+        for (Iterator<Object> i = l.iterator(); i.hasNext();) {
             Object obj = i.next();
             if (obj instanceof String) {
                 putString((String) obj);
@@ -345,7 +345,7 @@ public final class Message {
         }
     }
 
-    public List getList() {
+    public List<String> getList() {
         return Arrays.asList(Util.splitString(getString(), ","));
     }
 

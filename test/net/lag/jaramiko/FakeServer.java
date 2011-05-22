@@ -40,7 +40,6 @@ public class FakeServer implements ServerInterface {
                 "test/test_dss.key"), null);
     }
 
-    @Override
     public int checkChannelRequest(String kind, int chanID) {
         if (kind.equals("bogus")) {
             return ChannelError.ADMINISTRATIVELY_PROHIBITED;
@@ -48,7 +47,6 @@ public class FakeServer implements ServerInterface {
         return ChannelError.SUCCESS;
     }
 
-    @Override
     public String getAllowedAuths(String username) {
         if (username.equals("slowdive")) {
             return "publickey,password";
@@ -68,12 +66,10 @@ public class FakeServer implements ServerInterface {
         return "publickey";
     }
 
-    @Override
     public int checkAuthNone(String username) {
         return AuthError.FAILED;
     }
 
-    @Override
     public int checkAuthPassword(String username, String password) {
         if (username.equals("slowdive") && password.equals("pygmalion")) {
             return AuthError.SUCCESS;
@@ -89,7 +85,6 @@ public class FakeServer implements ServerInterface {
         return AuthError.FAILED;
     }
 
-    @Override
     public int checkAuthPublicKey(String username, PKey key) {
         if (username.equals("paranoid") && key.equals(mParanoidKey)) {
             // 2-part auth
@@ -102,7 +97,6 @@ public class FakeServer implements ServerInterface {
         return AuthError.FAILED;
     }
 
-    @Override
     public InteractiveQuery checkAuthInteractive(String username,
             String[] methods) {
         if (username.equals("commie")) {
@@ -119,7 +113,6 @@ public class FakeServer implements ServerInterface {
         return null;
     }
 
-    @Override
     public int checkAuthInteractiveResponse(String[] responses) {
         if (mUsername.equals("commie")) {
             if ((responses.length == 1) && responses[0].equals("cat")) {
@@ -129,13 +122,11 @@ public class FakeServer implements ServerInterface {
         return AuthError.FAILED;
     }
 
-    @Override
-    public List checkGlobalRequest(String kind, Message m) {
+    public List<Object> checkGlobalRequest(String kind, Message m) {
         mGlobalRequest = kind;
         return null;
     }
 
-    @Override
     public boolean checkChannelPTYRequest(Channel c, String term, int width,
             int height, int pixelWidth, int pixelHeight, TerminalModes modes) {
         mPTYTerm = term;
@@ -145,12 +136,10 @@ public class FakeServer implements ServerInterface {
         return true;
     }
 
-    @Override
     public boolean checkChannelShellRequest(Channel c) {
         return true;
     }
 
-    @Override
     public boolean checkChannelExecRequest(Channel c, String command) {
         if (!command.equals("yes")) {
             return false;
@@ -158,12 +147,10 @@ public class FakeServer implements ServerInterface {
         return true;
     }
 
-    @Override
     public boolean checkChannelSubsystemRequest(Channel c, String name) {
         return false;
     }
 
-    @Override
     public boolean checkChannelWindowChangeRequest(Channel c, int width,
             int height, int pixelWidth, int pixelHeight) {
         return false;

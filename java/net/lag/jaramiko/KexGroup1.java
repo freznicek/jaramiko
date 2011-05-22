@@ -36,12 +36,10 @@ import net.lag.crai.CraiDigest;
  * Standard "group1" SHA1 key exchange, the one type required by the protocol.
  */
 /* package */class KexGroup1 implements Kex {
-    @Override
     public String getName() {
         return "diffie-hellman-group1-sha1";
     }
 
-    @Override
     public void startKex(KexTransportInterface t, Crai crai) throws IOException {
         mTransport = t;
         mCrai = crai;
@@ -65,7 +63,6 @@ import net.lag.crai.CraiDigest;
         mTransport.expectPacket(KEXDH_REPLY);
     }
 
-    @Override
     public boolean handleMessage(byte ptype, Message m) throws IOException {
         if (ptype == KEXDH_INIT) {
             // server mode

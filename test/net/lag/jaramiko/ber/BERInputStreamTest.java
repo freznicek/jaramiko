@@ -53,14 +53,14 @@ public class BERInputStreamTest extends TestCase {
     public void testDecodeSequence() throws Exception {
         ByteArrayInputStream buffer = new ByteArrayInputStream(
                 Util.decodeHex("300902025A930403636174"));
-        List list = (List) new BERInputStream(buffer).next();
+        List<?> list = (List<?>) new BERInputStream(buffer).next();
         assertEquals(2, list.size());
         assertEquals(BigInteger.valueOf(23187), list.get(0));
         assertEquals("636174", Util.encodeHex((byte[]) list.get(1)));
 
         buffer = new ByteArrayInputStream(
                 Util.decodeHex("308002025A9304036361740000"));
-        list = (List) new BERInputStream(buffer).next();
+        list = (List<?>) new BERInputStream(buffer).next();
         assertEquals(2, list.size());
         assertEquals(BigInteger.valueOf(23187), list.get(0));
         assertEquals("636174", Util.encodeHex((byte[]) list.get(1)));
@@ -69,18 +69,18 @@ public class BERInputStreamTest extends TestCase {
     public void testDecodeNestedSequence() throws Exception {
         ByteArrayInputStream buffer = new ByteArrayInputStream(
                 Util.decodeHex("3007300205000101FF"));
-        List list = (List) new BERInputStream(buffer).next();
+        List<?> list = (List<?>) new BERInputStream(buffer).next();
         assertEquals(2, list.size());
-        List list2 = (List) list.get(0);
+        List<?> list2 = (List<?>) list.get(0);
         assertEquals(1, list2.size());
         assertTrue(list2.get(0) == null);
         assertEquals(Boolean.TRUE, list.get(1));
 
         buffer = new ByteArrayInputStream(
                 Util.decodeHex("30803080050000000101FF0000"));
-        list = (List) new BERInputStream(buffer).next();
+        list = (List<?>) new BERInputStream(buffer).next();
         assertEquals(2, list.size());
-        list2 = (List) list.get(0);
+        list2 = (List<?>) list.get(0);
         assertEquals(1, list2.size());
         assertTrue(list2.get(0) == null);
         assertEquals(Boolean.TRUE, list.get(1));
@@ -98,7 +98,7 @@ public class BERInputStreamTest extends TestCase {
         assertEquals(4, seq.mList.size());
         assertEquals("README", seq.mList.get(0));
         assertEquals("text/plain", seq.mList.get(1));
-        List list2 = (List) seq.mList.get(2);
+        List<?> list2 = (List<?>) seq.mList.get(2);
         assertEquals(4, list2.size());
         assertEquals(BigInteger.valueOf(436), list2.get(0));
         assertEquals(BigInteger.valueOf(666), list2.get(1));

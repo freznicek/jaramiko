@@ -66,7 +66,7 @@ public class BEROutputStreamTest extends TestCase {
 
     public void testSimpleList() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(new ArrayList());
+        new BEROutputStream(buffer).write(new ArrayList<Object>());
         assertEquals("30800000", Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
@@ -85,7 +85,7 @@ public class BEROutputStreamTest extends TestCase {
 
     public void testDefiniteLengthList() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer, false).write(new ArrayList());
+        new BEROutputStream(buffer, false).write(new ArrayList<Object>());
         assertEquals("3000", Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();

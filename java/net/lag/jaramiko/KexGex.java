@@ -36,12 +36,10 @@ import net.lag.crai.CraiDigest;
         mModulusPack = BaseTransport.getModulusPack();
     }
 
-    @Override
     public String getName() {
         return "diffie-hellman-group-exchange-sha1";
     }
 
-    @Override
     public void startKex(KexTransportInterface t, Crai crai) throws IOException {
         mTransport = t;
         mCrai = crai;
@@ -85,7 +83,6 @@ import net.lag.crai.CraiDigest;
      * @throws IOException
      *             if an exception occurred
      */
-    @Override
     public boolean handleMessage(byte ptype, Message m) throws IOException {
         switch (ptype) {
         case KEX_GEX_REQUEST:

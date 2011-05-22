@@ -38,27 +38,22 @@ import java.util.Calendar;
  * meant for debugging or reference.
  */
 public class ConsoleLog implements LogSink {
-    @Override
     public void error(String text) {
         System.err.println(getThreadID() + " ERR: " + text);
     }
 
-    @Override
     public void warning(String text) {
         System.err.println(getThreadID() + " WRN: " + text);
     }
 
-    @Override
     public void notice(String text) {
         System.err.println(getThreadID() + " NTC: " + text);
     }
 
-    @Override
     public void debug(String text) {
         System.err.println(getThreadID() + " DBG: " + text);
     }
 
-    @Override
     public void dump(String text, byte[] data, int offset, int length) {
         String tidstr = getThreadID();
         for (int i = 0; i < length; i += 16) {
@@ -105,7 +100,7 @@ public class ConsoleLog implements LogSink {
                 + pad(cal.get(Calendar.SECOND), 2) + "."
                 + pad(cal.get(Calendar.MILLISECOND), 3);
 
-        int tid = ((Integer) sThreadID.get()).intValue();
+        int tid = sThreadID.get().intValue();
         String tidstr = "t" + Integer.toString(tid);
         if (tid < 10) {
             tidstr = tidstr + "  ";
@@ -124,9 +119,9 @@ public class ConsoleLog implements LogSink {
     }
 
     private static int sNextThreadID = 1;
-    private static ThreadLocal sThreadID = new ThreadLocal() {
+    private static ThreadLocal<Integer> sThreadID = new ThreadLocal<Integer>() {
         @Override
-        protected synchronized Object initialValue() {
+        protected synchronized Integer initialValue() {
             synchronized (ConsoleLog.class) {
                 return new Integer(sNextThreadID++);
             }

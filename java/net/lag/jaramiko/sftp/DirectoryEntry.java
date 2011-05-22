@@ -50,7 +50,6 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
         return this.filename; // + " " + this.attributes.toString();
     }
 
-    @Override
     public int compareTo(DirectoryEntry o) {
         int result = this.filename.compareTo(o.filename);
         if (result == 0) {

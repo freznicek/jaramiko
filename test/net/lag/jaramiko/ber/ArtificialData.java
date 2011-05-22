@@ -38,7 +38,6 @@ public class ArtificialData {
     private static Tag TAG = Tag.create(Tag.CONTEXT, 100);
 
     private static class Encoder implements BEROutputStream.Encoder {
-        @Override
         public void encode(OutputStream out, Object obj,
                 boolean useIndefiniteLength) throws IOException {
             ArtificialData data = (ArtificialData) obj;

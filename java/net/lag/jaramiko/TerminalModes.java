@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class TerminalModes {
     public TerminalModes() {
-        mParams = new HashMap();
+        mParams = new HashMap<Integer, Integer>();
     }
 
     /**
@@ -54,7 +54,7 @@ public class TerminalModes {
      * @return the value, or 0
      */
     public int get(int key) {
-        Integer value = (Integer) mParams.get(Integer.valueOf(key));
+        Integer value = mParams.get(Integer.valueOf(key));
         if (value == null) {
             return 0;
         }
@@ -103,10 +103,10 @@ public class TerminalModes {
 
     /* package */byte[] toBytes() {
         Message m = new Message();
-        for (Iterator iter = mParams.keySet().iterator(); iter.hasNext();) {
-            int key = ((Integer) iter.next()).intValue();
-            int value = ((Integer) mParams.get(Integer.valueOf(key)))
-                    .intValue();
+        for (Iterator<Integer> iter = mParams.keySet().iterator(); iter
+                .hasNext();) {
+            int key = iter.next().intValue();
+            int value = mParams.get(Integer.valueOf(key)).intValue();
             m.putByte((byte) key);
             m.putInt(value);
         }
@@ -114,7 +114,7 @@ public class TerminalModes {
         return m.toByteArray();
     }
 
-    private Map mParams; // Map<Integer, Integer>
+    private Map<Integer, Integer> mParams; // Map<Integer, Integer>
 
     public static final int TTY_OP_END = 0;
     public static final int VINTR = 1;

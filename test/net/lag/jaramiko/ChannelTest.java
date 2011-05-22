@@ -78,7 +78,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -149,7 +148,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -189,7 +187,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -224,7 +221,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -270,7 +266,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
@@ -307,7 +302,6 @@ public class ChannelTest extends TestCase {
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     mTS.start(server, 15000);
