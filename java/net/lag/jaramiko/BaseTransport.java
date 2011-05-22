@@ -60,13 +60,7 @@ import net.lag.crai.*;
     BaseTransport (Socket socket)
         throws IOException
     {
-        if (sCrai == null) {
-            try {
-                sCrai = (Crai) Class.forName("net.lag.craijce.CraiJCE").newInstance();
-            } catch (Throwable t) {
-                throw new RuntimeException("Unable to load default CraiJCE: " + t);
-            }
-        }
+        getCrai();
         mActive = false;
         mInKex = false;
         mClearToSend = new Event();
@@ -536,6 +530,14 @@ import net.lag.crai.*;
     /* package */ static Crai
     getCrai ()
     {
+        if (sCrai == null) {
+            try {
+                sCrai = (Crai) Class.forName("net.lag.craijce.CraiJCE").newInstance();
+            } catch (Throwable t) {
+                throw new RuntimeException("Unable to load default CraiJCE: " + t);
+            }
+        }
+
         return sCrai;
     }
     
