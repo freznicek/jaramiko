@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -46,7 +46,7 @@ public class KexTest
         kex.startKex(t, new FakeCrai());
         assertTrue(Arrays.equals(EXP1, t.mMessage.toByteArray()));
         assertEquals(KexGroup1.KEXDH_REPLY, t.mExpect1);
-        
+
         // fake "reply"
         Message m = new Message();
         m.putString("fake-host-key");
@@ -60,7 +60,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP1H, t.mH));
         assertTrue(t.mActivated);
     }
-    
+
     public void
     testGroup1Server ()
         throws Exception
@@ -70,7 +70,7 @@ public class KexTest
         KexGroup1 kex = new KexGroup1();
         kex.startKex(t, new FakeCrai());
         assertEquals(KexGroup1.KEXDH_INIT, t.mExpect1);
-        
+
         Message m = new Message();
         m.putMPZ(BigInteger.valueOf(69));
         m.rewind();
@@ -80,7 +80,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP2, t.mMessage.toByteArray()));
         assertTrue(t.mActivated);
     }
-    
+
     public void
     testGexClient ()
         throws Exception
@@ -91,7 +91,7 @@ public class KexTest
         kex.startKex(t, new FakeCrai());
         assertTrue(Arrays.equals(EXP3, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_GROUP, t.mExpect1);
-        
+
         Message m = new Message();
         m.putMPZ(FakeModulusPack.sP);
         m.putMPZ(BigInteger.valueOf(FakeModulusPack.sG));
@@ -99,7 +99,7 @@ public class KexTest
         kex.handleMessage(KexGex.KEX_GEX_GROUP, m);
         assertTrue(Arrays.equals(EXP3A, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_REPLY, t.mExpect1);
-        
+
         m = new Message();
         m.putString("fake-host-key");
         m.putMPZ(BigInteger.valueOf(69));
@@ -112,7 +112,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP3H, t.mH));
         assertTrue(t.mActivated);
     }
-    
+
     public void
     testGexOldClient ()
         throws Exception
@@ -124,7 +124,7 @@ public class KexTest
         kex.startKex(t, new FakeCrai());
         assertTrue(Arrays.equals(EXP4, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_GROUP, t.mExpect1);
-        
+
         Message m = new Message();
         m.putMPZ(FakeModulusPack.sP);
         m.putMPZ(BigInteger.valueOf(FakeModulusPack.sG));
@@ -132,7 +132,7 @@ public class KexTest
         kex.handleMessage(KexGex.KEX_GEX_GROUP, m);
         assertTrue(Arrays.equals(EXP3A, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_REPLY, t.mExpect1);
-        
+
         m = new Message();
         m.putString("fake-host-key");
         m.putMPZ(BigInteger.valueOf(69));
@@ -145,7 +145,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP4H, t.mH));
         assertTrue(t.mActivated);
     }
-    
+
     public void
     testGexServer ()
         throws Exception
@@ -158,7 +158,7 @@ public class KexTest
         assertEquals(KexGex.KEX_GEX_REQUEST, t.mExpect1);
         assertEquals(KexGex.KEX_GEX_REQUEST_OLD, t.mExpect2);
         assertTrue(t.mMessage == null);
-        
+
         Message m = new Message();
         m.putInt(1024);
         m.putInt(2048);
@@ -168,7 +168,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP5, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_INIT, t.mExpect1);
         assertEquals(0, t.mExpect2);
-        
+
         m = new Message();
         m.putMPZ(BigInteger.valueOf(12345));
         m.rewind();
@@ -178,7 +178,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP5A, t.mMessage.toByteArray()));
         assertTrue(t.mActivated);
     }
-    
+
     public void
     testGexServerWithOldClient ()
         throws Exception
@@ -191,7 +191,7 @@ public class KexTest
         assertEquals(KexGex.KEX_GEX_REQUEST, t.mExpect1);
         assertEquals(KexGex.KEX_GEX_REQUEST_OLD, t.mExpect2);
         assertTrue(t.mMessage == null);
-        
+
         Message m = new Message();
         m.putInt(2048);
         m.rewind();
@@ -199,7 +199,7 @@ public class KexTest
         assertTrue(Arrays.equals(EXP6, t.mMessage.toByteArray()));
         assertEquals(KexGex.KEX_GEX_INIT, t.mExpect1);
         assertEquals(0, t.mExpect2);
-        
+
         m = new Message();
         m.putMPZ(BigInteger.valueOf(12345));
         m.rewind();
@@ -208,10 +208,10 @@ public class KexTest
         assertTrue(Arrays.equals(EXP6H, t.mH));
         assertTrue(Arrays.equals(EXP5A, t.mMessage.toByteArray()));
         assertTrue(t.mActivated);
-        
+
     }
-    
-    
+
+
     private static final byte[] EXP1 =
         Util.decodeHex("1E000000807E2DDB1743F3487D6545F04F1C8476092FB912B013" +
                        "626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00" +
@@ -222,7 +222,7 @@ public class KexTest
 
     private static final byte[] EXP1H =
         Util.decodeHex("03079780F3D3AD0B3C6DB30C8D21685F367A86D2");
-    
+
     private static final BigInteger EXP1K =
         new BigInteger("1473034331770871643980731003287197245944836419509417" +
                        "9797249681733965528989482751523943515690110179031004" +
@@ -230,7 +230,7 @@ public class KexTest
                        "7647224050161698879969974413529107048831474828428349" +
                        "6055223852115360852283821334858541043710301057312858" +
                        "051901453919067023103730011648890038847384890504");
-    
+
     private static final byte[] EXP2 =
         Util.decodeHex("1F0000000866616B652D6B6579000000807E2DDB1743F3487D65" +
                        "45F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B" +
@@ -242,10 +242,10 @@ public class KexTest
 
     private static final byte[] EXP2H =
         Util.decodeHex("B16BF34DD10945EDE84E9C1EF24A14BFDC843389");
-    
+
     private static final byte[] EXP3 =
         Util.decodeHex("22000004000000080000002000");
-    
+
     private static final byte[] EXP3A =
         Util.decodeHex("20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013" +
                        "626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00" +
@@ -253,16 +253,16 @@ public class KexTest
                        "2E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225" +
                        "FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE" +
                        "9208D4");
-    
+
     private static final byte[] EXP3H =
         Util.decodeHex("A265563F2FA87F1A89BF007EE90D58BE2E4A4BD0");
-    
+
     private static final byte[] EXP4 =
         Util.decodeHex("1E00000800");
-    
+
     private static final byte[] EXP4H =
         Util.decodeHex("807F87B269EF7AC5EC7E75676808776A27D5864C");
-    
+
     private static final byte[] EXP5 =
         Util.decodeHex("1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B" +
                        "80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E34" +
@@ -281,7 +281,7 @@ public class KexTest
 
     private static final byte[] EXP5H =
         Util.decodeHex("CE754197C21BF3452863B4F44D0B3951F12516EF");
-    
+
     private static final byte[] EXP5A =
         Util.decodeHex("210000000866616B652D6B6579000000807E2DDB1743F3487D65" +
                        "45F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B" +
@@ -290,7 +290,7 @@ public class KexTest
                        "A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383" +
                        "F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D7369" +
                        "67");
-    
+
     private static final byte[] EXP6 =
         Util.decodeHex("1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B" +
                        "80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E34" +
@@ -298,7 +298,7 @@ public class KexTest
                        "E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE38" +
                        "6BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFF" +
                        "FFFFFFFF0000000102");
-    
+
     private static final byte[] EXP6H =
         Util.decodeHex("B41A06B2E59043CEFC1AE16EC31F1E2D12EC455B");
 }

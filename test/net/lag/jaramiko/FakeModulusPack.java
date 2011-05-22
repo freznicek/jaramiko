@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import net.lag.crai.Crai;
 
 
-public class FakeModulusPack 
+public class FakeModulusPack
     extends ModulusPack
 {
     public ModulusPair
@@ -39,14 +39,14 @@ public class FakeModulusPack
     {
         return new ModulusPair(sG, sP);
     }
-    
+
     public int
     size ()
     {
         return 1;
     }
-    
-    
+
+
     private static final String P_TEXT =
         "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088" +
         "A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B30" +

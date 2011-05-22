@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -44,7 +44,7 @@ import net.lag.crai.Crai;
         mAuthenticated = false;
         mFailCount = 0;
     }
-    
+
     /* package */ void
     useServerMode (ServerInterface server, String banner)
     {
@@ -53,7 +53,7 @@ import net.lag.crai.Crai;
         mTransport.registerMessageHandler(MessageType.SERVICE_REQUEST, this);
         mTransport.registerMessageHandler(MessageType.USERAUTH_REQUEST, this);
     }
-    
+
     /* package */ void
     setBannerListener (BannerListener listener)
     {
@@ -65,13 +65,13 @@ import net.lag.crai.Crai;
     {
         return mAuthenticated;
     }
-    
+
     public String
     getUsername ()
     {
         return mUsername;
     }
-    
+
     public void
     authNone (String username, Event event)
         throws IOException
@@ -83,7 +83,7 @@ import net.lag.crai.Crai;
             requestAuth();
         }
     }
-    
+
     public void
     authPassword (String username, String password, Event event)
         throws IOException
@@ -96,7 +96,7 @@ import net.lag.crai.Crai;
             requestAuth();
         }
     }
-    
+
     public void
     authPrivateKey (String username, PKey key, Event event)
         throws IOException
@@ -109,7 +109,7 @@ import net.lag.crai.Crai;
             requestAuth();
         }
     }
-    
+
     public void
     authInteractive (String username, InteractiveHandler handler, Event event, String[] submethods)
         throws IOException
@@ -123,7 +123,7 @@ import net.lag.crai.Crai;
             requestAuth();
         }
     }
-    
+
     // called if the transport dies prematurely
     public void
     abort ()
@@ -132,7 +132,7 @@ import net.lag.crai.Crai;
             mAuthEvent.set();
         }
     }
-    
+
     public boolean
     handleMessage (byte ptype, Message m)
         throws IOException
@@ -165,8 +165,8 @@ import net.lag.crai.Crai;
         }
         return true;
     }
-    
-    
+
+
     private void
     requestAuth ()
         throws IOException
@@ -196,7 +196,7 @@ import net.lag.crai.Crai;
         m.putByteString(key.toByteArray());
         return m.toByteArray();
     }
-    
+
     private void
     parseServiceAccept (Message m)
         throws IOException
@@ -207,7 +207,7 @@ import net.lag.crai.Crai;
             return;
         }
         mLog.debug("Userauth is OK");
-        
+
         m = new Message();
         m.putByte(MessageType.USERAUTH_REQUEST);
         m.putString(mUsername);
@@ -239,7 +239,7 @@ import net.lag.crai.Crai;
         mTransport.registerMessageHandler(MessageType.USERAUTH_FAILURE, this);
         mTransport.sendMessage(m);
     }
-    
+
     private void
     parseBanner (Message m)
         throws IOException
@@ -251,7 +251,7 @@ import net.lag.crai.Crai;
             mBannerListener.authenticationBannerEvent(banner);
         }
     }
-    
+
     private void
     parseAuthFailure (Message m)
     {
@@ -273,7 +273,7 @@ import net.lag.crai.Crai;
         mUsername = null;
         mAuthEvent.set();
     }
-    
+
     private void
     parseAuthSuccess (Message m)
     {
@@ -282,7 +282,7 @@ import net.lag.crai.Crai;
         mTransport.authTrigger();
         mAuthEvent.set();
     }
-    
+
     private void
     parseInfoRequest (Message m)
         throws IOException
@@ -290,7 +290,7 @@ import net.lag.crai.Crai;
         if (! mAuthMethod.equals("keyboard-interactive")) {
             throw new SSHException("Illegal info request from the server");
         }
-        
+
         InteractiveQuery query = new InteractiveQuery();
         query.title = m.getString();
         query.instructions = m.getString();
@@ -303,7 +303,7 @@ import net.lag.crai.Crai;
             query.prompts[i].echoResponse = m.getBoolean();
         }
         String[] responses = mInteractiveHandler.handleInteractiveRequest(query);
-        
+
         Message mx = new Message();
         mx.putByte(MessageType.USERAUTH_INFO_RESPONSE);
         mx.putInt(responses.length);
@@ -312,11 +312,11 @@ import net.lag.crai.Crai;
         }
         mTransport.sendMessage(mx);
     }
-    
-    
+
+
     //  server mode
-    
-    
+
+
     private void
     disconnectServiceNotAvailable ()
         throws IOException
@@ -329,7 +329,7 @@ import net.lag.crai.Crai;
         mTransport.sendMessage(m);
         mTransport.close();
     }
-    
+
     private void
     disconnectNoMoreAuth ()
         throws IOException
@@ -342,7 +342,7 @@ import net.lag.crai.Crai;
         mTransport.sendMessage(m);
         mTransport.close();
     }
-    
+
     private void
     sendAuthResult (String username, String method, int result)
         throws IOException
@@ -387,7 +387,7 @@ import net.lag.crai.Crai;
         mx.putByte(MessageType.SERVICE_ACCEPT);
         mx.putString(service);
         mTransport.sendMessage(mx);
-        
+
         if (mBanner != null) {
             // send auth banner
             mx = new Message();
@@ -398,7 +398,7 @@ import net.lag.crai.Crai;
         }
         return;
     }
-    
+
     private void
     parseInfoResponse (Message m)
         throws IOException
@@ -422,7 +422,7 @@ import net.lag.crai.Crai;
         }
         sendAuthResult(mUsername, "keyboard-interactive", result);
     }
-    
+
     private void
     interactiveQuery (InteractiveQuery dialog)
         throws IOException
@@ -440,7 +440,7 @@ import net.lag.crai.Crai;
         mTransport.sendMessage(m);
         mTransport.registerMessageHandler(MessageType.USERAUTH_INFO_RESPONSE, this);
     }
-    
+
     private void
     parseAuthRequest (Message m)
         throws IOException
@@ -449,12 +449,12 @@ import net.lag.crai.Crai;
             // ignore
             return;
         }
-        
+
         String username = m.getString();
         String service = m.getString();
         String method = m.getString();
         mLog.debug("Auth request (type=" + method + ") service=" + service + ", username=" + username);
-        
+
         if (! service.equals("ssh-connection")) {
             disconnectServiceNotAvailable();
             return;
@@ -465,7 +465,7 @@ import net.lag.crai.Crai;
             return;
         }
         mUsername = username;
-        
+
         int result = AuthError.FAILED;
         if (method.equals("none")) {
             result = mServer.checkAuthNone(username);
@@ -495,7 +495,7 @@ import net.lag.crai.Crai;
                 disconnectNoMoreAuth();
                 return;
             }
-            
+
             // first check if this key is okay... if not, we can skip verifying it
             result = mServer.checkAuthPublicKey(username, key);
             if (result != AuthError.FAILED) {
@@ -534,16 +534,16 @@ import net.lag.crai.Crai;
         } else {
             result = mServer.checkAuthNone(username);
         }
-        
+
         // okay, send result
         sendAuthResult(username, method, result);
     }
-    
-    
+
+
     private static final int DISCONNECT_SERVICE_NOT_AVAILABLE = 7;
     //private static final int DISCONNECT_AUTH_CANCELLED_BY_USER = 13;
     private static final int DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14;
-    
+
     private BaseTransport mTransport;
     private Crai mCrai;
     private LogSink mLog;
@@ -553,7 +553,7 @@ import net.lag.crai.Crai;
     private Event mAuthEvent;
     private boolean mAuthenticated;
     private int mFailCount;
-    
+
     // auth info
     private String mAuthMethod;
     private String mUsername;

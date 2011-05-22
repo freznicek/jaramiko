@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -34,7 +34,7 @@ import junit.framework.TestCase;
 import net.lag.jaramiko.Util;
 
 
-public class BEROutputStreamTest 
+public class BEROutputStreamTest
     extends TestCase
 {
     public void
@@ -44,7 +44,7 @@ public class BEROutputStreamTest
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(Integer.valueOf(23));
         assertEquals("020117", Util.encodeHex(buffer.toByteArray()));
-        
+
         buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(Long.valueOf(23));
         assertEquals("020117", Util.encodeHex(buffer.toByteArray()));
@@ -69,7 +69,7 @@ public class BEROutputStreamTest
         new BEROutputStream(buffer).write("f\u00fcnky");
         assertEquals("0C0666C3BC6E6B79", Util.encodeHex(buffer.toByteArray()));
     }
-    
+
     public void
     testSimpleList ()
         throws Exception
@@ -86,7 +86,7 @@ public class BEROutputStreamTest
         new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }), Boolean.TRUE }));
         assertEquals("3080020123308002010A00000101FF0000", Util.encodeHex(buffer.toByteArray()));
     }
-    
+
     public void
     testDefiniteLengthList ()
         throws Exception
@@ -111,12 +111,12 @@ public class BEROutputStreamTest
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(new ArtificialData("vox".getBytes()));
         assertEquals("9F6403766F78", Util.encodeHex(buffer.toByteArray()));
-        
+
         buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(new ArtificialData(new byte[] { -1, 0 }));
         assertEquals("9F6402FF00", Util.encodeHex(buffer.toByteArray()));
     }
-    
+
     public void
     testEncodeSequence ()
         throws Exception
@@ -124,14 +124,14 @@ public class BEROutputStreamTest
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(new ArtificialSequence(Arrays.asList(new Integer[] { 3, 9 })));
         assertEquals("7F8148800201030201090000", Util.encodeHex(buffer.toByteArray()));
-        
+
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays.asList(new Object[] { 
+        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays.asList(new Object[] {
             Integer.valueOf(3), new byte[0], Boolean.FALSE
         })));
         assertEquals("7F81488002010304000101000000", Util.encodeHex(buffer.toByteArray()));
     }
-    
+
     public void
     testEncodeComplex ()
         throws Exception
@@ -143,14 +143,14 @@ public class BEROutputStreamTest
             "README", "text/plain", Arrays.asList(new Object[] { Long.valueOf(0664), Long.valueOf(666), timestamp1, timestamp2 }),
             Arrays.asList(new Object[] { "robey", Arrays.asList(new Object[] { "robey" }) }),
         }));
-        
+
         new BEROutputStream(buffer).write(s);
-        
+
         String exp = "7F8148800C06524541444D450C0A746578742F706C61696E308002" +
             "0201B40202029A7F81488002044077BFF302010000007F81488002044077BF" +
             "F60201000000000030800C05726F62657930800C05726F626579000000000000";
 
         assertEquals(exp, Util.encodeHex(buffer.toByteArray()));
-        
+
     }
 }

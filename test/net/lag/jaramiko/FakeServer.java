@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2005 Robey Pointer <robey@lag.net>
  *
  * This file is part of paramiko.
@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -52,7 +52,7 @@ public class FakeServer
         }
         return ChannelError.SUCCESS;
     }
-    
+
     public String
     getAllowedAuths (String username)
     {
@@ -73,13 +73,13 @@ public class FakeServer
         }
         return "publickey";
     }
-    
+
     public int
     checkAuthNone (String username)
     {
         return AuthError.FAILED;
     }
-    
+
     public int
     checkAuthPassword (String username, String password)
     {
@@ -96,7 +96,7 @@ public class FakeServer
         }
         return AuthError.FAILED;
     }
-    
+
     public int
     checkAuthPublicKey (String username, PKey key)
     {
@@ -110,7 +110,7 @@ public class FakeServer
         }
         return AuthError.FAILED;
     }
-    
+
     public InteractiveQuery
     checkAuthInteractive (String username, String[] methods)
     {
@@ -127,7 +127,7 @@ public class FakeServer
         }
         return null;
     }
-    
+
     public int
     checkAuthInteractiveResponse (String[] responses)
     {
@@ -186,14 +186,14 @@ public class FakeServer
     {
         return false;
     }
-    
-    
+
+
     public boolean mParanoidDidPassword;
     public boolean mParanoidDidPublicKey;
     public PKey mParanoidKey;
     public String mGlobalRequest;
     public String mUsername;
-    
+
     public String mPTYTerm;
     public int mPTYWidth;
     public int mPTYHeight;

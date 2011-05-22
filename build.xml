@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <project name="jaramiko" default="jar" basedir=".">
-    <!-- internal folder locations -->   
+    <!-- internal folder locations -->
     <property name="source-folder" location="java" />
     <property name="build-folder" location="classes" />
     <property name="docs-folder" location="docs" />
@@ -33,7 +33,7 @@
         <format property="today" pattern="d MMM yyyy HH:mm" />
     </tstamp>
 
-    
+
     <target name="init">
         <mkdir dir="${build-folder}" />
         <mkdir dir="${test-build-folder}" />
@@ -48,7 +48,7 @@
     <target name="compile-tests" depends="jar">
         <javac debug="true" srcdir="${test-folder}" destdir="${test-build-folder}" classpathref="test.deps.build" />
     </target>
-  
+
     <target name="jar" depends="compile" description="create jaramiko jar">
         <manifest file="${manifest-file}">
             <attribute name="Sealed" value="false" />
@@ -66,11 +66,11 @@
             <arg value="net.lag.jaramiko.AllTests" />
         </java>
     </target>
-    
+
     <target name="testv" depends="compile-tests">
         <java classname="net.lag.jaramiko.AllTests" classpathref="test.deps.run" />
     </target>
-    
+
     <target name="docs" depends="init">
         <javadoc sourcepath="${source-folder}" destdir="${docs-folder}" packagenames="net.lag.jaramiko.*" />
     </target>
@@ -80,7 +80,7 @@
             classpathref="demo.deps.build" />
         <echo message="Run ./demo.sh to try it out." />
     </target>
-    
+
     <target name="clean" description="clean built targets">
         <delete dir="${build-folder}" failonerror="false" />
         <delete dir="${test-build-folder}" failonerror="false" />

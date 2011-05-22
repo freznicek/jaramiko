@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -39,25 +39,25 @@ public class FakeKexTransport
     {
         return "SSH-2.0-lame";
     }
-    
+
     public String
     getLocalVersion ()
     {
         return "SSH-2.0-paramiko_1.0";
     }
-    
+
     public byte[]
     getRemoteKexInit ()
     {
         return "remote-kex-init".getBytes();
     }
-    
+
     public byte[]
     getLocalKexInit ()
     {
         return "local-kex-init".getBytes();
     }
-    
+
     public void
     registerMessageHandler (byte ptype, MessageHandler handler)
     {
@@ -70,7 +70,7 @@ public class FakeKexTransport
         mExpect1 = expect;
         mExpect2 = 0;
     }
-    
+
     public void
     expectPacket (byte expect1, byte expect2)
     {
@@ -83,7 +83,7 @@ public class FakeKexTransport
     {
         mMessage = m;
     }
-    
+
     public PKey
     getServerKey ()
     {
@@ -93,34 +93,34 @@ public class FakeKexTransport
             return null;
         }
     }
-    
+
     public void
     verifyKey (byte[] key, byte[] sig)
     {
         mVerifyKey = key;
         mVerifySig = sig;
     }
-    
+
     public void
     setKH (BigInteger k, byte[] h)
     {
         mK = k;
         mH = h;
     }
-    
+
     public void
     kexComplete ()
     {
         mActivated = true;
     }
-    
+
     public LogSink
     getLog ()
     {
         return new NullLog();
     }
-    
-    
+
+
     public Message mMessage;
     public Message mUserMessage;
     public byte mExpect1;

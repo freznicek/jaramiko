@@ -11,10 +11,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -33,7 +33,7 @@ import java.util.*;
  * A map of pseudo-terminal modes to configured values, as sent by the client
  * when requesting a pty over a {@link Channel}. These map key bindings to
  * events, among other arcana.
- * 
+ *
  * The constants are from RFC 4254 Section 8:
  * <a href="http://www.ietf.org/rfc/rfc4254.txt">http://www.ietf.org/rfc/rfc4254.txt</a>
  */
@@ -44,11 +44,11 @@ public class TerminalModes
     {
         mParams = new HashMap();
     }
-    
+
     /**
      * Retrieve one of the values set by the client. If no value was defined
      * for this key, 0 is returned.
-     *  
+     *
      * @param key one of the constants (like <code>VINTR</code>) defined by
      *     RFC 4254
      * @return the value, or 0
@@ -62,11 +62,11 @@ public class TerminalModes
         }
         return value.intValue();
     }
-    
+
     /**
      * Return true if the requested key was defined by the client in its pty
      * request.
-     * 
+     *
      * @param key one of the constants (like <code>VINTR</code> defined by
      *     RFC 4254
      * @return true if the value was defined by the client; false if not
@@ -76,10 +76,10 @@ public class TerminalModes
     {
         return mParams.containsKey(Integer.valueOf(key));
     }
-    
+
     /**
      * Set a pty request parameter.
-     * 
+     *
      * @param key one of the constants (like <code>VINTR</code> defined by
      *     RFC 4254
      * @param value the value of this parameter
@@ -89,7 +89,7 @@ public class TerminalModes
     {
         mParams.put(Integer.valueOf(key), Integer.valueOf(value));
     }
-    
+
     /* package */ static TerminalModes
     fromBytes (byte[] data)
     {
@@ -105,7 +105,7 @@ public class TerminalModes
         }
         return modes;
     }
-    
+
     /* package */ byte[]
     toBytes ()
     {
@@ -119,10 +119,10 @@ public class TerminalModes
         m.putByte((byte) 0);
         return m.toByteArray();
     }
-    
-    
+
+
     private Map mParams;    // Map<Integer, Integer>
-    
+
     public static final int TTY_OP_END = 0;
     public static final int VINTR = 1;
     public static final int VQUIT = 2;

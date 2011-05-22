@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -33,7 +33,7 @@ import java.util.Calendar;
  * to java's <code>System.err</code>.  The log level is indicated with a
  * three-letter abbreviation, and the current time and thread ID is attached,
  * but nothing else fancy is done.
- * 
+ *
  * <p> No attempt is made to make the logging efficient or useful. This is
  * only meant for debugging or reference.
  */
@@ -72,13 +72,13 @@ public class ConsoleLog
             System.err.println(tidstr + " DMP: " + text + ": " + dumpHex(data, offset + i, length - i));
         }
     }
-    
+
     private String
     dumpHex (byte[] data, int offset, int length)
     {
         StringBuffer hex = new StringBuffer();
         StringBuffer ascii = new StringBuffer();
-        
+
         for (int i = 0; i < 16; i++) {
             if (i >= length) {
                 hex.append("   ");
@@ -99,10 +99,10 @@ public class ConsoleLog
                 }
             }
         }
-        
+
         return hex.toString() + "   " + ascii.toString();
     }
-    
+
     private String
     getThreadID ()
     {
@@ -121,7 +121,7 @@ public class ConsoleLog
         }
         return timestamp + " " + tidstr;
     }
-    
+
     private String
     pad (int num, int places)
     {
@@ -132,7 +132,7 @@ public class ConsoleLog
         return out;
     }
 
-    
+
     private static int sNextThreadID = 1;
     private static ThreadLocal sThreadID = new ThreadLocal() {
         protected synchronized Object initialValue () {

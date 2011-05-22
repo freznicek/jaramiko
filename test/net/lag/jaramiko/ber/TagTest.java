@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -46,12 +46,12 @@ public class TagTest
         assertFalse(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(0, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("0000", Util.encodeHex(out.toByteArray()));
     }
-    
+
     public void
     testApplication ()
         throws Exception
@@ -62,7 +62,7 @@ public class TagTest
         assertTrue(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(0, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("7E00", Util.encodeHex(out.toByteArray()));
@@ -78,12 +78,12 @@ public class TagTest
         assertFalse(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(0, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("8100", Util.encodeHex(out.toByteArray()));
     }
-    
+
     public void
     testPrivate ()
         throws Exception
@@ -94,12 +94,12 @@ public class TagTest
         assertFalse(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(0, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("C900", Util.encodeHex(out.toByteArray()));
     }
-    
+
     public void
     testLongTag ()
         throws Exception
@@ -110,11 +110,11 @@ public class TagTest
         assertFalse(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(1, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("9F822301", Util.encodeHex(out.toByteArray()));
-        
+
         t = Tag.fromStream(new ByteArrayInputStream(Util.decodeHex("9FE5BFD76E00")));
         assertEquals(0xcafebee, t.getType());
 
@@ -133,7 +133,7 @@ public class TagTest
         assertFalse(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(259, t.getSize());
-        
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("C0820103", Util.encodeHex(out.toByteArray()));
@@ -144,12 +144,12 @@ public class TagTest
         assertTrue(t.isContainer());
         assertTrue(t.hasSize());
         assertEquals(129, t.getSize());
-        
+
         out = new ByteArrayOutputStream();
         t.write(out);
         assertEquals("308181", Util.encodeHex(out.toByteArray()));
     }
-    
+
     public void
     testErrors ()
         throws Exception
@@ -164,7 +164,7 @@ public class TagTest
             Tag.fromStream(new ByteArrayInputStream(Util.decodeHex("3F")));
             fail("expected exception");
         } catch (BERException x) { }
-        
+
         // truncated tag is missing length field
         try {
             Tag.fromStream(new ByteArrayInputStream(Util.decodeHex("30")));
@@ -189,7 +189,7 @@ public class TagTest
             fail("expected exception");
         } catch (BERException x) { }
     }
-    
+
     public void
     testCompareAndHash ()
         throws Exception
@@ -197,7 +197,7 @@ public class TagTest
         Tag t = Tag.create(Tag.CONTEXT, 13, 0);
         assertEquals(Tag.create(Tag.CONTEXT, 13, 0), t);
         assertEquals(Tag.fromStream(new ByteArrayInputStream(Util.decodeHex("8D00"))), t);
-        
+
         assertEquals(t.hashCode(), Tag.create(Tag.CONTEXT, 13, 0).hashCode());
         Map m = new HashMap();
         m.put(t, new Integer(23));

@@ -8,8 +8,8 @@ modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
      this list of conditions and the following disclaimer.
 
-  2. Redistributions in binary form must reproduce the above copyright 
-     notice, this list of conditions and the following disclaimer in 
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
      the documentation and/or other materials provided with the distribution.
 
   3. The names of the authors may not be used to endorse or promote products
@@ -44,19 +44,19 @@ final class Tree{
   static final private int HEAP_SIZE=(2*L_CODES+1);
 
   // Bit length codes must not exceed MAX_BL_BITS bits
-  static final int MAX_BL_BITS=7; 
+  static final int MAX_BL_BITS=7;
 
   // end of block literal code
-  static final int END_BLOCK=256; 
+  static final int END_BLOCK=256;
 
   // repeat previous bit length 3-6 times (2 bits of repeat count)
-  static final int REP_3_6=16; 
+  static final int REP_3_6=16;
 
   // repeat a zero length 3-10 times  (3 bits of repeat count)
-  static final int REPZ_3_10=17; 
+  static final int REPZ_3_10=17;
 
   // repeat a zero length 11-138 times  (7 bits of repeat count)
-  static final int REPZ_11_138=18; 
+  static final int REPZ_11_138=18;
 
   // extra bits for each length code
   static final int[] extra_lbits={
@@ -215,13 +215,13 @@ final class Tree{
     for (bits = max_length; bits != 0; bits--) {
       n = s.bl_count[bits];
       while (n != 0) {
-	m = s.heap[--h];
-	if (m > max_code) continue;
-	if (tree[m*2+1] != bits) {
-	  s.opt_len += ((long)bits - (long)tree[m*2+1])*(long)tree[m*2];
-	  tree[m*2+1] = (short)bits;
-	}
-	n--;
+        m = s.heap[--h];
+        if (m > max_code) continue;
+        if (tree[m*2+1] != bits) {
+          s.opt_len += ((long)bits - (long)tree[m*2+1])*(long)tree[m*2];
+          tree[m*2+1] = (short)bits;
+        }
+        n--;
       }
     }
   }
@@ -248,11 +248,11 @@ final class Tree{
 
     for(n=0; n<elems; n++) {
       if(tree[n*2] != 0) {
-	s.heap[++s.heap_len] = max_code = n;
-	s.depth[n] = 0;
+        s.heap[++s.heap_len] = max_code = n;
+        s.depth[n] = 0;
       }
       else{
-	tree[n*2+1] = 0;
+        tree[n*2+1] = 0;
       }
     }
 
@@ -318,9 +318,9 @@ final class Tree{
   // OUT assertion: the field code is set for all tree elements of non
   //     zero code length.
   static void gen_codes(short[] tree, // the tree to decorate
-			int max_code, // largest code with non zero frequency
-			short[] bl_count // number of codes at each bit length
-			){
+                        int max_code, // largest code with non zero frequency
+                        short[] bl_count // number of codes at each bit length
+                        ){
     short[] next_code=new short[MAX_BITS+1]; // next code value for each bit length
     short code = 0;            // running code value
     int bits;                  // bit index
@@ -350,14 +350,14 @@ final class Tree{
   // method would use a table)
   // IN assertion: 1 <= len <= 15
   static int bi_reverse(int code, // the value to invert
-			int len   // its bit length
-			){
+                        int len   // its bit length
+                        ){
     int res = 0;
     do{
       res|=code&1;
       code>>>=1;
       res<<=1;
-    } 
+    }
     while(--len>0);
     return res>>>1;
   }

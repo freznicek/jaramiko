@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -39,11 +39,11 @@ public class BadSignatureException
         super("Signature verificiation (" + keyType + ") failed");
         mKeyType = keyType;
     }
-    
+
     /**
      * Return the key type of the failed signature.  This will usually be
      * either <code>"ssh-rsa"</code> or <code>"ssh-dss"</code>.
-     * 
+     *
      * @return the key type
      */
     public String
@@ -51,9 +51,9 @@ public class BadSignatureException
     {
         return mKeyType;
     }
-    
-    
+
+
     private String mKeyType;
-    
+
     private static final long serialVersionUID = 0;
 }

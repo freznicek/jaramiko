@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -57,19 +57,19 @@ public class ServerTransport
         {
             return mLocalVersion;
         }
-        
+
         public String
         getRemoteVersion ()
         {
             return mRemoteVersion;
         }
-        
+
         public byte[]
         getLocalKexInit ()
         {
             return mLocalKexInit;
         }
-        
+
         public byte[]
         getRemoteKexInit ()
         {
@@ -81,32 +81,32 @@ public class ServerTransport
         {
             ServerTransport.this.registerMessageHandler(ptype, handler);
         }
-        
+
         public void
         expectPacket (byte ptype)
         {
             ServerTransport.this.expectPacket(ptype);
         }
-        
+
         public void
         expectPacket (byte ptype1, byte ptype2)
         {
             ServerTransport.this.expectPacket(ptype1, ptype2);
         }
-        
+
         public void
         sendMessage (Message m)
             throws IOException
         {
             ServerTransport.this.sendMessage(m);
         }
-        
+
         public PKey
         getServerKey ()
         {
             return ServerTransport.this.getServerKey();
         }
-        
+
         public void
         verifyKey (byte[] hostKey, byte[] sig)
             throws SSHException
@@ -120,14 +120,14 @@ public class ServerTransport
         {
             ServerTransport.this.setKH(k, h);
         }
-        
+
         public void
         kexComplete ()
             throws IOException
         {
             ServerTransport.this.activateOutbound();
         }
-        
+
         public LogSink
         getLog ()
         {
@@ -135,13 +135,13 @@ public class ServerTransport
         }
     }
 
-    
+
     public
     ServerTransport (Socket socket)
         throws IOException
     {
         super(socket);
-        
+
         mServerAcceptLock = new Object();
         mServerAccepts = new ArrayList();
         mServerKeyMap = new HashMap();
@@ -159,7 +159,7 @@ public class ServerTransport
      * {@link ServerInterface} will be called to handle the authentication and
      * check permissions.  If everything succeeds, newly-opened channels will
      * appear via the {@link #accept} method.
-     * 
+     *
      * @param server a callback object used for authentication and permission
      *     checking
      * @param timeout_ms maximum time (in milliseconds) to wait for negotiation
@@ -172,7 +172,7 @@ public class ServerTransport
         throws IOException
     {
         detectUnsupportedCiphers();
-        
+
         mServer = server;
         mCompletionEvent = new Event();
         mActive = true;
@@ -182,17 +182,17 @@ public class ServerTransport
                 transportRun();
             }
         }, "jaramiko server feeder").start();
-        
+
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
         }
     }
-    
+
     /**
      * Set a banner to be sent during authentication in server mode.  This
      * method should be called before {@link #start} in order to
      * guarantee that it gets sent.
-     *  
+     *
      * @param banner the authentication banner to advertise
      */
     public void
@@ -200,17 +200,17 @@ public class ServerTransport
     {
         mBanner = banner;
     }
-    
+
     /**
      * Add a host key to the list of keys used for server mode.  The host key
      * is used to sign certain packets during the SSH2 negotiation, so that
      * the client can trust that we are who we say we are.  Because this is
      * used for signing, the key must contain private key info, not just the
      * public half.
-     * 
+     *
      * <p>Only one key of each type (RSA or DSS) is kept.  If more than one
      * key type is set, the client gets to choose which type it prefers.
-     * 
+     *
      * @param key the host key to add
      */
     public void
@@ -218,7 +218,7 @@ public class ServerTransport
     {
         mServerKeyMap.put(key.getSSHName(), key);
     }
-    
+
     /**
      * Return the active host key.  After negotiating with the
      * client, this method will return the negotiated host key.  If only one
@@ -228,7 +228,7 @@ public class ServerTransport
      * type will be negotiated by the client, and this method will return the
      * key of the type agreed on.  If the host key has not been negotiated
      * yet, null is returned.
-     * 
+     *
      * @return the host key being used for this session
      */
     public PKey
@@ -241,7 +241,7 @@ public class ServerTransport
      * Return the next channel opened by the client over this transport.  If
      * no channel is opened before the given timeout, or the transport is
      * closed, null is returned.
-     * 
+     *
      * @param timeout_ms time (in milliseconds) to wait for a channel, or 0
      *     to wait forever
      * @return a new Channel opened by the client
@@ -253,24 +253,24 @@ public class ServerTransport
             if (mServerAccepts.size() > 0) {
                 return (Channel) mServerAccepts.remove(0);
             }
-            
+
             try {
                 mServerAcceptLock.wait(timeout_ms);
             } catch (InterruptedException x) {
                 Thread.currentThread().interrupt();
             }
-            
+
             if (! mActive) {
                 return null;
             }
-            
+
             if (mServerAccepts.size() > 0) {
                 return (Channel) mServerAccepts.remove(0);
             }
             return null;
         }
     }
-    
+
     public void
     close ()
     {
@@ -279,17 +279,17 @@ public class ServerTransport
             mServerAcceptLock.notifyAll();
         }
     }
-    
+
     /**
      * Set a crypto library provider for jaramiko.  This setting affects all
      * Transport objects (both ClientTransport and ServerTransport), present
      * and future, and usually will only need to be set once (or never).
      * The only time you really need to set this is if you're using a
      * non-standard crypto provider (like on an embedded platform).
-     * 
+     *
      * <p>If no crypto provider is set, jaramiko will attempt to use JCE,
      * which comes standard with java 1.4 and up.
-     * 
+     *
      * @param crai the crypto provider to use
      */
     public static void
@@ -297,11 +297,11 @@ public class ServerTransport
     {
         sCrai = crai;
     }
-    
-    
+
+
     // ------  package
-    
-    
+
+
     /* package */ KexTransportInterface
     createKexTransportInterface ()
     {
@@ -352,7 +352,7 @@ public class ServerTransport
             byte[] key = computeKey((byte)'D', desc.mKeySize);
             byte[] iv = computeKey((byte)'B', desc.mBlockSize);
             outCipher.initEncrypt(key, iv);
-            
+
             /* initial mac keys are done in the hash's natural size (not the
              * potentially truncated transmission size)
              */
@@ -363,7 +363,7 @@ public class ServerTransport
             } else {
                 outMac = sCrai.makeSHA1HMAC(key);
             }
-    
+
             mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
         } catch (CraiException x) {
             throw new SSHException("Internal java error: " + x);
@@ -382,7 +382,7 @@ public class ServerTransport
             }
         }
         mSecurityOptions.setKeys(keyTypes);
-        
+
         // if we don't have any moduli loaded, we can't do group-exchange kex
         if (getModulusPack().size() == 0) {
             List kexTypes = mSecurityOptions.getKex();
@@ -390,7 +390,7 @@ public class ServerTransport
             mSecurityOptions.setKex(kexTypes);
         }
     }
-    
+
     /* package */ void
     parseNewKeysHook ()
     {
@@ -399,7 +399,7 @@ public class ServerTransport
             mAuthHandler.useServerMode(mServer, mBanner);
         }
     }
-    
+
     /* package */ void
     kexInitHook ()
         throws SSHException
@@ -408,7 +408,7 @@ public class ServerTransport
         if (mServerKey == null) {
             throw new SSHException("Incompatible SSH peer (can't match requested host key type");
         }
-        
+
         // swap sense of "local" and "remote"
         String temp = mDescription.mLocalCipherName;
         mDescription.mLocalCipherName = mDescription.mRemoteCipherName;
@@ -416,14 +416,14 @@ public class ServerTransport
         CipherDescription tempd = mDescription.mLocalCipher;
         mDescription.mLocalCipher = mDescription.mRemoteCipher;
         mDescription.mRemoteCipher = tempd;
-        
+
         temp = mDescription.mLocalMacAlgorithm;
         mDescription.mLocalMacAlgorithm = mDescription.mRemoteMacAlgorithm;
         mDescription.mRemoteMacAlgorithm = temp;
         MacDescription tempd2 = mDescription.mLocalMac;
         mDescription.mLocalMac = mDescription.mRemoteMac;
         mDescription.mRemoteMac = tempd2;
-        
+
         temp = mDescription.mLocalCompression;
         mDescription.mLocalCompression = mDescription.mRemoteCompression;
         mDescription.mRemoteCompression = temp;
@@ -434,7 +434,7 @@ public class ServerTransport
     {
         return mServer.checkGlobalRequest(kind, m);
     }
-    
+
     /* package */ void
     parseChannelOpen (Message m)
         throws IOException
@@ -444,30 +444,30 @@ public class ServerTransport
         int chanID = m.getInt();
         int initialWindowSize = m.getInt();
         int maxPacketSize = m.getInt();
-        
+
         boolean reject = false;
         int myChanID = 0;
         Channel c = null;
-        
+
         synchronized (mLock) {
             myChanID = getNextChannel();
             c = getChannelForKind(myChanID, kind, m);
             mChannels[myChanID] = c;
         }
-        
+
         reason = mServer.checkChannelRequest(kind, myChanID);
         if (reason != ChannelError.SUCCESS) {
             mLog.debug("Rejecting '" + kind + "' channel request from client.");
             reject = true;
         }
-        
+
         if (reject) {
             if (c != null) {
                 synchronized (mLock) {
                     mChannels[myChanID] = null;
                 }
             }
-            
+
             Message mx = new Message();
             mx.putByte(MessageType.CHANNEL_OPEN_FAILURE);
             mx.putInt(chanID);
@@ -477,14 +477,14 @@ public class ServerTransport
             sendMessage(mx);
             return;
         }
-        
+
         synchronized (mLock) {
             c.setTransport(this, mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
             c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
             c.setServer(mServer);
         }
-        
+
         Message mx = new Message();
         mx.putByte(MessageType.CHANNEL_OPEN_SUCCESS);
         mx.putInt(chanID);
@@ -492,7 +492,7 @@ public class ServerTransport
         mx.putInt(mWindowSize);
         mx.putInt(mMaxPacketSize);
         sendMessage(mx);
-        
+
         mLog.notice("Secsh channel " + myChanID + " opened.");
 
         synchronized (mServerAcceptLock) {
@@ -501,7 +501,7 @@ public class ServerTransport
         }
     }
 
-    
+
     private ServerInterface mServer;
     private Map mServerKeyMap;    // Map<String, PKey> of available keys
     private PKey mServerKey;      // server key that was used for this session

@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -39,7 +39,7 @@ public class ModulusPackTest
         ModulusPack pack = new ModulusPack();
         assertEquals(198, pack.readStandardResource());
         assertEquals(0, pack.getDiscarded().size());
-        
+
         ModulusPack.ModulusPair mod = pack.get(new FakeCrai(), 1024, 1024, 2048);
         assertTrue((mod.mGenerator == 5) || (mod.mGenerator == 2));
         assertEquals(mod.mModulus.bitLength(), 1024);

@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -80,7 +80,7 @@ public class DSSKey
         try {
             CraiPrivateKey dsa = crai.makePrivateDSAKey(mX, mP, mQ, mG);
             byte[] sig = dsa.sign(data, 0, data.length);
-            
+
             Message m = new Message();
             m.putString(getSSHName());
             m.putByteString(sig);
@@ -89,7 +89,7 @@ public class DSSKey
             throw new SSHException("Java publickey error: " + x);
         }
     }
-    
+
     public boolean
     verifySSHSignature (Crai crai, byte[] data, Message sig)
         throws SSHException
@@ -123,7 +123,7 @@ public class DSSKey
         mY = ints[4];
         mX = ints[5];
     }
-    
+
     protected void
     buildFromMessage (Message m)
     {
@@ -132,10 +132,10 @@ public class DSSKey
         mG = m.getMPZ();
         mY = m.getMPZ();
     }
-    
+
     public void
     writePrivateKeyToStream (OutputStream os, String password)
-        throws IOException 
+        throws IOException
     {
         BigInteger[] nums = new BigInteger[6];
         nums[0] = BigInteger.ZERO;
@@ -146,12 +146,12 @@ public class DSSKey
         nums[5] = mX;
         writePrivateKeyToStream("DSA", os, nums, password);
     }
-    
+
     /**
      * Generate a new DSS private/public key pair.  This operation may take
      * a non-trivial amount of time.  The actual key generation is
      * delegated to {@link Crai}.
-     * 
+     *
      * @param bits bit size of the key to generate
      * @return a new DSS key
      * @throws SSHException if there's an error within the underlying crypto
@@ -165,7 +165,7 @@ public class DSSKey
             CraiKeyPair pair = crai.generateDSAKeyPair(bits);
             CraiPrivateKey.DSAContents priv = (CraiPrivateKey.DSAContents) pair.getPrivateKey().getContents();
             CraiPublicKey.DSAContents pub = (CraiPublicKey.DSAContents) pair.getPublicKey().getContents();
-            
+
             DSSKey key = new DSSKey();
             key.mP = pub.getP();
             key.mQ = pub.getQ();
@@ -183,11 +183,11 @@ public class DSSKey
      * method assumes the integers have come from some other reliable source.
      * The parameter names identify the required numbers from the DSS
      * algorithm.
-     * 
+     *
      * <p> Please don't use this method to generate a new key from scratch.
      * Picking correct values for these parameters is tricky.
      * Use {@link #generate(Crai, int)} to generate a new key.
-     * 
+     *
      * @param p the DSS "p"
      * @param q the DSS "q"
      * @param g the DSS "g"
@@ -206,11 +206,11 @@ public class DSSKey
         key.mX = x;
         return key;
     }
-    
+
     /**
      * Create a DSS public key object from the component integers. Such a key
      * can be used only to verify signatures, not sign data.
-     * 
+     *
      * @param p the DSS "p"
      * @param q the DSS "q"
      * @param g the DSS "g"
@@ -227,13 +227,13 @@ public class DSSKey
         key.mY = y;
         return key;
     }
-    
+
     public CraiPrivateKey
     toPrivateKey (Crai crai)
     {
         return crai.makePrivateDSAKey(mX, mP, mQ, mG);
     }
-    
+
     public CraiPublicKey
     toPublicKey (Crai crai)
     {

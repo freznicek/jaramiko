@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -53,7 +53,7 @@ public class BERInputStreamTest
         buffer = new ByteArrayInputStream(Util.decodeHex("040963616e646964617465"));
         assertEquals(Util.encodeHex("candidate".getBytes()), Util.encodeHex((byte[]) new BERInputStream(buffer).next()));
     }
-    
+
     public void
     testDecodeSequence ()
         throws Exception
@@ -70,7 +70,7 @@ public class BERInputStreamTest
         assertEquals(BigInteger.valueOf(23187), list.get(0));
         assertEquals("636174", Util.encodeHex((byte[]) list.get(1)));
     }
-    
+
     public void
     testDecodeNestedSequence ()
         throws Exception
@@ -91,7 +91,7 @@ public class BERInputStreamTest
         assertTrue(list2.get(0) == null);
         assertEquals(Boolean.TRUE, list.get(1));
     }
-    
+
     public void
     testDecodeComplexSequence ()
         throws Exception
@@ -115,14 +115,14 @@ public class BERInputStreamTest
         assertEquals(2, seq2.mList.size());
         assertEquals(BigInteger.valueOf(1081589747), seq2.mList.get(0));
         assertEquals(BigInteger.valueOf(0), seq2.mList.get(1));
-        
+
         seq2 = (ArtificialSequence) list2.get(3);
         assertEquals(2, seq2.mList.size());
         assertEquals(BigInteger.valueOf(1081589750), seq2.mList.get(0));
         assertEquals(BigInteger.valueOf(0), seq2.mList.get(1));
     }
-    
-    
+
+
 }
 
 /*

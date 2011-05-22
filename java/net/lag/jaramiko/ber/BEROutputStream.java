@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -37,21 +37,21 @@ public class BEROutputStream
     {
         public void encode (OutputStream out, Object obj, boolean useIndefiniteLength) throws IOException;
     }
-    
-    
+
+
     public
     BEROutputStream (OutputStream out, boolean useIndefiniteLength)
     {
         mOutStream = out;
         mUseIndefiniteLength = useIndefiniteLength;
     }
-    
+
     public
     BEROutputStream (OutputStream out)
     {
         this(out, true);
     }
-    
+
     public static void
     register (Class c, Encoder e)
     {
@@ -61,14 +61,14 @@ public class BEROutputStream
             sEncoderTable.put(c.getName(), e);
         }
     }
-    
+
     private static Encoder
     getEncoder (Object obj)
     {
         if (obj == null) {
             return (Encoder) sEncoderTable.get("null");
         }
-        
+
         Class c = obj.getClass();
         while (c != null) {
             Encoder encoder = (Encoder) sEncoderTable.get(c.getName());
@@ -88,7 +88,7 @@ public class BEROutputStream
 
             c = c.getSuperclass();
         }
-        
+
         return null;
     }
 
@@ -97,7 +97,7 @@ public class BEROutputStream
     {
         return getEncoder(item) != null;
     }
-    
+
     public void
     write (Object item)
         throws IOException
@@ -108,14 +108,14 @@ public class BEROutputStream
         }
         encoder.encode(mOutStream, item, mUseIndefiniteLength);
     }
-    
+
     /* package */ void
     writeTerminator ()
         throws IOException
     {
         Tag.TERMINATOR.write(mOutStream);
     }
-    
+
     public static void
     writeContainer (OutputStream out, Tag tag, Iterable sequence, boolean useIndefiniteLength)
         throws IOException
@@ -137,7 +137,7 @@ public class BEROutputStream
                 subOut.write(item);
             }
             byte[] dump = buffer.toByteArray();
-            
+
             tag.asSize(dump.length).write(out);
             out.write(dump);
         }
@@ -145,7 +145,7 @@ public class BEROutputStream
 
     /**
      * Encode an object into BER data.  This is just a convenience method.
-     * 
+     *
      * @param obj a java object of a type with a registered codec
      * @param useIndefiniteLength true if containers should be encoded as
      *     indefinite-length (the normal mode); false if containers should be
@@ -161,10 +161,10 @@ public class BEROutputStream
         new BEROutputStream(buffer, useIndefiniteLength).write(obj);
         return buffer.toByteArray();
     }
-    
+
     /**
      * Encode an object into BER data.  This is just a convenience method.
-     * 
+     *
      * @param obj a java object of a type with a registered codec
      * @return BER-encoded data
      * @throws IOException if there was an error encoding the object
@@ -175,13 +175,13 @@ public class BEROutputStream
     {
         return encode(obj, true);
     }
-    
-    
+
+
     private OutputStream mOutStream;
     private boolean mUseIndefiniteLength = true;
-    
+
     private static Map sEncoderTable = new HashMap();   // class name -> Encoder
-    
+
     static {
         CommonCodecs.register();
     }

@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -32,7 +32,7 @@ import net.lag.craijce.CraiJCE;
 
 /**
  * This only exists to allow a test to use FakeRandom.
- * 
+ *
  * @author robey
  */
 public class FakeCrai
@@ -43,86 +43,86 @@ public class FakeCrai
     {
         mCraiJCE.mCraiRandom = new FakeRandom();
     }
-    
+
     public CraiRandom
     getPRNG ()
     {
         return new FakeRandom();
     }
-    
+
     public CraiPrivateKey
     makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
     {
         return mCraiJCE.makePrivateRSAKey(n, d, p, q);
     }
-    
+
     public CraiPrivateKey
     makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
     {
         return mCraiJCE.makePrivateDSAKey(x, p, q, g);
     }
-    
+
     public CraiPublicKey
     makePublicRSAKey (BigInteger n, BigInteger e)
     {
         return mCraiJCE.makePublicRSAKey(n, e);
     }
-    
+
     public CraiPublicKey
     makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
     {
         return mCraiJCE.makePublicDSAKey(y, p, q, g);
     }
-    
+
     public CraiKeyPair
     generateRSAKeyPair (int bits)
     {
         return mCraiJCE.generateRSAKeyPair(bits);
     }
-    
+
     public CraiKeyPair
     generateDSAKeyPair (int bits)
     {
         return mCraiJCE.generateDSAKeyPair(bits);
     }
-    
+
     public CraiDigest
     makeSHA1 ()
     {
         return mCraiJCE.makeSHA1();
     }
-    
+
     public CraiDigest
     makeMD5 ()
     {
         return mCraiJCE.makeMD5();
     }
-    
+
     public CraiDigest
     makeSHA1HMAC (byte[] key)
     {
         return mCraiJCE.makeSHA1HMAC(key);
     }
-    
+
     public CraiDigest
     makeMD5HMAC (byte[] key)
     {
         return mCraiJCE.makeMD5HMAC(key);
     }
-    
+
     public CraiCipher
     getCipher (CraiCipherAlgorithm algorithm)
         throws CraiException
     {
         return mCraiJCE.getCipher(algorithm);
     }
-    
+
     public BigInteger
     modPow (BigInteger b, BigInteger e, BigInteger m)
     {
         return mCraiJCE.modPow(b, e, m);
     }
-    
-    
+
+
     private CraiJCE mCraiJCE = new CraiJCE();
 }

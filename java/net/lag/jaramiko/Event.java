@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -27,7 +27,7 @@ package net.lag.jaramiko;
 
 /**
  * A signal between threads, based on the python class of the same name.
- * 
+ *
  * <p>
  * An event is either clear (false) or set (true), and its state can be flipped
  * by any arbitrary thread.  Other thread(s) can wait for the event to be set.
@@ -49,7 +49,7 @@ public final class Event
 
     /**
      * Create a new Event, pre-set to be either set or clear.
-     * 
+     *
      * @param isSet true if the Event should initially be set; false if it
      *     should initially be clear
      */
@@ -59,7 +59,7 @@ public final class Event
         mSet = isSet;
         mLock = new Object();
     }
-    
+
     /**
      * Clear the event flag.  Subsequently, threads calling {@link #waitFor} will
      * block until {@link #set} is called again.
@@ -71,10 +71,10 @@ public final class Event
             mSet = false;
         }
     }
-    
+
     /**
      * Set the event flag.  All threads waiting on this event will be awakened.
-     * Subsequently, threads that call {@link #waitFor} will return immediately. 
+     * Subsequently, threads that call {@link #waitFor} will return immediately.
      */
     public void
     set ()
@@ -84,10 +84,10 @@ public final class Event
             mLock.notifyAll();
         }
     }
-    
+
     /**
      * Return true if and only if the event is currently set.
-     * 
+     *
      * @return true if the event is set; false if not
      */
     public boolean
@@ -97,15 +97,15 @@ public final class Event
             return mSet;
         }
     }
-    
+
     /**
      * Block until the event flag becomes set.  If the event flag is already
      * set, return immediately.  Otherwise, block until another thread calls
      * {@link #set}, or until the timeout occurs.
-     * 
+     *
      * <p>The odd method name is to avoid conflict with a poorly-named java
      * builtin method.
-     * 
+     *
      * @param timeout milliseconds to wait for the event to be set (0 = wait
      *     forever)
      * @throws InterruptedException if the thread was interrupted while waiting
@@ -121,8 +121,8 @@ public final class Event
             return;
         }
     }
-    
-    
+
+
     private boolean mSet;
     private Object mLock;
 }

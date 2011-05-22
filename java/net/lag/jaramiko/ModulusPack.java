@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -51,21 +51,21 @@ import net.lag.crai.Crai;
             mGenerator = generator;
             mModulus = modulus;
         }
-        
-        
+
+
         public int mGenerator;
         public BigInteger mModulus;
     }
-    
-    
+
+
     public
     ModulusPack ()
     {
         mDiscarded = new ArrayList();
-        // map of: bit length -> List<ModulusPair> 
+        // map of: bit length -> List<ModulusPair>
         mPack = new HashMap();
     }
-    
+
     private boolean
     parseModulus (String line)
     {
@@ -80,7 +80,7 @@ import net.lag.crai.Crai;
         int size = Util.fuzzyInt(elems[4]);
         int generator = Util.fuzzyInt(elems[5]);
         BigInteger modulus = new BigInteger(elems[6], 16);
-        
+
         /* weed out primes that aren't at least:
          * type 2 (meets basic structural requirements)
          * test 4 (more than just a small-prime sieve)
@@ -111,14 +111,14 @@ import net.lag.crai.Crai;
         list.add(new ModulusPair(generator, modulus));
         return true;
     }
-    
+
     public int
     readFromStream (InputStream in)
         throws IOException
     {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         int count = 0;
-        
+
         while (true) {
             String line = reader.readLine();
             if (line == null) {
@@ -132,7 +132,7 @@ import net.lag.crai.Crai;
             }
         }
     }
-    
+
     public int
     readStandardResource ()
     {
@@ -154,7 +154,7 @@ import net.lag.crai.Crai;
             return 0;
         }
     }
-    
+
     public ModulusPair
     get (Crai crai, int min, int prefer, int max)
         throws SSHException
@@ -168,9 +168,9 @@ import net.lag.crai.Crai;
         for (int i = 0; i < bitsizes.length; i++) {
             bitsizes[i] = ((Integer) bitsizesList.get(i)).intValue();
         }
-        
+
         int good = -1;
-        
+
         // find nearest bitsize >= preferred
         for (int i = 0; i < bitsizes.length; i++) {
             int b = bitsizes[i];
@@ -178,7 +178,7 @@ import net.lag.crai.Crai;
                 good = b;
             }
         }
-        
+
         // if that failed, find greatest bitsize >= min
         if (good == -1) {
             for (int i = 0; i < bitsizes.length; i++) {
@@ -188,7 +188,7 @@ import net.lag.crai.Crai;
                 }
             }
         }
-        
+
         if (good == -1) {
             /* their entire (min, max) range has no intersection with our
              * range. if their range is below ours, pick the smallest.
@@ -201,19 +201,19 @@ import net.lag.crai.Crai;
                 good = bitsizes[bitsizes.length - 1];
             }
         }
-        
+
         // now pick a random modulus of this bitsize.
         List list = (List) mPack.get(Integer.valueOf(good));
         int n = Util.rollRandom(crai, BigInteger.valueOf(list.size())).intValue();
         return (ModulusPair) list.get(n);
     }
-    
+
     public List
     getDiscarded ()
     {
         return mDiscarded;
     }
-    
+
     public int
     size ()
     {
@@ -225,7 +225,7 @@ import net.lag.crai.Crai;
         return size;
     }
 
-    
+
     private List mDiscarded;    // List<BigInteger>
     private Map mPack;          // Map<int, List<ModulusPair>>
 }

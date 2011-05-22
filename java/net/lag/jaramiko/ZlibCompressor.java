@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -49,7 +49,7 @@ import com.jcraft.jzlib.*;
         mDeflateStream.deflateEnd();
         mDeflateStream.free();
     }
-    
+
     /**
      * Create a byte[] by appending two existing buffers.  The <code>orig</code>
      * buffer may be <code>null</code>, in which case the <code>add</code>
@@ -72,17 +72,17 @@ import com.jcraft.jzlib.*;
         System.arraycopy(add, offset, out, x, length);
         return out;
     }
-    
+
     public byte[]
     compress (byte[] data, int offset, int length)
     {
         byte[] out = null;
-        
+
         /* i'm not a big fan of the ZStream API here. */
         mDeflateStream.next_in = data;
         mDeflateStream.next_in_index = offset;
         mDeflateStream.avail_in = length;
-        
+
         do {
             mDeflateStream.next_out = mBuffer;
             mDeflateStream.next_out_index = 0;
@@ -100,7 +100,7 @@ import com.jcraft.jzlib.*;
     uncompress (byte[] data, int offset, int length)
     {
         byte[] out = null;
-        
+
         /* i'm not a big fan of the ZStream API here. */
         mInflateStream.next_in = data;
         mInflateStream.next_in_index = offset;
@@ -119,10 +119,10 @@ import com.jcraft.jzlib.*;
         return out;
     }
 
-    
+
     private ZStream mDeflateStream;
     private ZStream mInflateStream;
     private byte[] mBuffer;
-    
+
     private static final int BUFFER_SIZE = 4096;
 }

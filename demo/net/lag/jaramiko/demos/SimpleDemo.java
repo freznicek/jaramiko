@@ -12,10 +12,10 @@ package net.lag.jaramiko.demos;
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -44,13 +44,13 @@ import net.lag.jaramiko.sftp.Client;
 public class SimpleDemo
 {
     private static final int SSH_PORT = 22;
-    
+
 
     private static void
     executeCommand (String serverName, PKey hostkey, String username, String password, String command)
     {
         ClientTransport transport = null;
-        
+
         try {
             System.out.println("--- Connecting...");
             Socket socket = new Socket();
@@ -82,33 +82,33 @@ public class SimpleDemo
                 }
             }
             channel.close();*/
-            
+
             Client SFTP = Client.fromTransport(transport);
             try {
-            	for (String name : SFTP.listdir("/")) {
-            		System.out.println(name);
-            	}
-            	
-            	InputStream stream = SFTP.openInputStream("/hello");
-            	
-            	try {
-            		InputStreamReader reader = new InputStreamReader(stream);
-            		
-            		
-            		char[] buffer = new char[32768];
-            		int readCount = 0;
-            		
-            		while ((readCount = reader.read(buffer)) > 0) {
-            			System.out.print(new String(buffer, 0, readCount));
-            		}
-            		// System.out << stream;
-            	} finally {
-            		stream.close();
-            	}
+                for (String name : SFTP.listdir("/")) {
+                    System.out.println(name);
+                }
+
+                InputStream stream = SFTP.openInputStream("/hello");
+
+                try {
+                    InputStreamReader reader = new InputStreamReader(stream);
+
+
+                    char[] buffer = new char[32768];
+                    int readCount = 0;
+
+                    while ((readCount = reader.read(buffer)) > 0) {
+                        System.out.print(new String(buffer, 0, readCount));
+                    }
+                    // System.out << stream;
+                } finally {
+                    stream.close();
+                }
             } finally {
-            	SFTP.close();
+                SFTP.close();
             }
-            
+
             System.out.println();
             System.out.println("--- Done.");
         } catch (IOException x) {
@@ -119,11 +119,11 @@ public class SimpleDemo
             }
         }
     }
-    
+
     public static void main (String[] args) throws Exception
     {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
+
         System.out.println();
         System.out.println("This demo will connect to an SSH server, login with a username and");
         System.out.println("password, and execute a single command.");
@@ -147,7 +147,7 @@ public class SimpleDemo
         if (command.length() == 0) {
             command = "ls";
         }
-        
+
         PKey hostkey = null;
         try {
             FileInputStream hostkeysFile = new FileInputStream(hostkeysFilename);
@@ -164,7 +164,7 @@ public class SimpleDemo
             System.out.println("!!! Couldn't open hostkeys file: " + x);
             System.out.println("!!! Therefore, no host key checking will be done, which is insecure.");
         }
-        
+
         executeCommand(serverName, hostkey, username, password, command);
     }
 }

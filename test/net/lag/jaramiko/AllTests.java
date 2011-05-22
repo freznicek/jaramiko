@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -39,9 +39,9 @@ public class AllTests
     {
         TestSuite ts = new TestSuite();
         ClientTransport.setCrai(new CraiJCE());
-        
+
         ts.addTestSuite(UtilTest.class);
-        
+
         ts.addTestSuite(MessageTest.class);
         ts.addTestSuite(PacketizerTest.class);
         ts.addTestSuite(KexTest.class);
@@ -50,14 +50,14 @@ public class AllTests
         ts.addTestSuite(ChannelTest.class);
         ts.addTestSuite(ModulusPackTest.class);
         ts.addTestSuite(HostKeysTest.class);
-        
+
         ts.addTestSuite(TagTest.class);
         ts.addTestSuite(BERInputStreamTest.class);
         ts.addTestSuite(BEROutputStreamTest.class);
-        
+
         return ts;
     }
-    
+
     public static void
     main (String[] args)
     {
@@ -81,7 +81,7 @@ public class AllTests
             }
         };
         r.addListener(listener);
-        
+
         suite.run(r);
     }
 }

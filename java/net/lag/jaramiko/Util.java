@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -47,13 +47,13 @@ public class Util
     {
         // don't instantiate
     }
-    
+
     /**
      * Replace non-ASCII characters in a string with either a hex quote of the
      * form <code>\\xHH</code> or (for chars above 255) a unicode quote of the
      * form <code>\\uHHHH</code>.  Existing backslashes are quoted too.  The
      * resulting string will only contain chars between 32 and 126.
-     * 
+     *
      * @param s the string to quote
      * @return a string safe to print or log
      */
@@ -117,7 +117,7 @@ public class Util
         x.printStackTrace(new PrintWriter(sw));
         return splitString(sw.toString(), "\n");
     }
-    
+
     public static int
     fuzzyInt (String s)
     {
@@ -127,13 +127,13 @@ public class Util
             return 0;
         }
     }
-    
+
     /**
      * Decode a string of hex digits into a byte array.  For example, the
      * string <code>"FF3C"</code> would be decoded into the byte array
      * <code>new byte[] { -1, 0x3c }</code>.  This is mostly just used for
      * unit tests.
-     * 
+     *
      * @param s the hex string to decode
      * @return the decoded byte array
      */
@@ -160,13 +160,13 @@ public class Util
         }
         return out.toString();
     }
-    
+
     public static final String
     encodeHex (byte[] x)
     {
         return encodeHex(x, 0, x.length);
     }
-    
+
     public static final String
     join (String[] list, String glue)
     {
@@ -179,11 +179,11 @@ public class Util
         }
         return out.toString();
     }
-    
+
     /**
      * Incredibly lazy method for decoding BER sequences from private key
      * files, knowing that they're always a single sequence of ints.
-     * 
+     *
      * @param data a byte array to decode
      * @return an array of BigIntegers representing the key data
      */
@@ -210,7 +210,7 @@ public class Util
         list.toArray(nums);
         return nums;
     }
-    
+
     public static byte[]
     encodeBERSequence (BigInteger[] nums)
         throws SSHException
@@ -222,11 +222,11 @@ public class Util
             throw new SSHException("BER encoding error: " + x);
         }
     }
-    
+
     /**
      * Continue reading from a stream until EOF is reached, or the requested
      * number of bytes is read.
-     * 
+     *
      * @param in the stream to read from
      * @param buffer the buffer to fill
      * @param off offset within the buffer to begin reading into
@@ -250,14 +250,14 @@ public class Util
         }
         return len;
     }
-    
+
     public static int
     readAll (InputStream in, byte[] buffer)
         throws IOException
     {
         return readAll(in, buffer, 0, buffer.length);
     }
-    
+
     // return a random # from 0 to N-1.
     // i think this might be overkill.
     public static BigInteger
@@ -266,7 +266,7 @@ public class Util
         int bits = max.subtract(BigInteger.ONE).bitLength();
         int bytes = (bits + 7) / 8;
         int hbyte_mask = (1 << (bits % 8)) - 1;
-        
+
         /* so here's the plan:
          * we fetch as many random bits as we'd need to fit N-1, and if the
          * generated number is >= N, we try again. in the worst case (N-1 is
@@ -286,7 +286,7 @@ public class Util
             }
         }
     }
-    
+
     public static String
     strip (String s)
     {

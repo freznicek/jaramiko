@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -34,14 +34,14 @@ import java.util.Arrays;
 /**
  * This is one the silliest things I've seen.
  * Borrowed from <http://java.sun.com/developer/technicalArticles/Security/pwordmask/index.html>
- * 
+ *
  * Ask the user for a password, and mask their typing with asterisks displayed
  * at a very high speed.
  */
 public class PasswordInput
 {
     public static class MaskingThread
-        extends Thread 
+        extends Thread
     {
         private volatile boolean stop;
         private char echochar = ' ';
@@ -75,14 +75,14 @@ public class PasswordInput
             }
         }
 
-        public void 
-        stopMasking() 
+        public void
+        stopMasking()
         {
             this.stop = true;
         }
     }
-    
-    
+
+
     public static final char[]
     getPassword (InputStream in, String prompt)
         throws IOException
@@ -90,7 +90,7 @@ public class PasswordInput
         MaskingThread maskingthread = new MaskingThread(prompt);
         Thread thread = new Thread(maskingthread);
         thread.start();
-      
+
         char[] lineBuffer;
         char[] buf;
         int i;
@@ -130,7 +130,7 @@ public class PasswordInput
                 break;
             }
         }
-        
+
         maskingthread.stopMasking();
         if (offset == 0) {
             return null;

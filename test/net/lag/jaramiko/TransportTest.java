@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -48,11 +48,11 @@ public class TransportTest
 
         Socket client = new Socket();
         client.connect(new InetSocketAddress(InetAddress.getByName("localhost"), serv.getLocalPort()));
-        
+
         Socket client2 = serv.accept();
         return new Socket[] { client2, client };
     }
-    
+
     public void
     setUp ()
         throws Exception
@@ -65,7 +65,7 @@ public class TransportTest
         //mTC.setLog(new ConsoleLog());
         //mTS.setLog(new ConsoleLog());
     }
-    
+
     public void
     tearDown ()
         throws Exception
@@ -75,33 +75,33 @@ public class TransportTest
         mSocketC.close();
         mSocketS.close();
     }
-    
+
     public void
     authenticationBannerEvent (String banner)
     {
         mBanner = banner;
     }
-    
-    
+
+
     // verify that the security options can be modified
     public void
     testSecurityOptions ()
         throws IOException
     {
         SecurityOptions o = mTC.getSecurityOptions();
-        
+
         List ciphers = o.getCiphers();
         assertTrue(ciphers.size() > 2);
         ciphers.clear();
         ciphers.add("aes256-cbc");
         ciphers.add("blowfish-cbc");
         o.setCiphers(ciphers);
-        
+
         List c2 = o.getCiphers();
         assertEquals(2, c2.size());
         assertEquals("aes256-cbc", (String) c2.get(0));
         assertEquals("blowfish-cbc", (String) c2.get(1));
-        
+
         try {
             ciphers.clear();
             ciphers.add("aes256-cbc");
@@ -122,7 +122,7 @@ public class TransportTest
         byte[] key = mTC.computeKey((byte)'C', 16);
         assertEquals("207E66594CA87C44ECCBA3B3CD39FDDB", Util.encodeHex(key));
     }
-    
+
     /*
      * verify that we can establish an ssh link with ourselves across the
      * loopback sockets.  this is hardly "simple" but it's simpler than the
@@ -140,7 +140,7 @@ public class TransportTest
         assertEquals(null, mTS.getUsername());
         assertFalse(mTC.isAuthenticated());
         assertFalse(mTS.isAuthenticated());
-        
+
         mTS.setServerBanner("Hello there!");
         final Event sync = new Event();
         new Thread(new Runnable() {
@@ -156,7 +156,7 @@ public class TransportTest
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
-        
+
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
         assertEquals("slowdive", mTC.getUsername());
@@ -165,7 +165,7 @@ public class TransportTest
         assertTrue(mTS.isAuthenticated());
         assertEquals("Hello there!", mBanner);
     }
-    
+
     /*
      * verify that the client can demand odd handshake settings, and can
      * renegotiate keys in mid-stream.
@@ -178,7 +178,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -188,7 +188,7 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         SecurityOptions o = mTC.getSecurityOptions();
         o.setCiphers(Arrays.asList(new String[] { "aes128-cbc" }));
         o.setDigests(Arrays.asList(new String[] { "hmac-md5-96" }));
@@ -203,7 +203,7 @@ public class TransportTest
         assertEquals(128, mTC.mDescription.getRemoteCipherBits());
         assertEquals(12, mTC.mPacketizer.mMacSizeOut);
         assertEquals(12, mTC.mPacketizer.mMacSizeIn);
-        
+
         mTC.sendIgnore(1024, 15000);
         mTC.renegotiateKeys(15000);
         mTC.sendIgnore(1024, 15000);
@@ -220,7 +220,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -244,7 +244,7 @@ public class TransportTest
         assertEquals("ssh-dss", mTC.getDescription().getServerKeyType());
         assertEquals("ssh-dss", mTS.getDescription().getServerKeyType());
     }
-    
+
     // verify that the keepalive will be sent
     public void
     testKeepalive ()
@@ -254,7 +254,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -264,11 +264,11 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
-        
+
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
         assertEquals(null, server.mGlobalRequest);
@@ -291,7 +291,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -301,7 +301,7 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         try {
             mTC.start(publicHostKey, 15000);
             mTC.authPassword("unknown", "error", 15000);
@@ -312,7 +312,7 @@ public class TransportTest
             assertEquals("publickey", allowed[0]);
         }
     }
-    
+
     /*
      * verify that a bad password gets the right exception, and that a retry
      * with the right password works.
@@ -325,7 +325,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -335,7 +335,7 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         try {
             mTC.authPassword("slowdive", "error", 15000);
@@ -343,14 +343,14 @@ public class TransportTest
         } catch (SSHException x) {
             // pass
         }
-        
+
         mTC.authPassword("slowdive", "pygmalion", 15000);
         sync.waitFor(5000);
-        
+
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
     }
-    
+
     // verify that multipart auth works
     public void
     testMultipartAuth ()
@@ -360,7 +360,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -370,21 +370,21 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
-        
+
         String[] remain = mTC.authPassword("paranoid", "paranoid", 15000);
         assertEquals(1, remain.length);
         assertEquals("publickey", remain[0]);
         PKey key = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
         remain = mTC.authPrivateKey("paranoid", key, 15000);
         assertEquals(0, remain.length);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
     }
-    
+
     // verify keyboard-interactive auth mode
     public void
     testInteractiveAuth ()
@@ -394,7 +394,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -404,7 +404,7 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
 
         String[] remain = mTC.authInteractive("commie", new InteractiveHandler() {
@@ -418,12 +418,12 @@ public class TransportTest
         assertEquals("Password", mGotQuery.prompts[0].text);
         assertEquals(false, mGotQuery.prompts[0].echoResponse);
         assertEquals(0, remain.length);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
     }
-    
+
     // verify that a password auth attempt will fallback to "interactive" if
     // password auth isn't supported, but interactive is.
     public void
@@ -434,7 +434,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -444,17 +444,17 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
 
         String[] remain = mTC.authPassword("commie", "cat", 15000);
         assertEquals(0, remain.length);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
     }
-    
+
     public void
     testRenegotiate ()
         throws Exception
@@ -463,7 +463,7 @@ public class TransportTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -473,10 +473,10 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
@@ -487,12 +487,12 @@ public class TransportTest
 
         mTC.mPacketizer.setRekeyBytes(16384);
         assertEquals(mTC.mH, mTC.mSessionID);
-        
+
         for (int i = 0; i < 20; i++) {
             chan.getOutputStream().write(new byte[1024]);
         }
         chan.close();
-        
+
         // allow a few seconds for the rekeying to complete
         for (int i = 0; i < 50; i++) {
             if (! mTC.mH.equals(mTC.mSessionID)) {
@@ -506,7 +506,7 @@ public class TransportTest
         assertFalse(mTC.mH.equals(mTC.mSessionID));
         schan.close();
     }
-    
+
     // verify that zlib compression is basically working
     public void
     testCompression ()
@@ -519,7 +519,7 @@ public class TransportTest
         mTS.useCompression(true);
         mTC.getSecurityOptions().setCompressions(Arrays.asList(new String[] { "zlib" }));
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -529,10 +529,10 @@ public class TransportTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
@@ -550,11 +550,11 @@ public class TransportTest
         long bytes2 = mTC.mPacketizer.getBytesSent();
         assertTrue(bytes2 - bytes < 1024);
         assertEquals(32, bytes2 - bytes);
-        
+
         chan.close();
         schan.close();
     }
-    
+
     // verify that accept(0) will return if the transport is closed out from under it.
     public void
     testAcceptBreaksOnClose ()
@@ -568,7 +568,7 @@ public class TransportTest
         assertEquals(null, mTS.getUsername());
         assertFalse(mTC.isAuthenticated());
         assertFalse(mTS.isAuthenticated());
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -581,14 +581,14 @@ public class TransportTest
         }).start();
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         assertFalse(sync.isSet());
         mTS.close();
         sync.waitFor(5000);
         assertTrue(sync.isSet());
     }
-    
-    
+
+
     private Socket mSocketC;
     private Socket mSocketS;
     private ClientTransport mTC;
@@ -596,7 +596,7 @@ public class TransportTest
 
     private String mBanner;
     private InteractiveQuery mGotQuery;
-    
+
     private static final BigInteger K =
         new BigInteger("12328109597968658152337725611420972077453906897310" +
                        "13308727636229713994294810725197135362927727095072" +

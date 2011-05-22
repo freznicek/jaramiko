@@ -50,10 +50,10 @@ Requirements
 
   - Java 1.3
   - a JCE implementation, or some sort of basic crypto library
-  
+
 Jaramiko uses an abstracted interface to access crypto functionality, so you
 can substitute your own crypto library by writing a glue class. The crypto
-interface is called CRAI and lives in package ``net.lag.crai``. 
+interface is called CRAI and lives in package ``net.lag.crai``.
 
 
 Building and Installing
@@ -62,12 +62,12 @@ Building and Installing
 To compile jaramiko, you only need to do::
 
     $ ant jar
-    
+
 which will build a ``jaramiko.jar`` file in the current directory. There are
 some extensive unit tests, which you can run with::
 
     $ ant test
-    
+
 There are no other dependencies, so adding ``jaramiko.jar`` to your app's
 classpath is enough.
 
@@ -78,7 +78,7 @@ Usage
 There are extensive javadocs, which can be built with::
 
     $ ant docs
-    
+
 A good place to start is the ``Transport`` class, which handles the actual
 SSH connection to a remote host.
 

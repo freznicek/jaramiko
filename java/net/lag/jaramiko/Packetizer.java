@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -55,14 +55,14 @@ import net.lag.crai.CraiRandom;
         mDumpPackets = false;
         mInitCount = 0;
         mKeepAliveInterval = 0;
-        
+
         mSequenceNumberOut = 0;
         mSequenceNumberIn = 0;
-        
+
         mWriteLock = new Object();
         mReadBuffer = new byte[64];
     }
-    
+
     public void
     setLog (LogSink log)
     {
@@ -74,13 +74,13 @@ import net.lag.crai.CraiRandom;
     {
         mDumpPackets = dump;
     }
-    
+
     public synchronized void
     close ()
     {
         mClosed = true;
     }
-    
+
     public synchronized void
     setKeepAlive (int interval, KeepAliveHandler handler)
     {
@@ -88,13 +88,13 @@ import net.lag.crai.CraiRandom;
         mKeepAliveHandler = handler;
         mKeepAliveLast = System.currentTimeMillis();
     }
-    
+
     /**
      * Set the number of bytes that can be sent or received before the
      * packetizer decides it's time to renegotiate keys.  Normally there is
      * no reason to chnage the default value, but it can be useful for unit
      * tests.
-     * 
+     *
      * @param bytes bytes to be send/received before rekeying
      */
     public void
@@ -102,11 +102,11 @@ import net.lag.crai.CraiRandom;
     {
         mRekeyBytes = bytes;
     }
-    
+
     /**
      * Return true if it's time to re-negotiate keys on this session.  This
      * needs to be done after about every 1GB of traffic.
-     * 
+     *
      * @return true if it's time to rekey
      */
     public synchronized boolean
@@ -114,7 +114,7 @@ import net.lag.crai.CraiRandom;
     {
         return mNeedRekey;
     }
-    
+
     // really inefficient, but only used for 1 line at the start of the session
     public String
     readline (int timeout_ms)
@@ -122,7 +122,7 @@ import net.lag.crai.CraiRandom;
     {
         StringBuffer line = new StringBuffer();
         long deadline = (timeout_ms > 0) ? System.currentTimeMillis() + timeout_ms : 0;
-        
+
         while (true) {
             try {
                 int c = mInStream.read();
@@ -140,7 +140,7 @@ import net.lag.crai.CraiRandom;
             } catch (InterruptedIOException x) {
                 // pass, try again
             }
-            
+
             if ((deadline > 0) && (System.currentTimeMillis() >= deadline)) {
                 throw new InterruptedIOException("timeout");
             }
@@ -151,14 +151,14 @@ import net.lag.crai.CraiRandom;
             }
         }
     }
-    
+
     public void
     writeline (String s)
         throws IOException
     {
         mOutStream.write(s.getBytes());
     }
-    
+
     public void
     setOutboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
     {
@@ -169,24 +169,24 @@ import net.lag.crai.CraiRandom;
             mMacSizeOut = macSize;
             mSentBytes = 0;
             mSentPackets = 0;
-            
+
             // wait until the reset happens in both directions before clearing the rekey flag
             mInitCount |= 1;
             if (mInitCount == 3) {
                 mInitCount = 0;
                 triggerRekey(false);
             }
-            
+
             mMacBufferOut = new byte[32];
         }
     }
-    
+
     public void
     setOutboundCompressor (Compressor comp)
     {
         mCompressOut = comp;
     }
-    
+
     // this is always called from the same thread that would be doing a read().
     public void
     setInboundCipher (CraiCipher cipher, int blockSize, CraiDigest mac, int macSize)
@@ -198,28 +198,28 @@ import net.lag.crai.CraiRandom;
         mReceivedBytes = 0;
         mReceivedPackets = 0;
         mReceivedPacketsOverflow = 0;
-        
+
         // wait until the reset happens in both directions before clearing the rekey flag
         mInitCount |= 2;
         if (mInitCount == 3) {
             mInitCount = 0;
             triggerRekey(false);
         }
-        
+
         mMacBufferIn = new byte[32];
     }
-    
+
     public void
     setInboundCompressor (Compressor comp)
     {
         mCompressIn = comp;
     }
-    
+
     /**
      * Write an SSH2 message to the stream.  The message will be packetized
      * (padded up to the block size), and if the outbound cipher is on, the
      * message will also be enciphered.
-     * 
+     *
      * @param msg the message to send
      * @throws IOException if an exception is thrown while writing data
      */
@@ -246,7 +246,7 @@ import net.lag.crai.CraiRandom;
             if (mDumpPackets) {
                 mLog.dump("OUT", packet, 0, length);
             }
-        
+
             if (mBlockEngineOut != null) {
                 new Message(mMacBufferOut).putInt(mSequenceNumberOut);
                 mMacEngineOut.reset();
@@ -264,13 +264,13 @@ import net.lag.crai.CraiRandom;
                     throw new IOException("encipher error: " + x);
                 }
             }
-            
+
             mSequenceNumberOut++;
             write(packet, 0, length);
             if (mBlockEngineOut != null) {
                 write(mMacBufferOut, 0, mMacSizeOut);
             }
-            
+
             mSentBytes += length;
             mSentPackets++;
             if (((mSentPackets >= mRekeyPackets) || (mSentBytes >= mRekeyBytes)) && ! needRekey()) {
@@ -281,7 +281,7 @@ import net.lag.crai.CraiRandom;
             }
         }
     }
-    
+
     // only 1 thread will be here at one time
     // return null on EOF
     public Message
@@ -312,7 +312,7 @@ import net.lag.crai.CraiRandom;
 
         byte[] packet = new byte[length - 1];
         System.arraycopy(mReadBuffer, 5, packet, 0, leftover);
-        
+
         /* don't try to read or process more bytes if we already have the
          * entire packet.  (danger's JVM pukes and returns -1 [EOF] if you
          * try to read zero bytes.)
@@ -329,20 +329,20 @@ import net.lag.crai.CraiRandom;
                     throw new IOException("decode error: " + x);
                 }
             }
-            
+
             // dump the packet before we try to verify the mac (helps with debugging)
             if (mDumpPackets) {
                 mLog.dump("IN", packet, leftover, remainderLen);
             }
         }
-        
+
         if (mBlockEngineIn != null) {
             // now, compute the mac
             new Message(mMacBufferIn).putInt(mSequenceNumberIn);
             mMacEngineIn.reset();
             mMacEngineIn.update(mMacBufferIn, 0, 4);
             mMacEngineIn.update(mReadBuffer, 0, 5);
-            mMacEngineIn.update(packet, 0, length - 1);        
+            mMacEngineIn.update(packet, 0, length - 1);
             try {
                 mMacEngineIn.finish(mMacBufferIn, 0);
             } catch (CraiException x) {
@@ -351,7 +351,7 @@ import net.lag.crai.CraiRandom;
             if (read(mReadBuffer, 0, mMacSizeIn, false) < 0) {
                 return null;
             }
-            
+
             // i'm pretty mad that there's no more efficient way to do this. >:(
             for (int i = 0; i < mMacSizeIn; i++) {
                 if (mReadBuffer[i] != mMacBufferIn[i]) {
@@ -370,9 +370,9 @@ import net.lag.crai.CraiRandom;
             msg = new Message(packet, 0, length - padding - 1, mSequenceNumberIn);
             mLog.debug("Read packet <" + msg.getCommandDescription() + ">, length " + (length - padding - 1));
         }
-        
+
         mSequenceNumberIn++;
-        
+
         // check for rekey
         mReceivedBytes += length + mMacSizeIn + 4;
         mReceivedPackets++;
@@ -392,7 +392,7 @@ import net.lag.crai.CraiRandom;
 
         return msg;
     }
-    
+
     // do not return until the entire buffer is read, or EOF
     private int
     read (byte[] buffer, int offset, int length, boolean checkRekey)
@@ -412,7 +412,7 @@ import net.lag.crai.CraiRandom;
             } catch (InterruptedIOException x) {
                 // pass
             }
-            
+
             if (total == length) {
                 return total;
             }
@@ -428,7 +428,7 @@ import net.lag.crai.CraiRandom;
             checkKeepAlive();
         }
     }
-    
+
     private void
     write (byte[] buffer, int offset, int length)
         throws IOException
@@ -436,7 +436,7 @@ import net.lag.crai.CraiRandom;
         // setSoTimeout() does not affect writes in java
         mOutStream.write(buffer, offset, length);
     }
-    
+
     private void
     checkKeepAlive ()
     {
@@ -450,28 +450,28 @@ import net.lag.crai.CraiRandom;
             mKeepAliveLast = now;
         }
     }
-    
+
     private synchronized void
     triggerRekey (boolean rekey)
     {
         mNeedRekey = rekey;
     }
-    
+
     // for unit tests
     /* package */ long
     getBytesSent ()
     {
         return mSentBytes;
     }
-    
+
     // for unit tests
     /* package */ long
     getBytesReceived ()
     {
         return mReceivedBytes;
     }
-    
-    
+
+
     /* READ the secsh RFC's before raising these values.  if anything, they
      * should probably be lower.
      */
@@ -480,7 +480,7 @@ import net.lag.crai.CraiRandom;
 
     private int mRekeyPackets = REKEY_PACKETS;
     private int mRekeyBytes = REKEY_BYTES;
-    
+
     private InputStream mInStream;
     private OutputStream mOutStream;
     private CraiRandom mRandom;
@@ -489,10 +489,10 @@ import net.lag.crai.CraiRandom;
     private boolean mDumpPackets;
     private boolean mNeedRekey;
     private int mInitCount;
-    
+
     private Object mWriteLock;
     private byte[] mReadBuffer;     // used for reading the first block of a packet
-    
+
     private int mBlockSizeOut = 8;
     private int mBlockSizeIn = 8;
     private CraiCipher mBlockEngineOut;
@@ -507,13 +507,13 @@ import net.lag.crai.CraiRandom;
     private int mSequenceNumberIn;
     private Compressor mCompressIn;
     private Compressor mCompressOut;
-    
+
     private long mSentBytes;
     private long mSentPackets;
     private long mReceivedBytes;
     private long mReceivedPackets;
     private int mReceivedPacketsOverflow;
-    
+
     private int mKeepAliveInterval;
     private long mKeepAliveLast;
     private KeepAliveHandler mKeepAliveHandler;

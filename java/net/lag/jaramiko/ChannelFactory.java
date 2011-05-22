@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -40,7 +40,7 @@ public interface ChannelFactory
     /**
      * Create a channel from parameters that are in the form of a list.  This
      * is called from {@link ClientTransport} when a client channel is opened.
-     * 
+     *
      * @param kind arbitrary string (defined by the argument to
      *     {@link ClientTransport#openChannel}) indicating the kind of channel
      *     to open
@@ -49,13 +49,13 @@ public interface ChannelFactory
      * @return an appropriate Channel object.
      */
     public Channel createChannel(String kind, int chanid, List params);
-           
+
     /**
      * Create a channel from parameters that are in the form of an SSH
      * {@link Message}.  This is called from {@link ServerTransport} when the
      * remote client has requested a special channel type.  The parameters
      * (if any) can be retrieved from the Message object.
-     * 
+     *
      * @param kind arbitrary string (defined by the argument to
      *     {@link ClientTransport#openChannel}) string indicating the kind of
      *     channel to open

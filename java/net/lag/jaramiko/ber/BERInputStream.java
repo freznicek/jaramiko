@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -37,8 +37,8 @@ public class BERInputStream
     {
         public Object decode (InputStream in, Tag tag) throws IOException;
     }
-    
-    
+
+
     public
     BERInputStream (InputStream in)
     {
@@ -46,18 +46,18 @@ public class BERInputStream
         mHitEOF = false;
         mAdvanceTag = null;
     }
-    
+
     public static void
     register (Tag tag, Decoder decoder)
     {
         sDecoderTable.put(tag, decoder);
     }
-    
+
     /**
      * When reading a container, this method makes sure that the end-of-stream
      * marker (if any) for that container has been read. If not, an exception
      * is thrown. Otherwise, it's a no-op.
-     * 
+     *
      * @throws BERException if the end-of-stream marker was not read yet
      * @throws IOException if there is an exception trying to read the next
      *     BER tag
@@ -70,13 +70,13 @@ public class BERInputStream
             throw new BERException("Stream underrun");
         }
     }
-    
+
     /**
      * Return true if there is another BER element in this stream, and a
      * future call to {@link #next()} should succeed.
-     * 
+     *
      * @return true if there is another BER element in this stream
-     * 
+     *
      * @throws IOException if there is an exception trying to read the next
      *     BER tag
      */
@@ -97,10 +97,10 @@ public class BERInputStream
         }
         return (mAdvanceTag != null);
     }
-    
+
     /**
      * Return the next object from this stream.
-     * 
+     *
      * @throws BERException if there isn't another item in the stream, or
      *     there is no registered decoder for the next item in the stream
      * @throws IOException if there is an exception trying to read the next
@@ -113,16 +113,16 @@ public class BERInputStream
         if (! hasNext()) {
             throw new BERException("End of stream");
         }
-        
+
         Tag tag = mAdvanceTag;
         mAdvanceTag = null;
-        
+
         Decoder decoder = (Decoder) sDecoderTable.get(tag);
         if (decoder == null) {
             System.err.println(sDecoderTable);
             throw new BERException("Can't decode object of type " + tag);
         }
-        
+
         LimitInputStream lis = new LimitInputStream(mInStream, tag.hasSize() ? tag.getSize() : -1);
         Object ret = decoder.decode(lis, tag);
         if (tag.hasSize()) {
@@ -132,7 +132,7 @@ public class BERInputStream
         }
         return ret;
     }
-    
+
     public static List
     decodeContainer (InputStream in)
         throws IOException
@@ -144,13 +144,13 @@ public class BERInputStream
         }
         return list;
     }
-    
+
     /**
      * Decode a block of byte data which is encoded in BER. Only the first
      * encoded object is returned, but if the object is a container, its
      * entire contents will be decoded too. This is just a convenience
      * method.
-     * 
+     *
      * @param data BER-encoded data
      * @return a decoded java object
      * @throws IOException if there was an error in the data
@@ -161,12 +161,12 @@ public class BERInputStream
     {
         return new BERInputStream(new ByteArrayInputStream(data)).next();
     }
-    
-    
+
+
     private InputStream mInStream;
     private boolean mHitEOF;
     private Tag mAdvanceTag;
-    
+
     private static Map sDecoderTable = new HashMap();   // Tag -> Decoder
 
     static {

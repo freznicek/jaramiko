@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -86,7 +86,7 @@ public class ChannelTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -96,14 +96,14 @@ public class ChannelTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
-        
+
         Channel chan = mTC.openSession(5000);
         Channel schan = mTS.accept(5000);
         try {
@@ -114,15 +114,15 @@ public class ChannelTest
         }
         chan.close();
         schan.close();
-        
+
         chan = mTC.openSession(5000);
         chan.execCommand("yes", 5000);
         schan = mTS.accept(5000);
-        
+
         schan.getOutputStream().write("Hello there.\n".getBytes());
         schan.getStderrOutputStream().write("This is on stderr.\n".getBytes());
         schan.close();
-        
+
         BufferedReader r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
         assertEquals("Hello there.", r.readLine());
         assertEquals(null, r.readLine());
@@ -130,7 +130,7 @@ public class ChannelTest
         assertEquals("This is on stderr.", r.readLine());
         assertEquals(null, r.readLine());
         chan.close();
-        
+
         // now try it with combined stdout/stderr
         chan = mTC.openSession(5000);
         chan.execCommand("yes", 5000);
@@ -138,7 +138,7 @@ public class ChannelTest
         schan.getOutputStream().write("Hello there\n".getBytes());
         schan.getStderrOutputStream().write("This is on stderr.\n".getBytes());
         schan.close();
-        
+
         chan.setCombineStderr(true);
         r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
         assertEquals("Hello there", r.readLine());
@@ -146,7 +146,7 @@ public class ChannelTest
         assertEquals(null, r.readLine());
         chan.close();
     }
-    
+
     // verify that invoke_shell() does something reasonable
     public void
     testInvokeShell ()
@@ -156,7 +156,7 @@ public class ChannelTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -166,14 +166,14 @@ public class ChannelTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
-        
+
         Channel chan = mTC.openSession(5000);
         chan.invokeShell(5000);
         Channel schan = mTS.accept(5000);
@@ -181,12 +181,12 @@ public class ChannelTest
         assertFalse(chan.isClosed());
         chan.close();
         assertTrue(chan.isClosed());
-        
+
         BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
         assertEquals("communist j. cat", r.readLine());
         schan.close();
     }
-    
+
     // verify that ChannelException is thrown for a bad channel-open request
     public void
     testChannelException ()
@@ -196,7 +196,7 @@ public class ChannelTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -206,10 +206,10 @@ public class ChannelTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
@@ -221,7 +221,7 @@ public class ChannelTest
             assertEquals(x.getChannelError(), ChannelError.ADMINISTRATIVELY_PROHIBITED);
         }
     }
-    
+
     // verify that getExitStatus works
     public void
     testExitStatus ()
@@ -231,7 +231,7 @@ public class ChannelTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -241,10 +241,10 @@ public class ChannelTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
@@ -258,14 +258,14 @@ public class ChannelTest
         schan.shutdownWrite();
         schan.sendExitStatus(23);
         schan.close();
-        
+
         BufferedReader r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
         assertEquals("Hello there.", r.readLine());
         assertEquals(null, r.readLine());
         assertEquals(23, chan.getExitStatus(5000));
         chan.close();
     }
-    
+
     // verify that we can change the window & max packet sizes
     public void
     testChangeWindowSize ()
@@ -298,14 +298,14 @@ public class ChannelTest
         Channel chan = mTC.openSession(5000);
         chan.execCommand("yes", 5000);
         Channel schan = mTS.accept(5000);
-        
+
         assertEquals(94321, schan.mOutWindowSize);
         assertEquals(65000, schan.mOutMaxPacketSize);
 
         chan.close();
         schan.close();
     }
-    
+
     // verify that a pty request works
     public void
     testPTY ()
@@ -315,7 +315,7 @@ public class ChannelTest
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
-        
+
         final Event sync = new Event();
         new Thread(new Runnable() {
             public void run () {
@@ -325,14 +325,14 @@ public class ChannelTest
                 } catch (IOException x) { }
             }
         }).start();
-        
+
         mTC.start(publicHostKey, 15000);
         mTC.authPassword("slowdive", "pygmalion", 15000);
-        
+
         sync.waitFor(5000);
         assertTrue(sync.isSet());
         assertTrue(mTS.isActive());
-        
+
         Channel chan = mTC.openSession(5000);
         TerminalModes modes = new TerminalModes();
         modes.put(TerminalModes.ECHO, 23);
@@ -347,17 +347,17 @@ public class ChannelTest
         assertEquals(23, server.mPTYModes.get(TerminalModes.ECHO));
         assertEquals(900, server.mPTYModes.get(TerminalModes.IXOFF));
         assertFalse(server.mPTYModes.contains(TerminalModes.IXON));
-        
+
         chan.getOutputStream().write("communist j. cat\n".getBytes());
         assertFalse(chan.isClosed());
         chan.close();
         assertTrue(chan.isClosed());
-        
+
         BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
         assertEquals("communist j. cat", r.readLine());
         schan.close();
     }
-    
+
 
     private Socket mSocketC;
     private Socket mSocketS;

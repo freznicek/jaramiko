@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -40,11 +40,11 @@ public class ChannelException
         super(ChannelError.getDescription(code));
         mChannelError = code;
     }
-    
+
     /**
      * Return the error code received from the server.  The code should be
      * one of the constants in {@link ChannelError}.
-     * 
+     *
      * @return the error code from the server
      */
     public int
@@ -52,9 +52,9 @@ public class ChannelException
     {
         return mChannelError;
     }
-    
-    
+
+
     private int mChannelError;
-    
+
     static final private long serialVersionUID = 0;
 }

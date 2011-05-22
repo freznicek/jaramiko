@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -37,7 +37,7 @@ public final class ChannelError
     {
         // forbid
     }
-    
+
     static String
     getDescription (int code)
     {
@@ -46,14 +46,14 @@ public final class ChannelError
         }
         return "Unknown error";
     }
-    
-    
+
+
     public static final int SUCCESS = 0;
     public static final int ADMINISTRATIVELY_PROHIBITED = 1;
     public static final int CONNECT_FAILED = 2;
     public static final int UNKNOWN_CHANNEL_TYPE = 3;
     public static final int RESOURCE_SHORTAGE = 4;
-    
+
     /* package */ static final String[] DESCRIPTION = {
         "",
         "Administratively prohibited",

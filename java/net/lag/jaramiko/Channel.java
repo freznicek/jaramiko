@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -36,9 +36,9 @@ import java.util.List;
 
 /*
  * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
- * 
+ *
  * channel methods should not be called while holding a transport lock.
- * 
+ *
  * mOutBufferLock protects: mOutWindowSize, outbound packets
  * mLock protects: mActive, mClosed, mEOFReceived, mEOFSent, mCombineStderr
  */
@@ -47,7 +47,7 @@ import java.util.List;
  * A secure tunnel across an SSH {@link Transport}.  A Channel is meant to
  * behave like a socket.  It has an InputStream and OutputStream, and may have
  * an input timeout set on it, just like a java socket.
- * 
+ *
  * Because SSH2 has a windowing kind of flow control, if you stop reading data
  * from a Channel and its buffer fills up, the server will be unable to send
  * you any more data until you read some of it.  (This won't affect other
@@ -62,20 +62,20 @@ public class Channel
     /* package */ static class Factory
         implements ChannelFactory
     {
-        public Channel 
+        public Channel
         createChannel (String kind, int chanid, List params)
         {
             return new Channel(chanid, kind, params);
         }
 
-        public Channel 
+        public Channel
         createChannel (String kind, int chanid, Message params)
         {
             return new Channel(chanid, kind, (List)null);
         }
     }
-    
-    
+
+
     private class ChannelInputStream
         extends InputStream
     {
@@ -86,7 +86,7 @@ public class Channel
             mBufferLen = 0;
             mBufferLock = new Object();
         }
-       
+
         public int
         available ()
         {
@@ -94,7 +94,7 @@ public class Channel
                 return mBufferLen;
             }
         }
-        
+
         public int
         read ()
             throws IOException
@@ -105,13 +105,13 @@ public class Channel
             }
             return (int) b[0] & 0xff;
         }
-        
+
         public int
         read (byte[] buf, int off, int len)
             throws IOException
         {
             int ack = 0;
-            
+
             synchronized (mBufferLock) {
                 if (mBufferLen == 0) {
                     int timeout = mTimeout;
@@ -121,7 +121,7 @@ public class Channel
                                 break;
                             }
                         }
-                        
+
                         long then = System.currentTimeMillis();
                         try {
                             mBufferLock.wait(timeout);
@@ -133,7 +133,7 @@ public class Channel
                             }
                         }
                     }
-                    
+
                     if (mBufferLen == 0) {
                         synchronized (mLock) {
                             if (mEOFReceived) {
@@ -145,7 +145,7 @@ public class Channel
                         }
                     }
                 }
-                
+
                 // something in the buffer
                 if (mBufferLen <= len) {
                     System.arraycopy(mBuffer, 0, buf, off, mBufferLen);
@@ -156,7 +156,7 @@ public class Channel
                     System.arraycopy(mBuffer, len, mBuffer, 0, mBufferLen - len);
                     mBufferLen -= len;
                 }
-                
+
                 ack = checkAddWindow(len);
             }
 
@@ -171,20 +171,20 @@ public class Channel
 
             return len;
         }
-    
+
         public void
         close ()
         {
             Channel.this.close();
         }
-        
-        
+
+
         private byte[] mBuffer;
         private int mBufferLen;
         private Object mBufferLock;
     }
-    
-    
+
+
     private class ChannelOutputStream
         extends OutputStream
     {
@@ -193,7 +193,7 @@ public class Channel
         {
             mStderr = stderr;
         }
-        
+
         public void
         write (int c)
             throws IOException
@@ -202,7 +202,7 @@ public class Channel
             b[0] = (byte) c;
             write(b, 0, 1);
         }
-        
+
         public void
         write (byte[] buf, int off, int len)
             throws IOException
@@ -214,7 +214,7 @@ public class Channel
                         // closed, or EOF
                         throw new IOException("Stream is closed.");
                     }
-                    
+
                     Message m = new Message();
                     if (mStderr) {
                         m.putByte(MessageType.CHANNEL_EXTENDED_DATA);
@@ -226,28 +226,28 @@ public class Channel
                     }
                     m.putByteString(buf, off, n);
                     mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
-                    
+
                     off += n;
                     len -= n;
                 }
             }
         }
-        
+
         public void
         close ()
         {
             Channel.this.close();
         }
-        
-        
+
+
         private boolean mStderr;
     }
-    
+
 
     /**
      * Client-mode constructor for a Channel.  The parameters (if any) are
      * passed in as a list directly from the application request.
-     * 
+     *
      * @param chanid channel ID
      * @param kind kind of channel
      * @param params the parameters this channel was opened with
@@ -266,13 +266,13 @@ public class Channel
         mLock = new Object();
         mEvent = new Event();
         mNotifyObject = null;
-        
+
         mInStream = new ChannelInputStream();
         mStderrInStream = new ChannelInputStream();
         mOutStream = new ChannelOutputStream(false);
         mStderrOutStream = new ChannelOutputStream(true);
         mOutBufferLock = new Object();
-        
+
         mStatusEvent = new Event();
         mTimeout = 0;   // infinite, in java-speek
     }
@@ -283,11 +283,11 @@ public class Channel
      * basic terminal semantics for a shell invoked with {@link #invokeShell}.
      * It isn't necessary (or desirable) to call this method if you're going
      * to execute a single command with {@link #execCommand}.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
      * @param width width (in characters) of the terminal screen
      * @param height height (in characters) of the terminal screen
@@ -304,7 +304,7 @@ public class Channel
             if (mClosed || mEOFReceived || mEOFSent || !mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
@@ -321,11 +321,11 @@ public class Channel
             } else {
                 m.putByteString(modes.toBytes());
             }
-            
+
             mEvent.clear();
             mTransport.sendUserMessage(m, -1);
         }
-        
+
         if (timeout_ms != 0) {
             waitForEvent(mEvent, timeout_ms);
         }
@@ -337,11 +337,11 @@ public class Channel
      * basic terminal semantics for a shell invoked with {@link #invokeShell}.
      * It isn't necessary (or desirable) to call this method if you're going
      * to execute a single command with {@link #execCommand}.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param term the terminal type to emulate (for example, <code>"vt100"</code>)
      * @param width width (in characters) of the terminal screen
      * @param height height (in characters) of the terminal screen
@@ -360,15 +360,15 @@ public class Channel
      * Request an interactive shell session on this channel.  If the server
      * allows it, the channel will then be directly connected to the stdin,
      * stdout, and stderr of the shell.
-     * 
+     *
      * <p>A typical usage would call {@link #getPTY} before this, in which
      * case the shell will operate through the pty, and the channel will be
      * connected to the stdin and stdout of the pty.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
      * @throws IOException if an exception occurred while making the request
@@ -381,31 +381,31 @@ public class Channel
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("shell");
             m.putBoolean(timeout_ms != 0);
-            
+
             mEvent.clear();
             mTransport.sendUserMessage(m, -1);
         }
-        
+
         if (timeout_ms != 0) {
             waitForEvent(mEvent, timeout_ms);
         }
     }
-    
+
     /**
      * Execute a command on the server.  If the server allows it, the channel
      * will then be directly connected to the stdin, stdout, and stderr of
      * the command being executed.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param command a shell command to execute
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
@@ -419,18 +419,18 @@ public class Channel
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("exec");
             m.putBoolean(timeout_ms != 0);
             m.putString(command);
-            
+
             mEvent.clear();
             mTransport.sendUserMessage(m, -1);
         }
-        
+
         if (timeout_ms != 0) {
             waitForEvent(mEvent, timeout_ms);
         }
@@ -440,11 +440,11 @@ public class Channel
      * Request a subsystem on the server (for example, <code>"sftp"</code>).
      * If the server allows it, the channel will then be directly connected
      * to the requested subsystem.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param subsystem name of the subsystem being requested
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
      *     wait forever; 0 to avoid waiting for a response
@@ -458,32 +458,32 @@ public class Channel
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
             m.putString("subsystem");
             m.putBoolean(timeout_ms != 0);
             m.putString(subsystem);
-            
+
             mEvent.clear();
             mTransport.sendUserMessage(m, -1);
         }
-        
+
         if (timeout_ms != 0) {
             waitForEvent(mEvent, timeout_ms);
         }
     }
-    
+
     /**
      * Resize the pseudo-terminal.  This can be used to change the width and
      * height of the terminal emulation created by a previous {@link #getPTY}
      * call.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     * 
+     *
      * @param width new width (in characters) of the terminal
      * @param height new height (in characters) of the terminal
      * @param timeout_ms time (in milliseconds) to wait for a response; -1 to
@@ -498,7 +498,7 @@ public class Channel
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
@@ -508,11 +508,11 @@ public class Channel
             m.putInt(height);
             m.putInt(0);
             m.putInt(0);
-            
+
             mEvent.clear();
             mTransport.sendUserMessage(m, timeout_ms);
         }
-        
+
         if (timeout_ms != 0) {
             waitForEvent(mEvent, timeout_ms);
         }
@@ -524,7 +524,7 @@ public class Channel
      * command hasn't finished yet, this method will wait up to <code>timeout_ms</code>
      * for it to complete.  If no exit status is sent within the timeout, an
      * {@link SSHException} will be thrown.
-     * 
+     *
      * @param timeout_ms time (in milliseconds) to wait for the exit status
      *     to be sent; -1 to wait forever
      * @return the exit status
@@ -538,13 +538,13 @@ public class Channel
         waitForEvent(mStatusEvent, timeout_ms);
         return mExitStatus;
     }
-    
+
     /**
      * Send the exit status of an executed command to the client.  (This
      * really only makes sense in server mode.)  Many clients expect to get
      * some sort of status code back from an executed command after it
      * completes.
-     * 
+     *
      * @param status the exit code of the process
      * @throws IOException if an exception occurred while sending the status
      *     code
@@ -564,16 +564,16 @@ public class Channel
             mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
         }
     }
-    
+
     /**
      * Send a generic channel request.  There is no reason to use this if you
      * are communicating with a standard SSH server, but it can be useful for
      * implementing other protocols across SSH.
-     * 
+     *
      * <p>Normally this method will wait for a server response to verify
      * that it succeeded.  You may pass a timeout of <code>0</code> to make
      * the request without waiting for a response.
-     *   
+     *
      * @param type the type of the message (an arbitrary string)
      * @param data data to be sent along with the request (can be null if no
      *     extra data is to be sent)
@@ -582,14 +582,14 @@ public class Channel
      * @throws IOException if an exception occurred while making the request
      */
     public void
-    sendChannelRequest (String type, List data, int timeout_ms) 
+    sendChannelRequest (String type, List data, int timeout_ms)
         throws IOException
     {
         synchronized (mLock) {
             if (mClosed || mEOFReceived || mEOFSent || ! mActive) {
                 throw new SSHException("Channel is not open");
             }
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_REQUEST);
             m.putInt(mRemoteChanID);
@@ -610,10 +610,10 @@ public class Channel
     /**
      * Return the arbitrary string identifying the "type" for this channel.
      * For normal SSH channels, this will usually be <code>"session"</code>.
-     * 
+     *
      * @return the kind of SSH channel
      */
-    public String 
+    public String
     getKind ()
     {
         return mKind;
@@ -622,13 +622,13 @@ public class Channel
     /**
      * Return a list of parameters passed to the channel.  In most cases this
      * will be null because most SSH channels don't take parameters.
-     * 
+     *
      * @return the channel parameters
      */
-    public List 
+    public List
     getParams ()
     {
-        return mParams; 
+        return mParams;
     }
 
     /**
@@ -638,10 +638,10 @@ public class Channel
      * <code>timeout_ms</code> is greater than zero, subsequent reads from
      * this channel's input streams will throw InterruptedIOException if no
      * data is ready within the timeout period.
-     * 
+     *
      * <p>By default, there is no timeout set, and read operations block
      * indefinitely.
-     * 
+     *
      * @param timeout_ms timeout (in milliseconds), or zero
      */
     public void
@@ -657,10 +657,10 @@ public class Channel
             }
         }
     }
-    
+
     /**
      * Return the read timeout previously set with {@link #setTimeout}.
-     * 
+     *
      * @return timeout (in milliseconds)
      */
     public int
@@ -672,14 +672,14 @@ public class Channel
             }
         }
     }
-    
+
     /**
      * Return an InputStream for reading data from this channel.  If
      * {@link #setCombineStderr} has been turned on, the stream will contain
      * a combination of data from the primary stream. and from any out-of-band
      * "stderr" stream.  Otherwise, the "stderr" stream must be fetched
      * separately using {@link #getStderrInputStream}.
-     * 
+     *
      * @return the InputStream for reading from this channel
      */
     public InputStream
@@ -687,12 +687,12 @@ public class Channel
     {
         return mInStream;
     }
-    
+
     /**
      * Return an InputStream for reading data from the "stderr" stream of
      * this channel.  If {@link #setCombineStderr} has been turned on, or
      * you are using a pty, no data will ever arrive over this stream.
-     * 
+     *
      * @return the InputStream for reading data from the "stderr" stream of
      *     this channel
      */
@@ -701,10 +701,10 @@ public class Channel
     {
         return mStderrInStream;
     }
-    
+
     /**
      * Return an OutputStream for writing data into this channel.
-     * 
+     *
      * @return the OutputStream for writing to this channel
      */
     public OutputStream
@@ -712,12 +712,12 @@ public class Channel
     {
         return mOutStream;
     }
-    
+
     /**
      * Return an OutputStream for writing data into the "stderr" stream of
      * this channel.  Normally this is only useful in server mode, when the
      * client did not request a pty.
-     * 
+     *
      * @return the OutputStream for writing to the "stderr" stream of this
      *     channel
      */
@@ -726,20 +726,20 @@ public class Channel
     {
         return mStderrOutStream;
     }
-    
+
     /**
      * Set whether stderr should be combined into stdout on this channel.
      * The default is false, but in some cases it may be convenient to have
      * both streams combined.
-     * 
+     *
      * <p>If this is false, and {@link #execCommand} is called (or
      * {@link #invokeShell} with no pty), output to stderr will not show up
      * through the normal {@link #getInputStream} stream; instead, you must
      * use {@link #getStderrInputStream} to get stderr output.
-     * 
+     *
      * <p>If this is true, data will never show up on {@link #getStderrInputStream},
      * but instead will be combined in the single normal input stream.
-     * 
+     *
      * @param combine true if stdout and stderr input should be combined
      * @return the previous setting
      */
@@ -748,14 +748,14 @@ public class Channel
     {
         byte[] data = null;
         boolean old = false;
-        
+
         synchronized (mInStream.mBufferLock) {
             synchronized (mStderrInStream.mBufferLock) {
                 synchronized (mLock) {
                     old = mCombineStderr;
                     mCombineStderr = combine;
                 }
-                
+
                 if (combine && ! old && (mStderrInStream.mBufferLen > 0)) {
                     // copy old stderr buffer into the primary buffer
                     data = new byte[mStderrInStream.mBufferLen];
@@ -764,13 +764,13 @@ public class Channel
                 }
             }
         }
-        
+
         if (data != null) {
             feed(mInStream, data);
         }
         return old;
     }
-    
+
     /**
      * Close the channel.  All future read/write operations on the channel
      * will fail.  The remote end will receive no more data (after queued data
@@ -784,7 +784,7 @@ public class Channel
             if (! mActive || mClosed) {
                 return;
             }
-        
+
             try {
                 sendEOF();
 
@@ -801,14 +801,14 @@ public class Channel
              * still try to send meta-data (exit-status, etc)
              */
         }
-        
+
         notifyClosed();
     }
-    
+
     /**
      * Return <code>true</code> if the channel is closed, either by the
      * local or remote side.
-     * 
+     *
      * @return <code>true</code> if this channel is closed
      */
     public boolean
@@ -818,7 +818,7 @@ public class Channel
             return mClosed;
         }
     }
-    
+
     /**
      * Shutdown the receiving side of this socket, closing the stream in the
      * incoming direction.  After this call, future reads on this channel
@@ -833,12 +833,12 @@ public class Channel
             mEOFReceived = true;
         }
     }
-    
+
     /**
      * Shutdown the sending side of this socket, closing the stream in the
      * outgoing direction.  After this call, future writes on this channel
      * will fail instantly.
-     * 
+     *
      * @throws IOException if an exception occurred
      */
     public void
@@ -849,13 +849,13 @@ public class Channel
             sendEOF();
         }
     }
-    
+
     /**
      * Return the ID # for this channel.  The channel ID is unique across
      * a {@link Transport} and usually a small number.  It's also the number
      * passed to {@link ServerInterface#checkChannelRequest} when determining
      * whether to accept a channel request in server mode.
-     * 
+     *
      * @return the channel ID
      */
     public int
@@ -863,17 +863,17 @@ public class Channel
     {
         return mChanID;
     }
-    
+
     /**
      * Set an object to be notified when new data arrives on the channel.
      * For an event-based server, it may be helpful to be notified through
      * an object instead of looping in a thread around a <code>read()</code>
      * call.
-     * 
+     *
      * <p>Once a notify object is set, whenever new data arrives on this
      * channel, the notify object will be notified via a call to
      * {@link Object#notifyAll}.
-     * 
+     *
      * @param obj the object to notify
      */
     public void
@@ -881,10 +881,10 @@ public class Channel
     {
         mNotifyObject = obj;
     }
-    
+
     /**
      * Get the {@link Transport} this Channel is associated with.
-     * 
+     *
      * @return this channel's Transport
      */
     public Transport
@@ -893,23 +893,23 @@ public class Channel
         return mTransport;
     }
 
-    
+
     /**
      * Handle a custom channel request from the remote host.  The default
      * method just returns <code>false</code> to reject the request.
-     * 
+     *
      * @param type channel request type (an arbitrary string)
      * @param message an SSH Message object which may contain extra parameters
      *    for this request
      * @return true if the request was successful; false if not
      */
-    protected boolean 
+    protected boolean
     handleCustomRequest (String type, Message message)
     {
         mLog.debug("Unhandled channel request '" + type + "'");
         return false;
     }
-    
+
     /* package */ boolean
     handleMessage (byte ptype, Message m)
         throws IOException
@@ -935,7 +935,7 @@ public class Channel
             return false;
         }
     }
-    
+
     /* package */ void
     setTransport (BaseTransport t, LogSink log)
     {
@@ -952,7 +952,7 @@ public class Channel
         mInWindowSoFar = 0;
         mLog.debug("Max packet in: " + maxPacketSize + " bytes");
     }
-    
+
     /* package */ void
     setRemoteChannel (int serverChanID, int serverWindowSize, int serverMaxPacketSize)
     {
@@ -965,13 +965,13 @@ public class Channel
         mActive = true;
         mLog.debug("Max packet out: " + serverMaxPacketSize + " bytes");
     }
-    
+
     /* package */ void
     setServer (ServerInterface server)
     {
         mServer = server;
     }
-    
+
     /* package */ void
     unlink ()
     {
@@ -986,8 +986,8 @@ public class Channel
         }
         notifyClosed();
     }
-    
-    
+
+
     private void
     notifyClosed ()
     {
@@ -1006,7 +1006,7 @@ public class Channel
             }
         }
     }
-    
+
     // you are holding the lock
     private void
     sendEOF ()
@@ -1017,7 +1017,7 @@ public class Channel
         }
         // in case we hit an error trying to send it:
         mEOFSent = true;
-        
+
         Message m = new Message();
         m.putByte(MessageType.CHANNEL_EOF);
         m.putInt(mRemoteChanID);
@@ -1030,7 +1030,7 @@ public class Channel
      * channel goes inactive (dead), it will return prematurely within the
      * next tenth of a second.
      * It will also return prematurely if the thread is interrupted.
-     *  
+     *
      * @param e the event to wait on
      * @param timeout_ms maximum time to wait (in milliseconds); -1 to wait
      *     forever
@@ -1066,7 +1066,7 @@ public class Channel
             }
         }
     }
-    
+
     // you're already holding mInBufferLock
     private int
     checkAddWindow (int nbytes)
@@ -1075,7 +1075,7 @@ public class Channel
             if (mClosed || mEOFReceived || !mActive) {
                 return 0;
             }
-            
+
             mInWindowSoFar += nbytes;
             if (mInWindowSoFar <= mInWindowThreshold) {
                 return 0;
@@ -1085,14 +1085,14 @@ public class Channel
             return ack;
         }
     }
-    
+
     /**
      * Wait for the send window to open up, and allocate up to
      * <code>size</code> bytes for transmission.  If no space is available,
      * this method will block until space opens up, or the channel is closed.
-     * 
+     *
      * You are holding mOutBufferLock.
-     * 
+     *
      * @param size number of bytes desired
      * @return number of bytes allocated (may be less than requested)
      */
@@ -1105,18 +1105,18 @@ public class Channel
                     return 0;
                 }
             }
-            
+
             try {
                 mOutBufferLock.wait();
             } catch (InterruptedException x) { }
         }
-        
+
         synchronized (mLock) {
             if (mClosed || mEOFSent) {
                 return 0;
             }
         }
-        
+
         if (mOutWindowSize < size) {
             size = mOutWindowSize;
         }
@@ -1126,7 +1126,7 @@ public class Channel
         mOutWindowSize -= size;
         return size;
     }
-    
+
     private void
     feed (ChannelInputStream is, byte[] data)
     {
@@ -1144,14 +1144,14 @@ public class Channel
             is.mBufferLen += data.length;
             is.mBufferLock.notifyAll();
         }
-        
+
         if (mNotifyObject != null) {
             synchronized (mNotifyObject) {
                 mNotifyObject.notifyAll();
             }
         }
     }
-    
+
     private boolean
     handleWindowAdjust (Message m)
     {
@@ -1162,14 +1162,14 @@ public class Channel
         }
         return true;
     }
-    
+
     private boolean
     handleData (Message m)
     {
         feed(mInStream, m.getByteString());
         return true;
     }
-    
+
     private boolean
     handleExtendedData (Message m)
     {
@@ -1179,34 +1179,34 @@ public class Channel
             mLog.error("Unknown extended_data type " + code + "; discarding");
             return true;
         }
-        
+
         if (mCombineStderr) {
             feed(mInStream, data);
         } else {
             feed(mStderrInStream, data);
         }
-        
+
         return true;
     }
-    
+
     private boolean
     handleEOF (Message m)
     {
         synchronized (mInStream.mBufferLock) {
             synchronized (mStderrInStream.mBufferLock) {
-            	synchronized (mLock) {
-            		if (! mEOFReceived) {
-            			mEOFReceived = true;
-            			mInStream.mBufferLock.notifyAll();
-            			mStderrInStream.mBufferLock.notifyAll();
-            		}
-            	}
+                synchronized (mLock) {
+                    if (! mEOFReceived) {
+                        mEOFReceived = true;
+                        mInStream.mBufferLock.notifyAll();
+                        mStderrInStream.mBufferLock.notifyAll();
+                    }
+                }
             }
         }
         mLog.debug("EOF received");
         return true;
     }
-    
+
     private boolean
     handleClose (Message m)
     {
@@ -1216,7 +1216,7 @@ public class Channel
         }
         return true;
     }
-    
+
     private boolean
     handleRequest (Message m)
         throws IOException
@@ -1224,7 +1224,7 @@ public class Channel
         String key = m.getString();
         boolean wantReply = m.getBoolean();
         boolean ok = false;
-        
+
         if (key.equals("exit-status")) {
             mExitStatus = m.getInt();
             mStatusEvent.set();
@@ -1277,7 +1277,7 @@ public class Channel
         } else {
             ok = handleCustomRequest(key, m);
         }
-        
+
         if (wantReply) {
             Message mx = new Message();
             mx.putByte(ok ? MessageType.CHANNEL_SUCCESS : MessageType.CHANNEL_FAILURE);
@@ -1286,7 +1286,7 @@ public class Channel
         }
         return true;
     }
-    
+
     private boolean
     handleSuccess (Message m)
     {
@@ -1294,7 +1294,7 @@ public class Channel
         mEvent.set();
         return true;
     }
-    
+
     private boolean
     handleFailure (Message m)
     {
@@ -1302,8 +1302,8 @@ public class Channel
         close();
         return true;
     }
-    
-    
+
+
     private int mChanID;
     private int mRemoteChanID;
     private String mKind;
@@ -1319,23 +1319,23 @@ public class Channel
     private LogSink mLog;
     private ServerInterface mServer;
     private Object mNotifyObject;
-    
+
     private int mInWindowThreshold;     // bytes we must receive before we bother to send a window update
     private int mInWindowSoFar;
     // package-scope for unit tests:
     /* package */ int mOutWindowSize;
     /* package */ int mOutMaxPacketSize;
-    
+
     private ChannelInputStream mInStream;
     private ChannelInputStream mStderrInStream;
     private ChannelOutputStream mOutStream;
     private ChannelOutputStream mStderrOutStream;
     private Object mOutBufferLock;
-    
+
     private int mExitStatus = -1;
     private Event mStatusEvent;
     private int mTimeout;
- 
+
     // lower bound on the "max packet size" we'll allow from the server
     private static final int MIN_PACKET_SIZE = 1024;
 

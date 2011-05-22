@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -50,7 +50,7 @@ public class HostKeysTest
         "kpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW5y" +
         "mME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/Qps" +
         "FH+Pc2M=";
-    
+
     private final static String KEYBLOB_DSS =
         "AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/o" +
         "LjYbVtjAy6pl/h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8" +
@@ -63,7 +63,7 @@ public class HostKeysTest
         "kUgyB7+NwacIBlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwj" +
         "QgE=";
 
-    
+
     public void
     testLoad ()
         throws Exception
@@ -76,7 +76,7 @@ public class HostKeysTest
         PKey key = (PKey) hk.lookup("secure.example.com").get("ssh-rsa");
         assertEquals("E6684DB30E109B67B70FF1DC5C7F1363", Util.encodeHex(key.getFingerprint()).toUpperCase());
     }
-    
+
     public void
     testAdd ()
         throws Exception
@@ -90,7 +90,7 @@ public class HostKeysTest
         assertEquals("7EC91BB336CB6D810B124B1353C32396", Util.encodeHex(key2.getFingerprint()));
         assertTrue(hk.check("foo.example.com", key));
     }
-    
+
     public void
     testMultiKeys ()
         throws Exception
@@ -101,7 +101,7 @@ public class HostKeysTest
         hk.add("|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c=", rkey);
         PKey dkey = DSSKey.createFromData(Base64.decode(KEYBLOB_DSS));
         hk.add("foo.example.com", dkey);
-        
+
         assertEquals(4, hk.size());
         Map m = hk.lookup("foo.example.com");
         assertEquals(2, m.size());

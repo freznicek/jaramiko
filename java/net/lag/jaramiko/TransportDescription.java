@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -38,11 +38,11 @@ public class TransportDescription
     {
         // pass
     }
-    
+
     /**
      * Return the name of the key exchange algorithm in use. One example is
      * <code>"diffie-hellman-group1-sha1"</code>
-     * 
+     *
      * @return the key exchange algorithm in use
      */
     public String
@@ -50,11 +50,11 @@ public class TransportDescription
     {
         return mKexName;
     }
-    
+
     /**
      * Return the type of key used by the server. This is usually either
      * <code>"ssh-rsa"</code> or <code>"ssh-dss"</code>.
-     * 
+     *
      * @return the type of key used by the server
      */
     public String
@@ -62,10 +62,10 @@ public class TransportDescription
     {
         return mServerKeyType;
     }
-    
+
     /**
      * Return the name of the negotiated cipher used for outbound traffic.
-     * 
+     *
      * @return the cipher name
      */
     public String
@@ -73,11 +73,11 @@ public class TransportDescription
     {
         return mLocalCipherName;
     }
-    
+
     /**
      * Return the key size (in bits) of the negotiated cipher used for
      * outbound traffic.
-     * 
+     *
      * @return the key size in bits
      */
     public int
@@ -85,10 +85,10 @@ public class TransportDescription
     {
         return mLocalCipher.mKeySize * 8;
     }
-    
+
     /**
      * Return the name of the negotiated cipher used for inbound traffic.
-     * 
+     *
      * @return the cipher name
      */
     public String
@@ -96,11 +96,11 @@ public class TransportDescription
     {
         return mRemoteCipherName;
     }
-    
+
     /**
      * Return the key size (in bits) of the negotiated cipher used for
      * inbound traffic.
-     * 
+     *
      * @return the key size in bits
      */
     public int
@@ -108,11 +108,11 @@ public class TransportDescription
     {
         return mRemoteCipher.mKeySize * 8;
     }
-    
+
     /**
      * Return the name of the MAC algorithm used for outbound traffic. An
      * example is <code>"hmac-sha1"</code>.
-     * 
+     *
      * @return the MAC algorithm name
      */
     public String
@@ -120,10 +120,10 @@ public class TransportDescription
     {
         return mLocalMacAlgorithm;
     }
-    
+
     /**
      * Return the number of bits used on outbound MACs.
-     * 
+     *
      * @return the bit size of the MAC
      */
     public int
@@ -131,11 +131,11 @@ public class TransportDescription
     {
         return mLocalMac.mDigestSize * 8;
     }
-    
+
     /**
      * Return the name of the MAC algorithm used for inbound traffic. An
      * example is <code>"hmac-sha1"</code>.
-     * 
+     *
      * @return the MAC algorithm name
      */
     public String
@@ -143,10 +143,10 @@ public class TransportDescription
     {
         return mRemoteMacAlgorithm;
     }
-    
+
     /**
      * Return the number of bits used on inbound MACs.
-     * 
+     *
      * @return the bits size of the MAC
      */
     public int
@@ -154,11 +154,11 @@ public class TransportDescription
     {
         return mRemoteMac.mDigestSize * 8;
     }
-    
+
     /**
      * Return the name of the compression used for outbound traffic, or
      * <code>"none"</code> for no compression.
-     * 
+     *
      * @return the name of the compression algorithm
      */
     public String
@@ -166,11 +166,11 @@ public class TransportDescription
     {
         return mLocalCompression;
     }
-    
+
     /**
      * Return the name of the compression used for inbound traffic, or
      * <code>"none"</code> for no compression.
-     * 
+     *
      * @return the name of the compression algorithm
      */
     public String
@@ -178,7 +178,7 @@ public class TransportDescription
     {
         return mRemoteCompression;
     }
-    
+
     public String
     toString ()
     {
@@ -189,8 +189,8 @@ public class TransportDescription
             mRemoteMacAlgorithm + " (bits=" + mRemoteMac.mDigestSize * 8 + "); outbound_compress=" +
             mLocalCompression + "; inbound_compress=" + mRemoteCompression;
     }
-    
-    
+
+
     /* package */ String mKexName;
     /* package */ String mServerKeyType;
     /* package */ String mLocalCipherName;

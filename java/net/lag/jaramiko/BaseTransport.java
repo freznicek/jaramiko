@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -51,8 +51,8 @@ import net.lag.crai.*;
      * initializes the Transport object; it doesn't begin negotiating the
      * SSH ession yet.  Use {@link #startClient} to begin a client session,
      * or {@link #startServer} to begin a server session.
-     * 
-     * @param socket the (previously connected) socket to use for this session 
+     *
+     * @param socket the (previously connected) socket to use for this session
      * @throws IOException if there's an error fetching the input/output
      *     streams from the socket
      */
@@ -65,37 +65,37 @@ import net.lag.crai.*;
         mInKex = false;
         mClearToSend = new Event();
         mLog = new NullLog();
-        
+
         mSocket = socket;
         mInStream = mSocket.getInputStream();
         mOutStream = mSocket.getOutputStream();
         mSecurityOptions = new SecurityOptions(KNOWN_CIPHERS, KNOWN_MACS, KNOWN_KEYS, KNOWN_KEX, KNOWN_COMPRESSIONS);
         mSecurityOptions.setCompressions(Arrays.asList(new String[] { "none" }));
-        
+
         mChannels = new Channel[16];
         mChannelEvents = new Event[16];
-        
+
         mSocket.setSoTimeout(100);
         mPacketizer = new Packetizer(mInStream, mOutStream, sCrai.getPRNG());
         mExpectedPacket1 = 0;
         mExpectedPacket2 = 0;
         mInitialKexDone = false;
-        
+
         mLocalVersion = "SSH-" + PROTO_ID + "-" + CLIENT_ID;
         mRemoteVersion = null;
-        
+
         mMessageHandlers = new HashMap();
         mChannelFactoryMap = new HashMap();
         mChannelFactoryMap.put("session", new Channel.Factory());
     }
-    
+
     public void
     setLog (LogSink logger)
     {
         mLog = logger;
         mPacketizer.setLog(logger);
     }
-    
+
     public void
     setDumpPackets (boolean dump)
     {
@@ -107,7 +107,7 @@ import net.lag.crai.*;
      * By default, this library will wait 15 seconds for a banner, to account
      * for high-latency links. You may make this timeout shorter or longer,
      * if you call this method before starting the transport.
-     * 
+     *
      * @param seconds number of seconds to wait for the SSH banner when
      *     initiating handshaking
      */
@@ -116,13 +116,13 @@ import net.lag.crai.*;
     {
         mInitialBannerTimeout = seconds * 1000;
     }
-    
+
     /**
      * Set the window size to be used on new channels. This is the amount of
      * un-acked data that can be in transit at once, so for high-latency
      * links, larger values may be better. This will also affect the size
      * of retransmit buffers.
-     * 
+     *
      * @param size window size (in bytes) to use for new channels
      */
     public void
@@ -130,11 +130,11 @@ import net.lag.crai.*;
     {
         mWindowSize = size;
     }
-    
+
     /**
      * Return the current window size used for new channels.
      * (see {@link #setWindowSize(int)})
-     * 
+     *
      * @return window size (in bytes) being used for new channels
      */
     public int
@@ -142,14 +142,14 @@ import net.lag.crai.*;
     {
         return mWindowSize;
     }
-    
+
     /**
      * Set the size of the largest SSH packet we will send. By default, we
      * will use the largest packet size allowed by the protocol spec, but some
      * servers will allow larger sizes. Use this with care: some servers will
      * disconnect if they receive a packet that's "too large". You usually
      * won't need to change this.
-     * 
+     *
      * @param size the new maximum packet size, in bytes
      */
     public void
@@ -157,11 +157,11 @@ import net.lag.crai.*;
     {
         mMaxPacketSize = size;
     }
-    
+
     /**
      * Return the current maximum packet size for the SSH protocol.
      * (see {@link #setMaxPacketSize(int)})
-     * 
+     *
      * @return the maximum packet size, in bytes
      */
     public int
@@ -169,7 +169,7 @@ import net.lag.crai.*;
     {
         return mMaxPacketSize;
     }
-    
+
     public SecurityOptions
     getSecurityOptions ()
     {
@@ -181,7 +181,7 @@ import net.lag.crai.*;
     {
         return mActive && (mAuthHandler != null) && mAuthHandler.isAuthenticated();
     }
-    
+
     public String
     getUsername ()
     {
@@ -190,7 +190,7 @@ import net.lag.crai.*;
         }
         return mAuthHandler.getUsername();
     }
-    
+
     public void
     setKeepAlive (int interval_ms)
     {
@@ -204,7 +204,7 @@ import net.lag.crai.*;
             }
         });
     }
-    
+
     /**
      * Turn on/off compression.  This will only have an affect before starting
      * the transport.  By default, compression is off since it negatively
@@ -221,7 +221,7 @@ import net.lag.crai.*;
         } else {
             mSecurityOptions.setCompressions(Arrays.asList(new String[] { "none" }));
         }
-    }            
+    }
 
     public void
     renegotiateKeys (int timeout_ms)
@@ -235,7 +235,7 @@ import net.lag.crai.*;
             throw new SSHException("Timeout during key renegotiation.");
         }
     }
-    
+
     public void
     sendIgnore (int bytes, int timeout_ms)
         throws IOException
@@ -252,7 +252,7 @@ import net.lag.crai.*;
         m.putBytes(data);
         sendUserMessage(m, timeout_ms);
     }
-    
+
     public Message
     sendGlobalRequest (String requestName, List parameters, int timeout_ms)
         throws IOException
@@ -277,32 +277,32 @@ import net.lag.crai.*;
         }
         return mGlobalResponse;
     }
-    
+
     public void
     close ()
     {
         Channel[] chans;
-        
+
         synchronized (mLock) {
             mActive = false;
             mPacketizer.close();
             chans = mChannels;
             mChannels = new Channel[16];
         }
-        
+
         for (int i = 0; i < chans.length; i++) {
             if (chans[i] != null) {
                 chans[i].unlink();
             }
         }
     }
-    
+
     /**
      * Return an object containing negotiated parameters of this SSH
      * transport. These parameters include the MAC algorithm, encryption,
      * and compression in both directions. This object will be null until
      * a transport is initiated.
-     * 
+     *
      * @return the negotiated parameters
      */
     public TransportDescription
@@ -310,17 +310,17 @@ import net.lag.crai.*;
     {
         return mDescription;
     }
-        
-    
+
+
     // -----  package
-    
-    
+
+
     /* package */ void
     registerMessageHandler (byte ptype, MessageHandler handler)
     {
         mMessageHandlers.put(new Byte(ptype), handler);
     }
-    
+
     /* package */ void
     expectPacket (byte ptype)
     {
@@ -341,7 +341,7 @@ import net.lag.crai.*;
             mSavedException = x;
         }
     }
-    
+
     /* package */ IOException
     getException ()
     {
@@ -361,7 +361,7 @@ import net.lag.crai.*;
             sendKexInit();
         }
     }
-    
+
     /* package */ final void
     setKH (BigInteger k, byte[] h)
     {
@@ -371,7 +371,7 @@ import net.lag.crai.*;
             mSessionID = h;
         }
     }
-    
+
     /* Compute SSH2-style key bytes, using an "id" ('A' - 'F') and a pile of
      * state common to this session.
      */
@@ -381,7 +381,7 @@ import net.lag.crai.*;
         byte[] out = new byte[nbytes];
         int sofar = 0;
         CraiDigest sha = sCrai.makeSHA1();
-        
+
         while (sofar < nbytes) {
             Message m = new Message();
             m.putMPZ(mK);
@@ -406,7 +406,7 @@ import net.lag.crai.*;
         }
         return out;
     }
-    
+
     private void
     startInboundCompression ()
     {
@@ -422,7 +422,7 @@ import net.lag.crai.*;
             }
         }
     }
-    
+
     private void
     startOutboundCompression ()
     {
@@ -438,7 +438,7 @@ import net.lag.crai.*;
             }
         }
     }
-    
+
     /* package */ void
     activateInbound ()
         throws SSHException
@@ -452,10 +452,10 @@ import net.lag.crai.*;
             startInboundCompression();
         }
     }
-    
+
     // ClientTransport & ServerTransport override to set the correct keys
     protected abstract void activateInbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
-    
+
     // switch on newly negotiated encryption parameters for outbound traffic
     /* package */ final void
     activateOutbound ()
@@ -464,7 +464,7 @@ import net.lag.crai.*;
         Message m = new Message();
         m.putByte(MessageType.NEW_KEYS);
         sendMessage(m);
-        
+
         CipherDescription desc = mDescription.mLocalCipher;
         MacDescription mdesc = mDescription.mLocalMac;
         activateOutbound(desc, mdesc);
@@ -480,9 +480,9 @@ import net.lag.crai.*;
         // we always expect to receive NEW_KEYS now
         mExpectedPacket1 = MessageType.NEW_KEYS;
     }
-    
+
     protected abstract void activateOutbound (CipherDescription desc, MacDescription mdesc) throws SSHException;
-    
+
     /* package */ void
     authTrigger ()
     {
@@ -494,11 +494,11 @@ import net.lag.crai.*;
             startInboundCompression();
         }
     }
-    
+
     /**
      * Send a message, but if we're in key (re)negotation, block until that's
      * finished.  This is used for user-initiated requests.
-     * 
+     *
      * @param m the message to send
      * @param timeout_ms maximum time (in milliseconds) to wait for the
      *     key exchange to finish, if it's ongoing
@@ -520,13 +520,13 @@ import net.lag.crai.*;
             }
         }
     }
-    
+
     /* package */ boolean
     isActive ()
     {
         return mActive;
     }
-    
+
     /* package */ static Crai
     getCrai ()
     {
@@ -540,7 +540,7 @@ import net.lag.crai.*;
 
         return sCrai;
     }
-    
+
     /* package */ static ModulusPack
     getModulusPack ()
     {
@@ -552,27 +552,27 @@ import net.lag.crai.*;
             return sModulusPack;
         }
     }
-    
-    /* package */ byte[] 
+
+    /* package */ byte[]
     getSessionID ()
     {
         return mSessionID;
     }
 
-    
+
     // -----  private
-    
-    
+
+
     private void
     checkBanner ()
         throws IOException
     {
         String line = null;
-        
+
         for (int i = 0; i < 5; i++) {
             /* give them 15 seconds for the first line, then just 5 seconds
-             * each additional line. (some links have very high latency.) 
-             */ 
+             * each additional line. (some links have very high latency.)
+             */
             int timeout = BANNER_TIMEOUT;
             if (i == 0) {
                 timeout = mInitialBannerTimeout;
@@ -590,12 +590,12 @@ import net.lag.crai.*;
             }
             mLog.debug("Banner: " + line);
         }
-        
+
         if (! line.startsWith("SSH-")) {
             throw new SSHException("Indecipherable protocol version '" + line + "'");
         }
         mRemoteVersion = line;
-        
+
         // pull off any attached comment
         int i = line.indexOf(' ');
         if (i > 0) {
@@ -612,17 +612,17 @@ import net.lag.crai.*;
         }
         mLog.notice("Connected (version " + version + ", client " + client + ")");
     }
-    
+
     private void
     sendKexInit ()
         throws IOException
     {
         sendKexInitHook();
-        
+
         synchronized (mClearToSend) {
             mClearToSend.clear();
         }
-        
+
         byte[] rand = new byte[16];
         sCrai.getPRNG().getBytes(rand);
 
@@ -641,19 +641,19 @@ import net.lag.crai.*;
         m.putString("");
         m.putBoolean(false);
         m.putInt(0);
-        
+
         // save a copy for later
         mLocalKexInit = m.toByteArray();
         mInKex = true;
         sendMessage(m);
     }
-    
+
     /* package */ void
     sendKexInitHook ()
     {
         // pass
     }
-    
+
     // return the first string from localPrefs that's in remotePrefs
     // (server mode overrides this to reverse the sense)
     /* package */ String
@@ -667,13 +667,13 @@ import net.lag.crai.*;
         }
         return null;
     }
-    
+
     /**
      * Wait for an event to trigger, up to an optional timeout.  If the
      * transport goes inactive (dead), it will return prematurely within the
      * next tenth of a second.
      * It will also return prematurely if the thread is interrupted.
-     *  
+     *
      * @param e the event to wait on
      * @param timeout_ms maximum time to wait (in milliseconds); -1 to wait
      *     forever
@@ -714,7 +714,7 @@ import net.lag.crai.*;
         }
         return true;
     }
-    
+
     /* package */ void
     transportRun0 ()
     {
@@ -723,7 +723,7 @@ import net.lag.crai.*;
             checkBanner();
             sendKexInit();
             mExpectedPacket1 = MessageType.KEX_INIT;
-            
+
             while (mActive) {
                 if (mPacketizer.needRekey() && ! mInKex) {
                     sendKexInit();
@@ -737,7 +737,7 @@ import net.lag.crai.*;
                 if (m == null) {
                     break;
                 }
-                
+
                 byte ptype = m.getByte();
                 switch (ptype) {
                 case MessageType.IGNORE:
@@ -751,7 +751,7 @@ import net.lag.crai.*;
                     parseDebug(m);
                     continue;
                 }
-                
+
                 if (mExpectedPacket1 != 0) {
                     if ((ptype != mExpectedPacket1) && (ptype != mExpectedPacket2)) {
                         if (mExpectedPacket2 != 0) {
@@ -766,7 +766,7 @@ import net.lag.crai.*;
                     mExpectedPacket1 = 0;
                     mExpectedPacket2 = 0;
                 }
-                
+
                 if (! parsePacket(ptype, m)) {
                     mLog.warning("Oops, unhandled packet type " + MessageType.getDescription(ptype));
                     Message resp = new Message();
@@ -783,7 +783,7 @@ import net.lag.crai.*;
             mLog.error("I/O exception in feeder thread: " + x);
             saveException(x);
         }
-        
+
         for (int i = 0; i < mChannels.length; i++) {
             if (mChannels[i] != null) {
                 mChannels[i].unlink();
@@ -796,11 +796,11 @@ import net.lag.crai.*;
             if (mCompletionEvent != null) {
                 mCompletionEvent.set();
             }
-            
+
             if (mAuthHandler != null) {
                 mAuthHandler.abort();
             }
-            
+
             for (int i = 0; i < mChannelEvents.length; i++) {
                 if (mChannelEvents[i] != null) {
                     mChannelEvents[i].set();
@@ -835,7 +835,7 @@ import net.lag.crai.*;
         if (handler != null) {
             return handler.handleMessage(ptype, m);
         }
-        
+
         if ((ptype >= MessageType.CHANNEL_WINDOW_ADJUST) && (ptype <= MessageType.CHANNEL_FAILURE)) {
             int chanID = m.getInt();
             Channel c = null;
@@ -849,7 +849,7 @@ import net.lag.crai.*;
                 throw new SSHException("Channel request for unknown channel");
             }
         }
-        
+
         switch (ptype) {
         case MessageType.NEW_KEYS:
             parseNewKeys();
@@ -878,7 +878,7 @@ import net.lag.crai.*;
         }
         return false;
     }
-    
+
     private void
     parseDisconnect (Message m)
     {
@@ -886,7 +886,7 @@ import net.lag.crai.*;
         String desc = m.getString();
         mLog.notice("Disconnect (code " + code + "): " + desc);
     }
-    
+
     private void
     parseDebug (Message m)
     {
@@ -895,20 +895,20 @@ import net.lag.crai.*;
         //String lang = m.getString();
         mLog.debug("Debug msg: " + Util.safeString(text));
     }
-    
+
     private void
     parseNewKeys ()
         throws SSHException
     {
         mLog.debug("Switch to new keys...");
         activateInbound();
-        
+
         // can also free a bunch of state here
         mLocalKexInit = null;
         mRemoteKexInit = null;
         mKexEngine = null;
         mK = null;
-        
+
         // give ServerTransport a chance to set up an AuthHandler hook:
         parseNewKeysHook();
 
@@ -927,13 +927,13 @@ import net.lag.crai.*;
             mClearToSend.set();
         }
     }
-    
+
     /* package */ void
     parseNewKeysHook ()
     {
         // pass
     }
-    
+
     private void
     parseGlobalRequest (Message m)
         throws IOException
@@ -954,23 +954,23 @@ import net.lag.crai.*;
             sendMessage(mx);
         }
     }
-    
+
     /* package */ List
     checkGlobalRequest (String kind, Message m)
     {
         // ServerTransport will override this
         return null;
     }
-    
+
     /* package */ void
     kexInitHook ()
         throws SSHException
     {
         // pass
     }
-    
+
     /* package */ abstract KexTransportInterface createKexTransportInterface ();
-    
+
     private void
     parseKexInit (Message m)
         throws IOException
@@ -983,7 +983,7 @@ import net.lag.crai.*;
             // send ours too
             sendKexInit();
         }
-        
+
         // there's no way to avoid this being a huge function, so here goes:
         m.getBytes(16);     // cookie
         List kexAlgorithmList = m.getList();
@@ -998,7 +998,7 @@ import net.lag.crai.*;
         m.getList();        // server lang list
         m.getBoolean();     // kex follows
         m.getInt();         // unused
-    
+
         String agreedLocalCompression = filter(mSecurityOptions.getCompressions(), clientCompressAlgorithmList);
         String agreedRemoteCompression = filter(mSecurityOptions.getCompressions(), serverCompressAlgorithmList);
         if ((agreedLocalCompression == null) || (agreedRemoteCompression == null)) {
@@ -1019,7 +1019,7 @@ import net.lag.crai.*;
         if ((agreedLocalCipher == null) || (agreedRemoteCipher == null)) {
             throw new SSHException("Incompatible SSH peer (no acceptable ciphers)");
         }
-        
+
         String agreedLocalMac = filter(mSecurityOptions.getDigests(), clientMacAlgorithmList);
         String agreedRemoteMac = filter(mSecurityOptions.getDigests(), serverMacAlgorithmList);
         if ((agreedLocalMac == null) || (agreedRemoteMac == null)) {
@@ -1042,7 +1042,7 @@ import net.lag.crai.*;
 
         kexInitHook();
         mLog.debug(d.toString());
-        
+
         // save for computing hash later...
         /* now wait!  openssh has a bug (and others might too) where there are
          * actually some extra bytes (one NUL byte in openssh's case) added to
@@ -1052,7 +1052,7 @@ import net.lag.crai.*;
         byte[] data = m.toByteArray();
         mRemoteKexInit = new byte[m.getPosition()];
         System.arraycopy(data, 0, mRemoteKexInit, 0, m.getPosition());
-        
+
         Class kexClass = (Class) sKexMap.get(agreedKex);
         if (kexClass == null) {
             throw new SSHException("Oops!  Negotiated kex " + agreedKex + " which I don't implement");
@@ -1064,7 +1064,7 @@ import net.lag.crai.*;
         }
         mKexEngine.startKex(createKexTransportInterface(), sCrai);
     }
-    
+
     private void
     parseRequestSuccess (Message m)
         throws IOException
@@ -1074,8 +1074,8 @@ import net.lag.crai.*;
         if (mCompletionEvent != null) {
             mCompletionEvent.set();
         }
-    }        
-    
+    }
+
     private void
     parseRequestFailure (Message m)
         throws IOException
@@ -1094,7 +1094,7 @@ import net.lag.crai.*;
         int serverChanID = m.getInt();
         int serverWindowSize = m.getInt();
         int serverMaxPacketSize = m.getInt();
-        
+
         synchronized (mLock) {
             Channel c = mChannels[chanID];
             if (c == null) {
@@ -1109,7 +1109,7 @@ import net.lag.crai.*;
             }
         }
     }
-    
+
     private void
     parseChannelOpenFailure (Message m)
     {
@@ -1119,7 +1119,7 @@ import net.lag.crai.*;
         m.getString();      // lang
         String reasonText = ChannelError.getDescription(reason);
         mLog.notice("Secsh channel " + chanID + " open FAILED: " + reasonStr + ": " + reasonText);
-        
+
         synchronized (mLock) {
             saveException(new ChannelException(reason));
             mChannels[chanID] = null;
@@ -1129,15 +1129,15 @@ import net.lag.crai.*;
             }
         }
     }
-    
+
     /* package */ abstract void parseChannelOpen (Message m) throws IOException;
-    
-    public void 
+
+    public void
     registerChannelKind (String kind, ChannelFactory factory)
     {
         mChannelFactoryMap.put(kind, factory);
     }
-    
+
     /* package */ Channel
     getChannelForKind (int chanid, String kind, Message params)
     {
@@ -1148,7 +1148,7 @@ import net.lag.crai.*;
             factory = new Channel.Factory();
         }
         return factory.createChannel(kind, chanid, params);
-    }  
+    }
 
     /* package */ Channel
     getChannelForKind (int chanid, String kind, List params)
@@ -1161,7 +1161,7 @@ import net.lag.crai.*;
         }
         return factory.createChannel(kind, chanid, params);
     }
-    
+
     // you are already holding mLock
     /* package */ int
     getNextChannel ()
@@ -1171,7 +1171,7 @@ import net.lag.crai.*;
                 return i;
             }
         }
-        
+
         // expand mChannels
         int old = mChannels.length;
         Channel[] nc = new Channel[old * 2];
@@ -1180,10 +1180,10 @@ import net.lag.crai.*;
         Event[] ne = new Event[old * 2];
         System.arraycopy(mChannelEvents, 0, ne, 0, old);
         mChannelEvents = ne;
-        
+
         return old;
     }
-    
+
     protected void
     unlinkChannel (int chanID)
     {
@@ -1191,7 +1191,7 @@ import net.lag.crai.*;
             mChannels[chanID] = null;
         }
     }
-    
+
     private void
     logStackTrace (Exception x)
     {
@@ -1200,7 +1200,7 @@ import net.lag.crai.*;
             mLog.debug(s[i]);
         }
     }
-    
+
     /*
      * try to generate each of the ciphers in sCipherMap, and remove the ones
      * that throw exceptions.  different JVMs may have implement different
@@ -1213,9 +1213,9 @@ import net.lag.crai.*;
         if (sCheckedCiphers) {
             return;
         }
-        
+
         boolean giveAdvice = false;
-        
+
         synchronized (BaseTransport.class) {
             for (Iterator i = sCipherMap.entrySet().iterator(); i.hasNext(); ) {
                 Map.Entry entry = (Map.Entry) i.next();
@@ -1232,11 +1232,11 @@ import net.lag.crai.*;
                     i.remove();
                 }
             }
-            
+
             sCheckedCiphers = true;
         }
-        
-        if (giveAdvice) {        
+
+        if (giveAdvice) {
             mLog.notice("Your java installation lacks support for 256-bit encryption.  " +
                         "This is due to a poor choice of defaults in Sun's java.  To fix it, " +
                         "visit: <http://java.sun.com/j2se/1.4.2/download.html> and download " +
@@ -1245,27 +1245,27 @@ import net.lag.crai.*;
         }
     }
 
-        
+
     private static final String PROTO_ID = "2.0";
     private static final String CLIENT_ID = "jaramiko_0.1";
-    
+
     private static final int BANNER_TIMEOUT = 5000;
     private static final int DEFAULT_WINDOW_SIZE = 384 * 1024;
     private static final int DEFAULT_MAX_PACKET_SIZE = 34816;
-    
+
     private static Map sCipherMap = new HashMap();
     private static Map sMacMap = new HashMap();
     private static Map sKeyMap = new HashMap();
     private static Map sKexMap = new HashMap();
     private static Map sCompressMap = new HashMap();
     private static volatile boolean sCheckedCiphers = false;
-    
+
     // crypto abstraction (not everyone has JCE)
     /* package */ static Crai sCrai = null;
-    
+
     // prime moduli used for kex-gex
     /* package */ static ModulusPack sModulusPack = null;
-    
+
     static {
         // mappings from SSH protocol names to java implementation details
         sCipherMap.put("aes128-cbc", new CipherDescription(CraiCipherAlgorithm.AES_CBC, 16, 16));
@@ -1277,17 +1277,17 @@ import net.lag.crai.*;
         sMacMap.put("hmac-sha1-96", new MacDescription("SHA1", 12, 20));
         sMacMap.put("hmac-md5", new MacDescription("MD5", 16, 16));
         sMacMap.put("hmac-md5-96", new MacDescription("MD5", 12, 16));
-        
+
         sKeyMap.put("ssh-rsa", RSAKey.class);
         sKeyMap.put("ssh-dss", DSSKey.class);
-        
+
         sKexMap.put("diffie-hellman-group1-sha1", KexGroup1.class);
         sKexMap.put("diffie-hellman-group-exchange-sha1", KexGex.class);
-        
+
         sCompressMap.put("zlib", ZlibCompressor.class);
         sCompressMap.put("zlib@openssh.com", ZlibCompressor.class);
     }
-    
+
     private final String[] KNOWN_CIPHERS = { "aes128-cbc", "blowfish-cbc", "aes256-cbc", "3des-cbc" };
     private final String[] KNOWN_MACS = { "hmac-sha1", "hmac-md5", "hmac-sha1-96", "hmac-md5-96" };
     private final String[] KNOWN_KEYS = { "ssh-rsa", "ssh-dss" };
@@ -1302,17 +1302,17 @@ import net.lag.crai.*;
     /* package */ int mWindowSize = DEFAULT_WINDOW_SIZE;
     /* package */ int mMaxPacketSize = DEFAULT_MAX_PACKET_SIZE;
     private int mInitialBannerTimeout = 15000;
-    
+
     private Socket mSocket;
     private InputStream mInStream;
     private OutputStream mOutStream;
     /* package */ SecurityOptions mSecurityOptions;
     /* package */ Packetizer mPacketizer;
     private Kex mKexEngine;
-    
+
     // negotiation:
     protected TransportDescription mDescription = null;
-    
+
     // shared transport state:
     /* package */ String mLocalVersion;
     /* package */ String mRemoteVersion;
@@ -1326,11 +1326,11 @@ import net.lag.crai.*;
     /* package */ BigInteger mK;
     /* package */ byte[] mH;
     /* package */ Object mLock = new Object();
-    
+
     // channels:
     /* package */ Channel[] mChannels;
     /* package */ Event[] mChannelEvents;
-    
+
     /* package */ boolean mActive;
     /* package */ Event mCompletionEvent;
     private Event mClearToSend;

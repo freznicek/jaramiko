@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -54,7 +54,7 @@ import net.lag.jaramiko.Util;
                 out.write(0);
             }
         }
-        
+
         public Object
         decode (InputStream in, Tag tag)
             throws IOException
@@ -69,8 +69,8 @@ import net.lag.jaramiko.Util;
             }
         }
     }
-    
-    
+
+
     public static class IntegerCodec
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
@@ -100,7 +100,7 @@ import net.lag.jaramiko.Util;
         }
     }
 
-    
+
     public static class BytesCodec
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
@@ -125,7 +125,7 @@ import net.lag.jaramiko.Util;
         }
     }
 
-    
+
     public static class NullCodec
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
@@ -135,14 +135,14 @@ import net.lag.jaramiko.Util;
         {
             NULL_TYPE.asSize(0).write(out);
         }
-        
+
         public Object
         decode (InputStream in, Tag tag)
         {
             return null;
         }
     }
-    
+
     public static class StringCodec
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
@@ -167,7 +167,7 @@ import net.lag.jaramiko.Util;
         }
     }
 
-    
+
     public static class ListCodec
         implements BEROutputStream.Encoder, BERInputStream.Decoder
     {
@@ -191,22 +191,22 @@ import net.lag.jaramiko.Util;
         }
     }
 
-    
+
     private static Tag BOOLEAN_TYPE = Tag.create(Tag.UNIVERSAL, 1);
     private static Tag INTEGER_TYPE = Tag.create(Tag.UNIVERSAL, 2);
     private static Tag BYTES_TYPE = Tag.create(Tag.UNIVERSAL, 4);
     private static Tag NULL_TYPE = Tag.create(Tag.UNIVERSAL, 5);
     private static Tag UTF8_TYPE = Tag.create(Tag.UNIVERSAL, 12);
     private static Tag LIST_TYPE = Tag.createContainer(Tag.UNIVERSAL, 16);
-    
+
     private static volatile boolean sRegistered = false;
-    
+
     /* package */ static void register ()
     {
         if (sRegistered) {
             return;
         }
-        
+
         BEROutputStream.register(Boolean.class, new BooleanCodec());
         BERInputStream.register(BOOLEAN_TYPE, new BooleanCodec());
 
@@ -226,7 +226,7 @@ import net.lag.jaramiko.Util;
 
         BEROutputStream.register(List.class, new ListCodec());
         BERInputStream.register(LIST_TYPE, new ListCodec());
-        
+
         sRegistered = true;
     }
 }

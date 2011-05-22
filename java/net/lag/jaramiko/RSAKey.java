@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -52,25 +52,25 @@ public final class RSAKey
         mP = null;
         mQ = null;
     }
-    
+
     public String
     getSSHName ()
     {
         return "ssh-rsa";
     }
-    
+
     public boolean
     canSign ()
     {
         return (mD != null);
     }
-    
+
     public int
     getBits ()
     {
         return mN.bitLength();
     }
-    
+
     public byte[]
     toByteArray()
     {
@@ -96,7 +96,7 @@ public final class RSAKey
             throw new SSHException("Java publickey error: " + x);
         }
     }
-    
+
     public boolean
     verifySSHSignature (Crai crai, byte[] data, Message sig)
         throws SSHException
@@ -106,14 +106,14 @@ public final class RSAKey
                 return false;
             }
             byte[] sigData = sig.getByteString();
-            
+
             CraiPublicKey rsa = crai.makePublicRSAKey(mN, mE);
             return rsa.verify(data, 0, data.length, sigData);
         } catch (CraiException x) {
             throw new SSHException("Java publickey error: " + x);
         }
     }
-    
+
     protected void
     buildFromBER (BigInteger[] ints)
         throws SSHException
@@ -127,7 +127,7 @@ public final class RSAKey
         mP = ints[4];
         mQ = ints[5];
     }
-    
+
     protected void
     buildFromMessage (Message m)
         throws SSHException
@@ -135,10 +135,10 @@ public final class RSAKey
         mE = m.getMPZ();
         mN = m.getMPZ();
     }
-    
+
     public void
     writePrivateKeyToStream (OutputStream os, String password)
-        throws IOException 
+        throws IOException
     {
         BigInteger[] nums = new BigInteger[9];
         nums[0] = BigInteger.ZERO;
@@ -153,12 +153,12 @@ public final class RSAKey
         nums[8] = mQ.modInverse(mP);
         writePrivateKeyToStream("RSA", os, nums, password);
     }
-    
+
     /**
      * Generate a new RSA private/public key pair.  This operation may take
      * a non-trivial amount of time.  The actual key generation is
      * delegated to {@link Crai}.
-     * 
+     *
      * @param bits bit size of the key to generate
      * @return a new RSA key
      * @throws SSHException if there's an error within the underlying crypto
@@ -172,7 +172,7 @@ public final class RSAKey
             CraiKeyPair pair = crai.generateRSAKeyPair(bits);
             CraiPrivateKey.RSAContents priv = (CraiPrivateKey.RSAContents) pair.getPrivateKey().getContents();
             CraiPublicKey.RSAContents pub = (CraiPublicKey.RSAContents) pair.getPublicKey().getContents();
-            
+
             RSAKey key = new RSAKey();
             key.mE = pub.getE();
             key.mN = pub.getN();
@@ -184,17 +184,17 @@ public final class RSAKey
             throw new SSHException("Java publickey error: " + x);
         }
     }
-    
+
     /**
      * Create an RSA private key object from the component integers. This
      * method assumes the integers have come from some other reliable source.
      * The parameter names identify the required numbers from the RSA
      * algorithm.
-     * 
+     *
      * <p> Please don't use this method to generate a new key from scratch.
      * Picking correct values for these parameters is tricky.
      * Use {@link #generate(Crai, int)} to generate a new key.
-     * 
+     *
      * @param e the RSA "e"
      * @param d the RSA "d"
      * @param n the RSA "n"
@@ -213,11 +213,11 @@ public final class RSAKey
         key.mQ = q;
         return key;
     }
-    
+
     /**
      * Create an RSA public key object from the component integers. Such a key
      * can be used only to verify signatures, not sign data.
-     * 
+     *
      * @param e the RSA "e"
      * @param n the RSA "n"
      * @return an RSA public key object
@@ -230,19 +230,19 @@ public final class RSAKey
         key.mN = n;
         return key;
     }
-    
+
     public CraiPrivateKey
     toPrivateKey (Crai crai)
     {
         return crai.makePrivateRSAKey(mN, mD, mP, mQ);
     }
-    
+
     public CraiPublicKey
     toPublicKey (Crai crai)
     {
         return crai.makePublicRSAKey(mN, mE);
     }
-    
+
 
     private BigInteger mE;
     private BigInteger mD;

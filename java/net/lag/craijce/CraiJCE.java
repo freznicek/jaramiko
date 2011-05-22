@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -69,18 +69,18 @@ public class CraiJCE
         {
             mRandom = new SecureRandom();
         }
-        
+
         public void
         getBytes (byte[] b)
         {
             mRandom.nextBytes(b);
         }
-        
-        
+
+
         public SecureRandom mRandom;
     }
-    
-    
+
+
     private class JCEPrivateRSAKey
         implements CraiPrivateKey
     {
@@ -92,7 +92,7 @@ public class CraiJCE
             mP = p;
             mQ = q;
         }
-        
+
         public byte[]
         sign(byte[] b, int off, int len)
             throws CraiException
@@ -110,7 +110,7 @@ public class CraiJCE
                 throw new CraiException("error performing RSA signature: " + e);
             }
         }
-        
+
         public CraiPrivateKey.Contents
         getContents ()
         {
@@ -118,29 +118,29 @@ public class CraiJCE
                 public BigInteger getN() {
                     return mN;
                 }
-                
+
                 public BigInteger getD() {
                     return mD;
                 }
-                
+
                 public BigInteger getP() {
                     return mP;
                 }
-                
+
                 public BigInteger getQ() {
                     return mQ;
                 }
             };
         }
-        
-        
+
+
         private BigInteger mN;
         private BigInteger mD;
         private BigInteger mP;
         private BigInteger mQ;
     }
-    
-    
+
+
     private class JCEPrivateDSAKey
         implements CraiPrivateKey
     {
@@ -152,7 +152,7 @@ public class CraiJCE
             mQ = q;
             mG = g;
         }
-        
+
         public byte[]
         sign(byte[] b, int off, int len)
             throws CraiException
@@ -165,7 +165,7 @@ public class CraiJCE
                 s.initSign(key, ((JCERandom) mCraiRandom).mRandom);
                 s.update(b, off, len);
                 byte[] sig = s.sign();
-                
+
                 /* decode java's odd signature format:
                  * java returns a ber sequence containing (r, s) but ssh2 expects
                  * a 40-byte buffer containing the 20 bytes of r followed by the
@@ -184,7 +184,7 @@ public class CraiJCE
                 throw new CraiException("error performing DSA signature: " + e);
             }
         }
-        
+
         public CraiPrivateKey.Contents
         getContents ()
         {
@@ -192,7 +192,7 @@ public class CraiJCE
                 public BigInteger getP() {
                     return mP;
                 }
-                
+
                 public BigInteger getQ() {
                     return mQ;
                 }
@@ -213,8 +213,8 @@ public class CraiJCE
         private BigInteger mQ;
         private BigInteger mG;
     }
-    
-    
+
+
     private class JCEPublicRSAKey
         implements CraiPublicKey
     {
@@ -224,7 +224,7 @@ public class CraiJCE
             mN = n;
             mE = e;
         }
-        
+
         public boolean
         verify (byte[] data, int off, int len, byte[] signature)
             throws CraiException
@@ -248,19 +248,19 @@ public class CraiJCE
                 public BigInteger getN() {
                     return mN;
                 }
-                
+
                 public BigInteger getE() {
                     return mE;
                 }
             };
         }
-        
-        
+
+
         private BigInteger mN;
         private BigInteger mE;
     }
-    
-    
+
+
     private class JCEPublicDSAKey
         implements CraiPublicKey
     {
@@ -272,7 +272,7 @@ public class CraiJCE
             mQ = q;
             mG = g;
         }
-        
+
         public boolean
         verify (byte[] data, int off, int len, byte[] signature)
             throws CraiException
@@ -305,7 +305,7 @@ public class CraiJCE
                 throw new CraiException("error verifying DSA signature: " + e);
             }
         }
-        
+
         public CraiPublicKey.Contents
         getContents ()
         {
@@ -313,7 +313,7 @@ public class CraiJCE
                 public BigInteger getP() {
                     return mP;
                 }
-                
+
                 public BigInteger getQ() {
                     return mQ;
                 }
@@ -328,14 +328,14 @@ public class CraiJCE
             };
         }
 
-        
+
         private BigInteger mY;
         private BigInteger mP;
         private BigInteger mQ;
         private BigInteger mG;
     }
-    
-    
+
+
     private static class JCEDigest
         implements CraiDigest
     {
@@ -344,25 +344,25 @@ public class CraiJCE
         {
             mDigest = d;
         }
-        
+
         public void
         reset ()
         {
             mDigest.reset();
         }
-        
+
         public void
         update (byte[] data, int off, int len)
         {
             mDigest.update(data, off, len);
         }
-        
+
         public byte[]
         finish ()
         {
             return mDigest.digest();
         }
-        
+
         public void
         finish (byte[] out, int off)
             throws CraiException
@@ -373,12 +373,12 @@ public class CraiJCE
                 throw new CraiException(x.toString());
             }
         }
-        
-        
+
+
         private MessageDigest mDigest;
     }
-    
-    
+
+
     private static class JCEHMAC
         implements CraiDigest
     {
@@ -387,25 +387,25 @@ public class CraiJCE
         {
             mMac = mac;
         }
-        
+
         public void
         reset ()
         {
             mMac.reset();
         }
-        
+
         public void
         update (byte[] data, int off, int len)
         {
             mMac.update(data, off, len);
         }
-        
+
         public byte[]
         finish ()
         {
             return mMac.doFinal();
         }
-        
+
         public void
         finish (byte[] out, int off)
             throws CraiException
@@ -416,12 +416,12 @@ public class CraiJCE
                 throw new CraiException(x.toString());
             }
         }
-        
-        
+
+
         private Mac mMac;
     }
-    
-    
+
+
     private static class JCECipher
         implements CraiCipher
     {
@@ -436,7 +436,7 @@ public class CraiJCE
                 throw new CraiException("cipher " + javaName + " not found: " + x);
             }
         }
-        
+
         public void
         initEncrypt (byte[] key, byte[] iv)
             throws CraiException
@@ -453,7 +453,7 @@ public class CraiJCE
                 throw new CraiException("cipher " + mJavaName + " encrypt init error: " + x);
             }
         }
-        
+
         public void
         initDecrypt (byte[] key, byte[] iv)
             throws CraiException
@@ -469,7 +469,7 @@ public class CraiJCE
                 throw new CraiException("cipher " + mJavaName + " decrypt init error: " + x);
             }
         }
-        
+
         public void
         process (byte[] in, int off, int len, byte[] out, int off_out)
             throws CraiException
@@ -480,43 +480,43 @@ public class CraiJCE
                 throw new CraiException("cipher " + mJavaName + " process error: " + x);
             }
         }
-        
-        
+
+
         private String mJavaName;
         private Cipher mCipher;
     }
 
-    
+
     public CraiRandom
     getPRNG ()
     {
         return mCraiRandom;
     }
-    
+
     public CraiPrivateKey
     makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
     {
         return new JCEPrivateRSAKey(n, d, p, q);
     }
-    
+
     public CraiPrivateKey
     makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
     {
         return new JCEPrivateDSAKey(x, p, q, g);
     }
-    
+
     public CraiPublicKey
     makePublicRSAKey (BigInteger n, BigInteger e)
     {
         return new JCEPublicRSAKey(n, e);
     }
-    
+
     public CraiPublicKey
     makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
     {
         return new JCEPublicDSAKey(y, p, q, g);
     }
-    
+
     public CraiKeyPair
     generateRSAKeyPair (int bits)
     {
@@ -533,10 +533,10 @@ public class CraiJCE
         } catch (NoSuchAlgorithmException x) {
             throw new RuntimeException("Unable to find RSA key algorithm");
         }
-        
+
         RSAPrivateKey priv = (RSAPrivateKey) pair.getPrivate();
         RSAPublicKey pub = (RSAPublicKey) pair.getPublic();
-        
+
         BigInteger n = priv.getModulus();
         BigInteger d = priv.getPrivateExponent();
         BigInteger e = pub.getPublicExponent();
@@ -544,7 +544,7 @@ public class CraiJCE
         BigInteger q = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv).getPrimeQ() : null;
         return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(n, d, p, q));
     }
-    
+
     public CraiKeyPair
     generateDSAKeyPair (int bits)
     {
@@ -556,10 +556,10 @@ public class CraiJCE
         } catch (NoSuchAlgorithmException x) {
             throw new RuntimeException("Unable to find DSA key algorithm");
         }
-        
+
         DSAPrivateKey priv = (DSAPrivateKey) pair.getPrivate();
         DSAPublicKey pub = (DSAPublicKey) pair.getPublic();
-        
+
         BigInteger p = priv.getParams().getP();
         BigInteger q = priv.getParams().getQ();
         BigInteger g = priv.getParams().getG();
@@ -567,7 +567,7 @@ public class CraiJCE
         BigInteger y = pub.getY();
         return new CraiKeyPair(new JCEPublicDSAKey(y, p, q, g), new JCEPrivateDSAKey(x, p, q, g));
     }
-    
+
     public CraiDigest
     makeSHA1 ()
     {
@@ -578,7 +578,7 @@ public class CraiJCE
             throw new RuntimeException("Unable to find SHA-1 algorithm");
         }
     }
-    
+
     public CraiDigest
     makeMD5 ()
     {
@@ -589,7 +589,7 @@ public class CraiJCE
             throw new RuntimeException("Unable to find MD5 algorithm");
         }
     }
-    
+
     public CraiDigest
     makeSHA1HMAC (byte[] key)
     {
@@ -601,7 +601,7 @@ public class CraiJCE
             throw new RuntimeException("Unable to find SHA-1 HMAC algorithm");
         }
     }
-    
+
     public CraiDigest
     makeMD5HMAC (byte[] key)
     {
@@ -613,7 +613,7 @@ public class CraiJCE
             throw new RuntimeException("Unable to find MD5 HMAC algorithm");
         }
     }
-    
+
     public CraiCipher
     getCipher (CraiCipherAlgorithm algorithm)
         throws CraiException
@@ -628,13 +628,13 @@ public class CraiJCE
             throw new CraiException("cipher algorithm not implemented");
         }
     }
-    
+
     public BigInteger
     modPow (BigInteger b, BigInteger e, BigInteger m)
     {
         return b.modPow(e, m);
     }
 
-    
+
     public CraiRandom mCraiRandom = new JCERandom();
 }

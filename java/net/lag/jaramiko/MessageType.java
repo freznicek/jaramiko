@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -37,10 +37,10 @@ package net.lag.jaramiko;
     public static final byte DEBUG = 4;
     public static final byte SERVICE_REQUEST = 5;
     public static final byte SERVICE_ACCEPT = 6;
-    
+
     public static final byte KEX_INIT = 20;
     public static final byte NEW_KEYS = 21;
-    
+
     public static final byte KEX_0 = 30;
     public static final byte KEX_1 = 31;
     public static final byte KEX_2 = 32;
@@ -51,12 +51,12 @@ package net.lag.jaramiko;
     public static final byte USERAUTH_FAILURE = 51;
     public static final byte USERAUTH_SUCCESS = 52;
     public static final byte USERAUTH_BANNER = 53;
-    
+
     public static final byte USERAUTH_PK_OK = 60;
-    
+
     public static final byte USERAUTH_INFO_REQUEST = 60;
     public static final byte USERAUTH_INFO_RESPONSE = 61;
-    
+
     public static final byte GLOBAL_REQUEST = 80;
     public static final byte REQUEST_SUCCESS = 81;
     public static final byte REQUEST_FAILURE = 82;
@@ -72,8 +72,8 @@ package net.lag.jaramiko;
     public static final byte CHANNEL_REQUEST = 98;
     public static final byte CHANNEL_SUCCESS = 99;
     public static final byte CHANNEL_FAILURE = 100;
-    
-    
+
+
     public static String
     getDescription (byte t)
     {

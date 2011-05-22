@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -40,10 +40,10 @@ import net.lag.crai.CraiDigest;
     {
         mModulusPack = BaseTransport.getModulusPack();
     }
-    
-    public String 
-    getName () 
-    { 
+
+    public String
+    getName ()
+    {
         return "diffie-hellman-group-exchange-sha1";
     }
 
@@ -53,13 +53,13 @@ import net.lag.crai.CraiDigest;
     {
         mTransport = t;
         mCrai = crai;
-        
+
         if (t.getServerKey() != null) {
             // server mode
             t.expectPacket(KEX_GEX_REQUEST, KEX_GEX_REQUEST_OLD);
             return;
         }
-        
+
         /* request a bit range: we accept (mMinBits) to (mMaxBits), but
          * prefer (mPreferredBits). according to the spec, we shoudn't pull
          * the minimum up above 1024.
@@ -83,7 +83,7 @@ import net.lag.crai.CraiDigest;
      * Handle an SSH protocol message and return true if the message was
      * understood, or false if it wasn't (and wasn't handled).  This is part
      * of jaramiko's internal implementation.
-     * 
+     *
      * @param ptype message type
      * @param m message
      * @return true if the message was handled; false otherwise
@@ -110,13 +110,13 @@ import net.lag.crai.CraiDigest;
             parseRequestOld(m);
             return true;
         }
-        
+
         throw new SSHException("KexGex asked to handle packet type " + MessageType.getDescription(ptype));
     }
-    
-    
+
+
     // server mode:
-    
+
     private void
     parseRequest (Message m)
         throws IOException
@@ -124,7 +124,7 @@ import net.lag.crai.CraiDigest;
         int minBits = m.getInt();
         int preferredBits = m.getInt();
         int maxBits = m.getInt();
-        
+
         // smoosh the user's preferred size into our own limits
         if (preferredBits > mMaxBits) {
             preferredBits = mMaxBits;
@@ -132,7 +132,7 @@ import net.lag.crai.CraiDigest;
         if (preferredBits < mMinBits) {
             preferredBits = mMinBits;
         }
-        
+
         /* fix min/max if they're inconsistent. technically, we could just
          * pout and hang up, but there's no harm in giving them the benefit
          * of the doubt and just picking a bitsize for them.
@@ -143,22 +143,22 @@ import net.lag.crai.CraiDigest;
         if (maxBits < preferredBits) {
             maxBits = preferredBits;
         }
-        
+
         // now save a copy.
         mMinBits = minBits;
         mPreferredBits = preferredBits;
         mMaxBits = maxBits;
-        
+
         // generate prime
         if (mModulusPack.size() == 0) {
             throw new SSHException("Can't do server-side gex; no modulus list");
         }
-        
+
         mTransport.getLog().debug("Picking p (" + mMinBits + " <= " + mPreferredBits + " <= " + mMaxBits + " bits)");
         ModulusPack.ModulusPair mod = mModulusPack.get(mCrai, mMinBits, mPreferredBits, mMaxBits);
         mG = BigInteger.valueOf(mod.mGenerator);
         mP = mod.mModulus;
-        
+
         m = new Message();
         m.putByte(KEX_GEX_GROUP);
         m.putMPZ(mP);
@@ -166,14 +166,14 @@ import net.lag.crai.CraiDigest;
         mTransport.sendMessage(m);
         mTransport.expectPacket(KEX_GEX_INIT);
     }
-    
+
     private void
-    parseRequestOld (Message m) 
+    parseRequestOld (Message m)
         throws IOException
     {
         // same as above, but without min_bits or max_bits (used by older clients like putty).
         int preferredBits = m.getInt();
-        
+
         // smoosh the user's preferred size into our own limits
         if (preferredBits > mMaxBits) {
             preferredBits = mMaxBits;
@@ -181,20 +181,20 @@ import net.lag.crai.CraiDigest;
         if (preferredBits < mMinBits) {
             preferredBits = mMinBits;
         }
-        
+
         // now save a copy.
         mPreferredBits = preferredBits;
-        
+
         // generate prime
         if (mModulusPack.size() == 0) {
             throw new SSHException("Can't do server-side gex; no modulus list");
         }
-        
+
         mTransport.getLog().debug("Picking p (~ " + mPreferredBits + " bits)");
         ModulusPack.ModulusPair mod = mModulusPack.get(mCrai, mMinBits, mPreferredBits, mMaxBits);
         mG = BigInteger.valueOf(mod.mGenerator);
         mP = mod.mModulus;
-        
+
         m = new Message();
         m.putByte(KEX_GEX_GROUP);
         m.putMPZ(mP);
@@ -203,7 +203,7 @@ import net.lag.crai.CraiDigest;
         mTransport.expectPacket(KEX_GEX_INIT);
         mUseOldStyle = true;
     }
-    
+
     private void
     parseInit (Message m)
         throws IOException
@@ -217,7 +217,7 @@ import net.lag.crai.CraiDigest;
         BigInteger k = mE.modPow(mX, mP);
         PKey key = mTransport.getServerKey();
         byte[] keyBytes = key.toByteArray();
-        
+
         // okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
         Message hm = new Message();
         hm.putString(mTransport.getRemoteVersion());
@@ -237,13 +237,13 @@ import net.lag.crai.CraiDigest;
         hm.putMPZ(mE);
         hm.putMPZ(mF);
         hm.putMPZ(k);
-        
+
         CraiDigest sha = mCrai.makeSHA1();
         byte[] data = hm.toByteArray();
         sha.update(data, 0, data.length);
         byte[] h = sha.finish();
         mTransport.setKH(k, h);
-        
+
         // sign it.
         byte[] sig = key.signSSHData(mCrai, h).toByteArray();
         Message rm = new Message();
@@ -254,17 +254,17 @@ import net.lag.crai.CraiDigest;
         mTransport.sendMessage(rm);
         mTransport.kexComplete();
     }
-  
-    
+
+
     // client mode:
-    
+
     private void
     parseGroup (Message m)
         throws IOException
     {
         mP = m.getMPZ();
         mG = m.getMPZ();
-        
+
         // reject if p's bit length < 1024 or > 8192
         int bitlen = mP.bitLength();
         if ((bitlen < 1024) || (bitlen > 8192)) {
@@ -272,7 +272,7 @@ import net.lag.crai.CraiDigest;
         }
         mTransport.getLog().debug("Got server p (" + bitlen + " bits)");
         generateX();
-        
+
         // now compute e = g^x mod p.
         mE = mG.modPow(mX, mP);
         Message rm = new Message();
@@ -293,7 +293,7 @@ import net.lag.crai.CraiDigest;
             throw new SSHException("Server kex 'f' is out of range");
         }
         BigInteger k = mF.modPow(mX, mP);
-        
+
         // okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
         Message hm = new Message();
         hm.putString(mTransport.getLocalVersion());
@@ -321,8 +321,8 @@ import net.lag.crai.CraiDigest;
         mTransport.verifyKey(hostKey, sig);
         mTransport.kexComplete();
     }
-    
-    
+
+
     // generate an "x" (1 < x < (p-1)/2).
     private void
     generateX ()
@@ -335,25 +335,25 @@ import net.lag.crai.CraiDigest;
             }
         }
     }
-    
+
 
     private KexTransportInterface mTransport;
     private Crai mCrai;
     protected ModulusPack mModulusPack;
-    
+
     private int mMinBits = 1024;
     private int mMaxBits = 8192;
     private int mPreferredBits = 2048;
     /* package */ boolean mTestOldStyle = false;
     private boolean mUseOldStyle = false;
-    
+
     private BigInteger mP;
     private BigInteger mQ;
     private BigInteger mG;
     private BigInteger mX;
     private BigInteger mE;
     private BigInteger mF;
-    
+
     protected static final byte KEX_GEX_REQUEST_OLD = 30;
     protected static final byte KEX_GEX_GROUP = 31;
     protected static final byte KEX_GEX_INIT = 32;

@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -44,14 +44,14 @@ import net.lag.crai.CraiDigest;
     {
         return "diffie-hellman-group1-sha1";
     }
-    
+
     public void
     startKex (KexTransportInterface t, Crai crai)
         throws IOException
     {
         mTransport = t;
         mCrai = crai;
-     
+
         generateX();
         if (mTransport.getServerKey() != null) {
             // (server mode)
@@ -70,7 +70,7 @@ import net.lag.crai.CraiDigest;
         mTransport.registerMessageHandler(KEXDH_REPLY, this);
         mTransport.expectPacket(KEXDH_REPLY);
     }
-    
+
     public boolean
     handleMessage (byte ptype, Message m)
         throws IOException
@@ -86,8 +86,8 @@ import net.lag.crai.CraiDigest;
         }
         throw new SSHException("KexGroup1 asked to handle packet type " + MessageType.getDescription(ptype));
     }
-    
-    
+
+
     /*
      * Generate an "x" (1 < x < q), where q is (p-1)/2.
      * p is a 128-byte (1024-bit) number, where the first 64 bits are 1.
@@ -102,7 +102,7 @@ import net.lag.crai.CraiDigest;
             byte[] b = new byte[128];
             mCrai.getPRNG().getBytes(b);
             b[0] &= 0x7f;
-            
+
             byte[] test = new byte[8];
             System.arraycopy(b, 0, test, 0, 8);
             if (! Arrays.equals(test, BAD1) && ! Arrays.equals(test, BAD2)) {
@@ -111,7 +111,7 @@ import net.lag.crai.CraiDigest;
             }
         }
     }
-    
+
     // server mode
     private void
     handleKexDHInit (Message m)
@@ -124,7 +124,7 @@ import net.lag.crai.CraiDigest;
         BigInteger k = mCrai.modPow(mE, mX, P);
         PKey key = mTransport.getServerKey();
         byte[] keyBytes = key.toByteArray();
-        
+
         // okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         Message hm = new Message();
         hm.putString(mTransport.getRemoteVersion());
@@ -135,13 +135,13 @@ import net.lag.crai.CraiDigest;
         hm.putMPZ(mE);
         hm.putMPZ(mF);
         hm.putMPZ(k);
-        
+
         CraiDigest sha = mCrai.makeSHA1();
         byte[] data = hm.toByteArray();
         sha.update(data, 0, data.length);
         byte[] h = sha.finish();
         mTransport.setKH(k, h);
-        
+
         // sign it
         byte[] sig = key.signSSHData(mCrai, h).toByteArray();
         Message rm = new Message();
@@ -152,7 +152,7 @@ import net.lag.crai.CraiDigest;
         mTransport.sendMessage(rm);
         mTransport.kexComplete();
     }
-    
+
     // client mode
     private void
     handleKexDHReply (Message m)
@@ -184,11 +184,11 @@ import net.lag.crai.CraiDigest;
         mTransport.verifyKey(hostKey, sig);
         mTransport.kexComplete();
     }
-    
-    
+
+
     public static final byte KEXDH_INIT = 30;
     public static final byte KEXDH_REPLY = 31;
-    
+
     private static final BigInteger P =
         new BigInteger("FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" +
                        "29024E088A67CC74020BBEA63B139B22514A08798E3404DD" +
@@ -197,13 +197,13 @@ import net.lag.crai.CraiDigest;
                        "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381" +
                        "FFFFFFFFFFFFFFFF", 16);
     private static final BigInteger G = BigInteger.valueOf(2);
-    
+
     private static final byte[] BAD1 = { 0, 0, 0, 0, 0, 0, 0, 0 };
     private static final byte[] BAD2 = { 0x7f, -1, -1, -1, -1, -1, -1, -1 };
-    
+
     private Crai mCrai;
     private KexTransportInterface mTransport;
-    
+
     private BigInteger mX;
     private BigInteger mE;
     private BigInteger mF;

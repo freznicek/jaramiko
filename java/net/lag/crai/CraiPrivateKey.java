@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -42,8 +42,8 @@ public interface CraiPrivateKey
     {
         // nothing
     }
-    
-    
+
+
     /**
      * The private contents of an RSA key.
      */
@@ -55,8 +55,8 @@ public interface CraiPrivateKey
         public BigInteger getP();
         public BigInteger getQ();
     }
-    
-    
+
+
     /**
      * The private contents of a DSA key.
      */
@@ -68,11 +68,11 @@ public interface CraiPrivateKey
         public BigInteger getG();
         public BigInteger getX();
     }
-    
-    
+
+
     /**
      * Sign data with this private key.
-     * 
+     *
      * @param data the data to sign
      * @param off offset into the data to begin signing
      * @param len number of bytes to sign
@@ -81,10 +81,10 @@ public interface CraiPrivateKey
      *     exception
      */
     public byte[] sign(byte[] data, int off, int len) throws CraiException;
-    
+
     /**
      * Return an object containing the private contents of this key.
-     * 
+     *
      * @return an object which can be used to retrieve the underlying
      *     contents (usually BigIntegers)
      */

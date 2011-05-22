@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -54,19 +54,19 @@ public class ClientTransport
         {
             return mLocalVersion;
         }
-        
+
         public String
         getRemoteVersion ()
         {
             return mRemoteVersion;
         }
-        
+
         public byte[]
         getLocalKexInit ()
         {
             return mLocalKexInit;
         }
-        
+
         public byte[]
         getRemoteKexInit ()
         {
@@ -78,33 +78,33 @@ public class ClientTransport
         {
             ClientTransport.this.registerMessageHandler(ptype, handler);
         }
-        
+
         public void
         expectPacket (byte ptype)
         {
             ClientTransport.this.expectPacket(ptype);
         }
-        
+
         public void
         expectPacket (byte ptype1, byte ptype2)
         {
             ClientTransport.this.expectPacket(ptype1, ptype2);
         }
-        
+
         public void
         sendMessage (Message m)
             throws IOException
         {
             ClientTransport.this.sendMessage(m);
         }
-        
+
         public PKey
         getServerKey ()
         {
             // no server key in client mode
             return null;
         }
-        
+
         public void
         verifyKey (byte[] hostKey, byte[] sig)
             throws SSHException
@@ -117,28 +117,28 @@ public class ClientTransport
         {
             ClientTransport.this.setKH(k, h);
         }
-        
+
         public void
         kexComplete ()
             throws IOException
         {
             ClientTransport.this.activateOutbound();
         }
-        
+
         public LogSink
         getLog ()
         {
             return mLog;
         }
     }
-    
-    
+
+
     /**
      * Create a new SSH client session over an existing socket.  This only
      * initializes the ClientTransport object; it doesn't begin negotiating
      * the SSH session yet.  Use {@link #start} to begin a client session.
-     * 
-     * @param socket the (previously connected) socket to use for this session 
+     *
+     * @param socket the (previously connected) socket to use for this session
      * @throws IOException if there's an error fetching the input/output
      *     streams from the socket
      */
@@ -148,7 +148,7 @@ public class ClientTransport
     {
         super(socket);
     }
-    
+
     /**
      * Negotiate a new SSH2 session as a client.  This is the first step after
      * creating a new Transport.  A separate thread is created for protocol
@@ -160,12 +160,12 @@ public class ClientTransport
      * exception will be thrown if the server's host key doesn't match.  If the
      * host key is <code>null</code>, no host key checking is done, and you
      * must do it yourself using {@link #getRemoteServerKey}.
-     * 
+     *
      * <p>After a successful negotiation, you will usually want to
      * authenticate, calling {@link #authPassword} or {@link #authPrivateKey}.
      * Then you may call {@link #openSession} or {@link #openChannel} to get
      * a {@link Channel} for data transfer.
-     * 
+     *
      * @param hostkey the host key expected from the server, or <code>null</code>
      *     to skip host key checking
      * @param timeout_ms maximum time (in milliseconds) to wait for negotiation
@@ -184,7 +184,7 @@ public class ClientTransport
             // we only want this particular key then
             mSecurityOptions.setKeys(Arrays.asList(new String[] { hostkey.getSSHName() }));
         }
-        
+
         mCompletionEvent = new Event();
         mActive = true;
         new Thread(new Runnable() {
@@ -197,7 +197,7 @@ public class ClientTransport
         if (! waitForEvent(mCompletionEvent, timeout_ms)) {
             throw new SSHException("Timeout.");
         }
-        
+
         // check the host key
         if (hostkey != null) {
             PKey skey = getRemoteServerKey();
@@ -215,7 +215,7 @@ public class ClientTransport
      * Set a listener for banner events from the remote SSH server.  The
      * listener will only receive callback events if the server sends a
      * banner during authentication.
-     * 
+     *
      * @param listener the new listener
      */
     public void
@@ -223,13 +223,13 @@ public class ClientTransport
     {
         mBannerListener = listener;
     }
-    
+
     /**
      * Try to authenticate to the SSH2 server using no authentication at all.
      * This will almost always fail.  It may be useful for determining the list
      * of authentication types supported by the server, by catching the
      * {@link BadAuthenticationType} exception raised.
-     * 
+     *
      * @param username the username to authenticate as
      * @param timeout_ms how long to wait for a response (in milliseconds);
      *     <code>-1</code> to wait forever
@@ -251,20 +251,20 @@ public class ClientTransport
         mAuthHandler.authNone(username, event);
         return waitForAuthResponse(event, timeout_ms);
     }
-    
+
     /**
      * Authenticate to the SSH2 server using a password.  The username and
      * password are sent over an encrypted link.  If the server doesn't support
      * password authentication, but does support "interactive" authentication,
      * an attempt at simple "interactive" password authentication is attempted.
      * (This is usually a symptom of a misconfigured Debian or Gentoo server.)
-     * 
+     *
      * <p>This method blocks until authentication succeeds or fails.  On
      * failure, an exception is raised.  Otherwise, the method simply returns.
      * If the server requires multi-step authentication (which is very rare),
      * this method will return a list of auth types permissible for the next
      * step.  Otherwise, in the normal case, an empty list is returned.
-     * 
+     *
      * @param username the username to authenticate as
      * @param password the password to authenticate with
      * @param timeout_ms how long to wait for a response (in milliseconds);
@@ -283,17 +283,17 @@ public class ClientTransport
     {
         return authPassword(username, password, true, timeout_ms);
     }
-    
+
     /**
      * Authenticate to the SSH2 server using a password.  The username and
      * password are sent over an encrypted link.
-     * 
+     *
      * <p>This method blocks until authentication succeeds or fails.  On
      * failure, an exception is raised.  Otherwise, the method simply returns.
      * If the server requires multi-step authentication (which is very rare),
      * this method will return a list of auth types permissible for the next
      * step.  Otherwise, in the normal case, an empty list is returned.
-     * 
+     *
      * @param username the username to authenticate as
      * @param password the password to authenticate with
      * @param fallback <code>true</code> if an attempt at an automated
@@ -328,7 +328,7 @@ public class ClientTransport
             if (! fallback) {
                 throw x;
             }
-            
+
             try {
                 return authInteractive(username, new InteractiveHandler() {
                     public String[] handleInteractiveRequest (InteractiveQuery query) throws SSHException {
@@ -352,18 +352,18 @@ public class ClientTransport
             }
         }
     }
-    
+
     /**
      * Authenticate to the SSH2 server using a private key.  The key is used to
      * sign data from the server, so it must be a key capable of signing (not
      * just a public key).
-     * 
+     *
      * <p>This method blocks until the authentication succeeds or fails.  On
      * failure, an exception is raised.  Otherwise, the method simply returns.
      * If the server requires multi-step authentication (which is very rare),
      * this method will return a list of auth types permissible for the next
      * step.  Otherwise, in the normal case, an empty list is returned.
-     * 
+     *
      * @param username the username to authenticate as
      * @param key the private key to authenticate with
      * @param timeout_ms how long to wait for a response (in milliseconds);
@@ -391,16 +391,16 @@ public class ClientTransport
      * Authenticate to the SSH2 server interactively.  A handler is used to
      * answer arbitrary questions from the server.  On many servers, this is
      * just a dumb wrapper around PAM.
-     * 
+     *
      * <p>This method blocks until the authentication succeeds or fails,
      * periodically calling the given {@link InteractiveHandler} to get
      * answers for authentication questions.  The handler may be called more
      * than once if the server continues to ask questions.
-     * 
+     *
      * <p>If the server requires multi-step authentication (which is very
      * rare), this method will return a list of auth types permissible for the
      * next step.  Otherwise, in the normal case, an empty list is returned.
-     * 
+     *
      * @param username the username to authenticate as
      * @param handler a handler for fielding interactive queries from the
      *     server and providing responses
@@ -426,10 +426,10 @@ public class ClientTransport
         mAuthHandler.authInteractive(username, handler, event, submethods);
         return waitForAuthResponse(event, timeout_ms);
     }
-    
+
     /**
      * Return the host key of the server (in client mode).
-     * 
+     *
      * @return the public key of the remote server
      * @throws SSHException if no session is currently active
      */
@@ -442,16 +442,16 @@ public class ClientTransport
         }
         return mHostKey;
     }
-    
+
     /**
      * Request a new channel to the server.  {@link Channel}s are socket-like
      * objects used for the actual transfer of data across an SSH session.
      * You may only request a channel after negotiating encryption (using
      * {@link #start}) and authenticating.
-     * 
+     *
      * <p>For most cases, you should call {@link #openSession} instead.  This
      * is a more advanced interface.
-     * 
+     *
      * @param kind the kind of channel requested (usually <code>"session"</code>,
      *     <code>"forwarded-tcpip"</code>, or <code>"direct-tcpip"</code>)
      * @param parameters any parameters required by the channel request type
@@ -470,12 +470,12 @@ public class ClientTransport
         if (! mActive) {
             throw new SSHException("No existing session.");
         }
-        
+
         Event e = null;
         int chanid = 0;
         synchronized (mLock) {
             chanid = getNextChannel();
-            
+
             Message m = new Message();
             m.putByte(MessageType.CHANNEL_OPEN);
             m.putString(kind);
@@ -485,7 +485,7 @@ public class ClientTransport
             if (parameters != null) {
                 m.putAll(parameters);
             }
-            
+
             Channel c = getChannelForKind(chanid, kind, parameters);
             if (c == null) {
                 throw new ChannelException(ChannelError.ADMINISTRATIVELY_PROHIBITED);
@@ -495,14 +495,14 @@ public class ClientTransport
             mChannelEvents[chanid] = e;
             c.setTransport(this, mLog);
             c.setWindow(mWindowSize, mMaxPacketSize);
-            
+
             sendUserMessage(m, timeout_ms);
         }
-        
+
         if (! waitForEvent(e, timeout_ms)) {
             throw new SSHException("Timeout.");
         }
-        
+
         synchronized (mLock) {
             Channel c = mChannels[chanid];
             if (c == null) {
@@ -515,11 +515,11 @@ public class ClientTransport
             return c;
         }
     }
-    
+
     /**
      * Request a new channel to the server, of type <code>"session"</code>.
      * This is just an alias for <code>openChannel("session", null, timeout_ms)</code>.
-     * 
+     *
      * @param timeout_ms time (in milliseconds) to wait for the request to
      *     compelte
      * @return a new {@link Channel} on success
@@ -532,17 +532,17 @@ public class ClientTransport
     {
         return openChannel("session", null, timeout_ms);
     }
-    
+
     /**
      * Set a crypto library provider for jaramiko.  This setting affects all
      * Transport objects (both ClientTransport and ServerTransport), present
      * and future, and usually will only need to be set once (or never).
      * The only time you really need to set this is if you're using a
      * non-standard crypto provider (like on an embedded platform).
-     * 
+     *
      * <p>If no crypto provider is set, jaramiko will attempt to use JCE,
      * which comes standard with java 1.4 and up.
-     * 
+     *
      * @param crai the crypto provider to use
      */
     public static void
@@ -550,10 +550,10 @@ public class ClientTransport
     {
         sCrai = crai;
     }
-    
-    
+
+
     // -----  package
-    
+
 
     /* package */ KexTransportInterface
     createKexTransportInterface ()
@@ -587,7 +587,7 @@ public class ClientTransport
             throw new SSHException("Internal java error: " + x);
         }
     }
-    
+
     protected final void
     activateOutbound (CipherDescription desc, MacDescription mdesc)
         throws SSHException
@@ -598,7 +598,7 @@ public class ClientTransport
             byte[] key = computeKey((byte)'C', desc.mKeySize);
             byte[] iv = computeKey((byte)'A', desc.mBlockSize);
             outCipher.initEncrypt(key, iv);
-            
+
             /* initial mac keys are done in the hash's natural size (not the
              * potentially truncated transmission size)
              */
@@ -609,7 +609,7 @@ public class ClientTransport
             } else {
                 outMac = sCrai.makeSHA1HMAC(key);
             }
-    
+
             mPacketizer.setOutboundCipher(outCipher, desc.mBlockSize, outMac, mdesc.mDigestSize);
         } catch (CraiException x) {
             throw new SSHException("Internal java error: " + x);
@@ -634,9 +634,9 @@ public class ClientTransport
         sendMessage(mx);
     }
 
-    
+
     // -----  private
-    
+
     private String[]
     waitForAuthResponse (Event e, int timeout_ms)
         throws IOException
@@ -644,7 +644,7 @@ public class ClientTransport
         if (! waitForEvent(e, timeout_ms)) {
             throw new SSHException("Timeout.");
         }
-        
+
         if (! mAuthHandler.isAuthenticated()) {
             IOException x = getException();
             if (x == null) {
@@ -656,7 +656,7 @@ public class ClientTransport
         }
         return new String[0];
     }
-    
+
     private final void
     verifyKey (byte[] hostKey, byte[] sig)
         throws SSHException

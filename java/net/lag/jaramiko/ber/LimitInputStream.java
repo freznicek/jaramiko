@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -39,7 +39,7 @@ public class LimitInputStream
 {
     /**
      * Create a new limited InputStream.
-     * 
+     *
      * @param in the InputStream to wrap
      * @param limit the maximum number of bytes to allow to be read, or -1 to
      *     set no limit
@@ -51,11 +51,11 @@ public class LimitInputStream
         mLimit = limit;
         mCount = 0;
     }
-    
+
     /**
      * Return the number of bytes which can still be read from this stream
      * before hitting the limit. If no limit was set, -1 is always returned.
-     * 
+     *
      * @return the remaining bytes that can be read, or -1
      */
     public int
@@ -63,10 +63,10 @@ public class LimitInputStream
     {
         return (mLimit < 0) ? mLimit : mLimit - mCount;
     }
-    
+
     /**
      * Return the total number of bytes that were read from this stream.
-     * 
+     *
      * @return the number of bytes read
      */
     public int
@@ -74,7 +74,7 @@ public class LimitInputStream
     {
         return mCount;
     }
-    
+
     public int
     read ()
         throws IOException
@@ -88,14 +88,14 @@ public class LimitInputStream
         }
         return ret;
     }
-    
+
     public int
     read (byte[] b)
         throws IOException
     {
         return read(b, 0, b.length);
     }
-    
+
     public int
     read (byte[] b, int off, int len)
         throws IOException
@@ -106,14 +106,14 @@ public class LimitInputStream
                 return -1;
             }
         }
-        
+
         int ret = super.read(b, off, len);
         if (ret > 0) {
             mCount += ret;
         }
         return ret;
     }
-    
+
     public long
     skip (long n)
         throws IOException
@@ -124,15 +124,15 @@ public class LimitInputStream
                 return 0;
             }
         }
-        
+
         long ret = super.skip(n);
         if (ret > 0) {
             mCount += ret;
         }
         return ret;
     }
-    
-    
+
+
     private int mLimit;
     private int mCount;
 }

@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -42,8 +42,8 @@ public interface CraiPublicKey
     {
         // nothing
     }
-    
-    
+
+
     /**
      * The public contents of an RSA key.
      */
@@ -53,8 +53,8 @@ public interface CraiPublicKey
         public BigInteger getN();
         public BigInteger getE();
     }
-    
-    
+
+
     /**
      * The public contents of a DSA key.
      */
@@ -71,7 +71,7 @@ public interface CraiPublicKey
     /**
      * Verify that a signature of a block of data actually came from this
      * key.
-     * 
+     *
      * @param data the data that was signed
      * @param off offset into the data that was signed
      * @param len number of bytes signed
@@ -81,10 +81,10 @@ public interface CraiPublicKey
      *     exception
      */
     public boolean verify(byte[] data, int off, int len, byte[] signature) throws CraiException;
-    
+
     /**
      * Return an object containing the public contents of this key.
-     * 
+     *
      * @return an object which can be used to retrieve the underlying
      *     contents (usually BigIntegers)
      */

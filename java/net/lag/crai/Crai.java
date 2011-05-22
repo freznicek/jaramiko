@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -30,27 +30,27 @@ import java.math.BigInteger;
 
 /**
  * Crypto abstraction interface.
- * 
+ *
  * <p>Not every platform has JCE, so this interface allows you to wrap your
  * native crypto libraries so that they can be used by jaramiko.
  */
 public interface Crai
 {
     public CraiRandom getPRNG ();
-    
+
     public CraiPrivateKey makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q);
     public CraiPrivateKey makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g);
     public CraiPublicKey makePublicRSAKey (BigInteger n, BigInteger e);
     public CraiPublicKey makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g);
     public CraiKeyPair generateRSAKeyPair (int bits);
     public CraiKeyPair generateDSAKeyPair (int bits);
-    
+
     public CraiDigest makeSHA1 ();
     public CraiDigest makeMD5 ();
     public CraiDigest makeSHA1HMAC (byte[] key);
     public CraiDigest makeMD5HMAC (byte[] key);
-    
+
     public CraiCipher getCipher (CraiCipherAlgorithm algorithm) throws CraiException;
-    
+
     public BigInteger modPow (BigInteger b, BigInteger e, BigInteger m);
 }
