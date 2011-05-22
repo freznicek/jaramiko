@@ -28,34 +28,24 @@ package net.lag.jaramiko.ber;
 import java.io.IOException;
 import java.io.OutputStream;
 
-
-public class ArtificialData
-{
-    public
-    ArtificialData (byte[] data)
-    {
+public class ArtificialData {
+    public ArtificialData(byte[] data) {
         mData = data;
     }
-
 
     public byte[] mData;
 
     private static Tag TAG = Tag.create(Tag.CONTEXT, 100);
 
-
-    private static class Encoder
-        implements BEROutputStream.Encoder
-    {
-        public void
-        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
-            throws IOException
-        {
+    private static class Encoder implements BEROutputStream.Encoder {
+        @Override
+        public void encode(OutputStream out, Object obj,
+                boolean useIndefiniteLength) throws IOException {
             ArtificialData data = (ArtificialData) obj;
             TAG.asSize(data.mData.length).write(out);
             out.write(data.mData);
         }
     }
-
 
     static {
         BEROutputStream.register(ArtificialData.class, new Encoder());

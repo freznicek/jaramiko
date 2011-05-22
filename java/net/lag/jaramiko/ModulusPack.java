@@ -31,44 +31,38 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import net.lag.crai.Crai;
-
 
 /**
  * Convenience object for holding the contents of an openssh 'moduli' file,
  * which contains pre-generated primes of various bit sizes, for use in
  * group-exchange key negotiation (aka "kex-gex").
  */
-/* package */ class ModulusPack
-{
-    public static class ModulusPair
-    {
-        public
-        ModulusPair (int generator, BigInteger modulus)
-        {
+/* package */class ModulusPack {
+    public static class ModulusPair {
+        public ModulusPair(int generator, BigInteger modulus) {
             mGenerator = generator;
             mModulus = modulus;
         }
-
 
         public int mGenerator;
         public BigInteger mModulus;
     }
 
-
-    public
-    ModulusPack ()
-    {
+    public ModulusPack() {
         mDiscarded = new ArrayList();
         // map of: bit length -> List<ModulusPair>
         mPack = new HashMap();
     }
 
-    private boolean
-    parseModulus (String line)
-    {
+    private boolean parseModulus(String line) {
         // timestamp, mod_type, tests, tries, size, generator, modulus
         String[] elems = Util.splitString(line, " ", 7);
         if (elems.length < 7) {
@@ -81,12 +75,13 @@ import net.lag.crai.Crai;
         int generator = Util.fuzzyInt(elems[5]);
         BigInteger modulus = new BigInteger(elems[6], 16);
 
-        /* weed out primes that aren't at least:
-         * type 2 (meets basic structural requirements)
-         * test 4 (more than just a small-prime sieve)
-         * tries < 100 if test & 4 (at least 100 tries of miller-rabin)
+        /*
+         * weed out primes that aren't at least: type 2 (meets basic structural
+         * requirements) test 4 (more than just a small-prime sieve) tries < 100
+         * if test & 4 (at least 100 tries of miller-rabin)
          */
-        if ((modType < 2) || (tests < 4) || (((tests & 4) != 0) && (tests < 8) && (tries < 100))) {
+        if ((modType < 2) || (tests < 4)
+                || (((tests & 4) != 0) && (tests < 8) && (tries < 100))) {
             mDiscarded.add(modulus);
             return false;
         }
@@ -94,9 +89,10 @@ import net.lag.crai.Crai;
             generator = 2;
         }
 
-        /* there's a bug in the ssh "moduli" file (yeah, i know: shock!
-         * dismay! call cnn!) where it understates the bit lengths of these
-         * primes by 1. this is okay.
+        /*
+         * there's a bug in the ssh "moduli" file (yeah, i know: shock! dismay!
+         * call cnn!) where it understates the bit lengths of these primes by 1.
+         * this is okay.
          */
         int bl = modulus.bitLength();
         if ((bl != size) && (bl != size + 1)) {
@@ -112,10 +108,7 @@ import net.lag.crai.Crai;
         return true;
     }
 
-    public int
-    readFromStream (InputStream in)
-        throws IOException
-    {
+    public int readFromStream(InputStream in) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         int count = 0;
 
@@ -133,10 +126,9 @@ import net.lag.crai.Crai;
         }
     }
 
-    public int
-    readStandardResource ()
-    {
-        /* this requires a bit of care. many embedded JVMs won't have the
+    public int readStandardResource() {
+        /*
+         * this requires a bit of care. many embedded JVMs won't have the
          * ability to load files this way.
          */
         ClassLoader loader = getClass().getClassLoader();
@@ -144,21 +136,21 @@ import net.lag.crai.Crai;
             return 0;
         }
         try {
-            Method method = loader.getClass().getMethod("getResourceAsStream", new Class[] { String.class });
+            Method method = loader.getClass().getMethod("getResourceAsStream",
+                    new Class[] { String.class });
             if (method == null) {
                 return 0;
             }
-            Object stream = method.invoke(loader, new Object[] { "resources/moduli" });
+            Object stream = method.invoke(loader,
+                    new Object[] { "resources/moduli" });
             return readFromStream((InputStream) stream);
         } catch (Exception x) {
             return 0;
         }
     }
 
-    public ModulusPair
-    get (Crai crai, int min, int prefer, int max)
-        throws SSHException
-    {
+    public ModulusPair get(Crai crai, int min, int prefer, int max)
+            throws SSHException {
         List bitsizesList = new ArrayList(mPack.keySet());
         Collections.sort(bitsizesList);
         if (bitsizesList.size() == 0) {
@@ -190,11 +182,11 @@ import net.lag.crai.Crai;
         }
 
         if (good == -1) {
-            /* their entire (min, max) range has no intersection with our
-             * range. if their range is below ours, pick the smallest.
-             * otherwise pick the largest. it'll be out of their range
-             * requirement either way, but we'll be sending them the closest
-             * one we have.
+            /*
+             * their entire (min, max) range has no intersection with our range.
+             * if their range is below ours, pick the smallest. otherwise pick
+             * the largest. it'll be out of their range requirement either way,
+             * but we'll be sending them the closest one we have.
              */
             good = bitsizes[0];
             if (min > good) {
@@ -204,28 +196,24 @@ import net.lag.crai.Crai;
 
         // now pick a random modulus of this bitsize.
         List list = (List) mPack.get(Integer.valueOf(good));
-        int n = Util.rollRandom(crai, BigInteger.valueOf(list.size())).intValue();
+        int n = Util.rollRandom(crai, BigInteger.valueOf(list.size()))
+                .intValue();
         return (ModulusPair) list.get(n);
     }
 
-    public List
-    getDiscarded ()
-    {
+    public List getDiscarded() {
         return mDiscarded;
     }
 
-    public int
-    size ()
-    {
+    public int size() {
         int size = 0;
-        for (Iterator iter = mPack.keySet().iterator(); iter.hasNext(); ) {
+        for (Iterator iter = mPack.keySet().iterator(); iter.hasNext();) {
             Integer key = (Integer) iter.next();
             size += ((List) mPack.get(key)).size();
         }
         return size;
     }
 
-
-    private List mDiscarded;    // List<BigInteger>
-    private Map mPack;          // Map<int, List<ModulusPair>>
+    private List mDiscarded; // List<BigInteger>
+    private Map mPack; // Map<int, List<ModulusPair>>
 }

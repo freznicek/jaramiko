@@ -28,33 +28,26 @@ package net.lag.jaramiko.ber;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-
-public class BEROutputStream
-{
-    public static interface Encoder
-    {
-        public void encode (OutputStream out, Object obj, boolean useIndefiniteLength) throws IOException;
+public class BEROutputStream {
+    public static interface Encoder {
+        public void encode(OutputStream out, Object obj,
+                boolean useIndefiniteLength) throws IOException;
     }
 
-
-    public
-    BEROutputStream (OutputStream out, boolean useIndefiniteLength)
-    {
+    public BEROutputStream(OutputStream out, boolean useIndefiniteLength) {
         mOutStream = out;
         mUseIndefiniteLength = useIndefiniteLength;
     }
 
-    public
-    BEROutputStream (OutputStream out)
-    {
+    public BEROutputStream(OutputStream out) {
         this(out, true);
     }
 
-    public static void
-    register (Class c, Encoder e)
-    {
+    public static void register(Class c, Encoder e) {
         if (c == null) {
             sEncoderTable.put("null", e);
         } else {
@@ -62,9 +55,7 @@ public class BEROutputStream
         }
     }
 
-    private static Encoder
-    getEncoder (Object obj)
-    {
+    private static Encoder getEncoder(Object obj) {
         if (obj == null) {
             return (Encoder) sEncoderTable.get("null");
         }
@@ -77,7 +68,8 @@ public class BEROutputStream
             }
 
             // must check the interfaces to handle things like List.
-            // java hides some interfaces in the superclass, so we have to check on each iteration.
+            // java hides some interfaces in the superclass, so we have to check
+            // on each iteration.
             Class[] ifaces = c.getInterfaces();
             for (int i = 0; i < ifaces.length; i++) {
                 encoder = (Encoder) sEncoderTable.get(ifaces[i].getName());
@@ -92,47 +84,41 @@ public class BEROutputStream
         return null;
     }
 
-    public static boolean
-    canEncode (Object item)
-    {
+    public static boolean canEncode(Object item) {
         return getEncoder(item) != null;
     }
 
-    public void
-    write (Object item)
-        throws IOException
-    {
+    public void write(Object item) throws IOException {
         Encoder encoder = getEncoder(item);
         if (encoder == null) {
-            throw new BERException("Can't encode object of type " + item.getClass().getName());
+            throw new BERException("Can't encode object of type "
+                    + item.getClass().getName());
         }
         encoder.encode(mOutStream, item, mUseIndefiniteLength);
     }
 
-    /* package */ void
-    writeTerminator ()
-        throws IOException
-    {
+    /* package */void writeTerminator() throws IOException {
         Tag.TERMINATOR.write(mOutStream);
     }
 
-    public static void
-    writeContainer (OutputStream out, Tag tag, Iterable sequence, boolean useIndefiniteLength)
-        throws IOException
-    {
+    public static void writeContainer(OutputStream out, Tag tag,
+            Iterable sequence, boolean useIndefiniteLength) throws IOException {
         if (useIndefiniteLength) {
             tag.write(out);
-            BEROutputStream subOut = new BEROutputStream(out, useIndefiniteLength);
-            for (Iterator iter = sequence.iterator(); iter.hasNext(); ) {
+            BEROutputStream subOut = new BEROutputStream(out,
+                    useIndefiniteLength);
+            for (Iterator iter = sequence.iterator(); iter.hasNext();) {
                 Object item = iter.next();
                 subOut.write(item);
             }
             subOut.writeTerminator();
         } else {
-            // write the contents into a buffer, then dump that buffer into the stream.
+            // write the contents into a buffer, then dump that buffer into the
+            // stream.
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            BEROutputStream subOut = new BEROutputStream(buffer, useIndefiniteLength);
-            for (Iterator iter = sequence.iterator(); iter.hasNext(); ) {
+            BEROutputStream subOut = new BEROutputStream(buffer,
+                    useIndefiniteLength);
+            for (Iterator iter = sequence.iterator(); iter.hasNext();) {
                 Object item = iter.next();
                 subOut.write(item);
             }
@@ -144,43 +130,42 @@ public class BEROutputStream
     }
 
     /**
-     * Encode an object into BER data.  This is just a convenience method.
-     *
-     * @param obj a java object of a type with a registered codec
-     * @param useIndefiniteLength true if containers should be encoded as
-     *     indefinite-length (the normal mode); false if containers should be
-     *     buffered as they're written, to track lengths8
+     * Encode an object into BER data. This is just a convenience method.
+     * 
+     * @param obj
+     *            a java object of a type with a registered codec
+     * @param useIndefiniteLength
+     *            true if containers should be encoded as indefinite-length (the
+     *            normal mode); false if containers should be buffered as
+     *            they're written, to track lengths8
      * @return BER-encoded data
-     * @throws IOException if there was an error encoding the object
+     * @throws IOException
+     *             if there was an error encoding the object
      */
-    public static byte[]
-    encode (Object obj, boolean useIndefiniteLength)
-        throws IOException
-    {
+    public static byte[] encode(Object obj, boolean useIndefiniteLength)
+            throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer, useIndefiniteLength).write(obj);
         return buffer.toByteArray();
     }
 
     /**
-     * Encode an object into BER data.  This is just a convenience method.
-     *
-     * @param obj a java object of a type with a registered codec
+     * Encode an object into BER data. This is just a convenience method.
+     * 
+     * @param obj
+     *            a java object of a type with a registered codec
      * @return BER-encoded data
-     * @throws IOException if there was an error encoding the object
+     * @throws IOException
+     *             if there was an error encoding the object
      */
-    public static byte[]
-    encode (Object obj)
-        throws IOException
-    {
+    public static byte[] encode(Object obj) throws IOException {
         return encode(obj, true);
     }
-
 
     private OutputStream mOutStream;
     private boolean mUseIndefiniteLength = true;
 
-    private static Map sEncoderTable = new HashMap();   // class name -> Encoder
+    private static Map sEncoderTable = new HashMap(); // class name -> Encoder
 
     static {
         CommonCodecs.register();

@@ -35,35 +35,28 @@ import net.lag.crai.CraiKeyPair;
 import net.lag.crai.CraiPrivateKey;
 import net.lag.crai.CraiPublicKey;
 
-
 /**
- * Standard DSS public/private key algorithm for signing and verification.
- * This wraps the java library in some SSH-specific functionality.
+ * Standard DSS public/private key algorithm for signing and verification. This
+ * wraps the java library in some SSH-specific functionality.
  */
-public class DSSKey
-    extends PKey
-{
-    public String
-    getSSHName ()
-    {
+public class DSSKey extends PKey {
+    @Override
+    public String getSSHName() {
         return "ssh-dss";
     }
 
-    public boolean
-    canSign ()
-    {
+    @Override
+    public boolean canSign() {
         return mX != null;
     }
 
-    public int
-    getBits ()
-    {
+    @Override
+    public int getBits() {
         return mP.bitLength();
     }
 
-    public byte[]
-    toByteArray ()
-    {
+    @Override
+    public byte[] toByteArray() {
         Message m = new Message();
         m.putString(getSSHName());
         m.putMPZ(mP);
@@ -73,10 +66,8 @@ public class DSSKey
         return m.toByteArray();
     }
 
-    public Message
-    signSSHData (Crai crai, byte[] data)
-        throws SSHException
-    {
+    @Override
+    public Message signSSHData(Crai crai, byte[] data) throws SSHException {
         try {
             CraiPrivateKey dsa = crai.makePrivateDSAKey(mX, mP, mQ, mG);
             byte[] sig = dsa.sign(data, 0, data.length);
@@ -90,18 +81,19 @@ public class DSSKey
         }
     }
 
-    public boolean
-    verifySSHSignature (Crai crai, byte[] data, Message sig)
-        throws SSHException
-    {
+    @Override
+    public boolean verifySSHSignature(Crai crai, byte[] data, Message sig)
+            throws SSHException {
         try {
-            if (! sig.getString().equals("ssh-dss")) {
+            if (!sig.getString().equals("ssh-dss")) {
                 return false;
             }
             byte[] sigData = sig.getByteString();
 
             if (sigData.length != 40) {
-                throw new SSHException("DSS signature must be exactly 40 bytes! (is: " + sigData.length + ")");
+                throw new SSHException(
+                        "DSS signature must be exactly 40 bytes! (is: "
+                                + sigData.length + ")");
             }
             CraiPublicKey dsa = crai.makePublicDSAKey(mY, mP, mQ, mG);
             return dsa.verify(data, 0, data.length, sigData);
@@ -110,12 +102,11 @@ public class DSSKey
         }
     }
 
-    protected void
-    buildFromBER (BigInteger[] ints)
-        throws SSHException
-    {
+    @Override
+    protected void buildFromBER(BigInteger[] ints) throws SSHException {
         if (ints.length < 6) {
-            throw new SSHException("Not a valid RSA private key file (bad ber encoding)");
+            throw new SSHException(
+                    "Not a valid RSA private key file (bad ber encoding)");
         }
         mP = ints[1];
         mQ = ints[2];
@@ -124,19 +115,17 @@ public class DSSKey
         mX = ints[5];
     }
 
-    protected void
-    buildFromMessage (Message m)
-    {
+    @Override
+    protected void buildFromMessage(Message m) {
         mP = m.getMPZ();
         mQ = m.getMPZ();
         mG = m.getMPZ();
         mY = m.getMPZ();
     }
 
-    public void
-    writePrivateKeyToStream (OutputStream os, String password)
-        throws IOException
-    {
+    @Override
+    public void writePrivateKeyToStream(OutputStream os, String password)
+            throws IOException {
         BigInteger[] nums = new BigInteger[6];
         nums[0] = BigInteger.ZERO;
         nums[1] = mP;
@@ -148,23 +137,23 @@ public class DSSKey
     }
 
     /**
-     * Generate a new DSS private/public key pair.  This operation may take
-     * a non-trivial amount of time.  The actual key generation is
-     * delegated to {@link Crai}.
-     *
-     * @param bits bit size of the key to generate
+     * Generate a new DSS private/public key pair. This operation may take a
+     * non-trivial amount of time. The actual key generation is delegated to
+     * {@link Crai}.
+     * 
+     * @param bits
+     *            bit size of the key to generate
      * @return a new DSS key
-     * @throws SSHException if there's an error within the underlying crypto
-     *     library
+     * @throws SSHException
+     *             if there's an error within the underlying crypto library
      */
-    public static DSSKey
-    generate (Crai crai, int bits)
-        throws SSHException
-    {
+    public static DSSKey generate(Crai crai, int bits) throws SSHException {
         try {
             CraiKeyPair pair = crai.generateDSAKeyPair(bits);
-            CraiPrivateKey.DSAContents priv = (CraiPrivateKey.DSAContents) pair.getPrivateKey().getContents();
-            CraiPublicKey.DSAContents pub = (CraiPublicKey.DSAContents) pair.getPublicKey().getContents();
+            CraiPrivateKey.DSAContents priv = (CraiPrivateKey.DSAContents) pair
+                    .getPrivateKey().getContents();
+            CraiPublicKey.DSAContents pub = (CraiPublicKey.DSAContents) pair
+                    .getPublicKey().getContents();
 
             DSSKey key = new DSSKey();
             key.mP = pub.getP();
@@ -179,25 +168,29 @@ public class DSSKey
     }
 
     /**
-     * Create a DSS private key object from the component integers. This
-     * method assumes the integers have come from some other reliable source.
-     * The parameter names identify the required numbers from the DSS
-     * algorithm.
-     *
-     * <p> Please don't use this method to generate a new key from scratch.
-     * Picking correct values for these parameters is tricky.
-     * Use {@link #generate(Crai, int)} to generate a new key.
-     *
-     * @param p the DSS "p"
-     * @param q the DSS "q"
-     * @param g the DSS "g"
-     * @param y the DSS "y"
-     * @param x the DSS "x"
+     * Create a DSS private key object from the component integers. This method
+     * assumes the integers have come from some other reliable source. The
+     * parameter names identify the required numbers from the DSS algorithm.
+     * 
+     * <p>
+     * Please don't use this method to generate a new key from scratch. Picking
+     * correct values for these parameters is tricky. Use
+     * {@link #generate(Crai, int)} to generate a new key.
+     * 
+     * @param p
+     *            the DSS "p"
+     * @param q
+     *            the DSS "q"
+     * @param g
+     *            the DSS "g"
+     * @param y
+     *            the DSS "y"
+     * @param x
+     *            the DSS "x"
      * @return a DSS private key object
      */
-    public static DSSKey
-    build (BigInteger p, BigInteger q, BigInteger g, BigInteger y, BigInteger x)
-    {
+    public static DSSKey build(BigInteger p, BigInteger q, BigInteger g,
+            BigInteger y, BigInteger x) {
         DSSKey key = new DSSKey();
         key.mP = p;
         key.mQ = q;
@@ -210,16 +203,19 @@ public class DSSKey
     /**
      * Create a DSS public key object from the component integers. Such a key
      * can be used only to verify signatures, not sign data.
-     *
-     * @param p the DSS "p"
-     * @param q the DSS "q"
-     * @param g the DSS "g"
-     * @param y the DSS "y"
+     * 
+     * @param p
+     *            the DSS "p"
+     * @param q
+     *            the DSS "q"
+     * @param g
+     *            the DSS "g"
+     * @param y
+     *            the DSS "y"
      * @return a DSS public key object
      */
-    public static DSSKey
-    build (BigInteger p, BigInteger q, BigInteger g, BigInteger y)
-    {
+    public static DSSKey build(BigInteger p, BigInteger q, BigInteger g,
+            BigInteger y) {
         DSSKey key = new DSSKey();
         key.mP = p;
         key.mQ = q;
@@ -228,18 +224,15 @@ public class DSSKey
         return key;
     }
 
-    public CraiPrivateKey
-    toPrivateKey (Crai crai)
-    {
+    @Override
+    public CraiPrivateKey toPrivateKey(Crai crai) {
         return crai.makePrivateDSAKey(mX, mP, mQ, mG);
     }
 
-    public CraiPublicKey
-    toPublicKey (Crai crai)
-    {
+    @Override
+    public CraiPublicKey toPublicKey(Crai crai) {
         return crai.makePublicDSAKey(mY, mP, mQ, mG);
     }
-
 
     private BigInteger mP;
     private BigInteger mQ;

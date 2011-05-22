@@ -27,20 +27,15 @@ package net.lag.jaramiko;
 
 import junit.framework.TestCase;
 
+public class ModulusPackTest extends TestCase {
 
-public class ModulusPackTest
-    extends TestCase
-{
-
-    public void
-    testLoad ()
-        throws Exception
-    {
+    public void testLoad() throws Exception {
         ModulusPack pack = new ModulusPack();
         assertEquals(198, pack.readStandardResource());
         assertEquals(0, pack.getDiscarded().size());
 
-        ModulusPack.ModulusPair mod = pack.get(new FakeCrai(), 1024, 1024, 2048);
+        ModulusPack.ModulusPair mod = pack
+                .get(new FakeCrai(), 1024, 1024, 2048);
         assertTrue((mod.mGenerator == 5) || (mod.mGenerator == 2));
         assertEquals(mod.mModulus.bitLength(), 1024);
     }

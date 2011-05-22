@@ -25,33 +25,25 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Exception thrown from {@link ClientTransport} when a server gives a bad
  * signature.
  */
-public class BadSignatureException
-    extends SSHException
-{
-    public
-    BadSignatureException (String keyType)
-    {
+public class BadSignatureException extends SSHException {
+    public BadSignatureException(String keyType) {
         super("Signature verificiation (" + keyType + ") failed");
         mKeyType = keyType;
     }
 
     /**
-     * Return the key type of the failed signature.  This will usually be
-     * either <code>"ssh-rsa"</code> or <code>"ssh-dss"</code>.
-     *
+     * Return the key type of the failed signature. This will usually be either
+     * <code>"ssh-rsa"</code> or <code>"ssh-dss"</code>.
+     * 
      * @return the key type
      */
-    public String
-    getKeyType ()
-    {
+    public String getKeyType() {
         return mKeyType;
     }
-
 
     private String mKeyType;
 

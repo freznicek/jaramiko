@@ -25,19 +25,13 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Exception raised when a password is needed to unlock a private key file.
  */
-public class PasswordRequiredException
-    extends SSHException
-{
-    public
-    PasswordRequiredException (String description)
-    {
+public class PasswordRequiredException extends SSHException {
+    public PasswordRequiredException(String description) {
         super(description);
     }
-
 
     private static final long serialVersionUID = 0;
 }

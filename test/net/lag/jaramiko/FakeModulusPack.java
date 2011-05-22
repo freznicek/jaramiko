@@ -29,30 +29,23 @@ import java.math.BigInteger;
 
 import net.lag.crai.Crai;
 
-
-public class FakeModulusPack
-    extends ModulusPack
-{
-    public ModulusPair
-    get (Crai crai, int min, int prefer, int max)
-        throws SSHException
-    {
+public class FakeModulusPack extends ModulusPack {
+    @Override
+    public ModulusPair get(Crai crai, int min, int prefer, int max)
+            throws SSHException {
         return new ModulusPair(sG, sP);
     }
 
-    public int
-    size ()
-    {
+    @Override
+    public int size() {
         return 1;
     }
 
-
-    private static final String P_TEXT =
-        "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088" +
-        "A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B30" +
-        "2B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A63" +
-        "7ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE64928" +
-        "6651ECE65381FFFFFFFFFFFFFFFF";
+    private static final String P_TEXT = "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088"
+            + "A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B30"
+            + "2B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A63"
+            + "7ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE64928"
+            + "6651ECE65381FFFFFFFFFFFFFFFF";
     public static final BigInteger sP = new BigInteger(P_TEXT, 16);
     public static final int sG = 2;
 }

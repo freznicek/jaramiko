@@ -25,27 +25,26 @@
 
 package net.lag.jaramiko;
 
-
 /**
- * Information from the server to the client containing instructions and
- * prompts for an interactive authentication request.
+ * Information from the server to the client containing instructions and prompts
+ * for an interactive authentication request.
  */
-public class InteractiveQuery
-{
+public class InteractiveQuery {
     /**
-     * An interactive authentication prompt from the server.  Each prompt
+     * An interactive authentication prompt from the server. Each prompt
      * contains the prompt {@link #text} and a boolean ({@link #echoResponse})
      * indicating if the response should be echoed back.
      */
-    public static class Prompt
-    {
+    public static class Prompt {
         /** The prompt to offer the user */
         public String text;
 
-        /** Indicates if the user's response should be echoed back (ie, is not a password) */
+        /**
+         * Indicates if the user's response should be echoed back (ie, is not a
+         * password)
+         */
         public boolean echoResponse;
     };
-
 
     /**
      * A short title for the dialog or session.

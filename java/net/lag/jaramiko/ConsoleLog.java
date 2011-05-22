@@ -27,55 +27,47 @@ package net.lag.jaramiko;
 
 import java.util.Calendar;
 
-
 /**
- * Simple {@link LogSink} implementation which dumps jaramiko's log messages
- * to java's <code>System.err</code>.  The log level is indicated with a
+ * Simple {@link LogSink} implementation which dumps jaramiko's log messages to
+ * java's <code>System.err</code>. The log level is indicated with a
  * three-letter abbreviation, and the current time and thread ID is attached,
  * but nothing else fancy is done.
- *
- * <p> No attempt is made to make the logging efficient or useful. This is
- * only meant for debugging or reference.
+ * 
+ * <p>
+ * No attempt is made to make the logging efficient or useful. This is only
+ * meant for debugging or reference.
  */
-public class ConsoleLog
-    implements LogSink
-{
-    public void
-    error (String text)
-    {
+public class ConsoleLog implements LogSink {
+    @Override
+    public void error(String text) {
         System.err.println(getThreadID() + " ERR: " + text);
     }
 
-    public void
-    warning (String text)
-    {
+    @Override
+    public void warning(String text) {
         System.err.println(getThreadID() + " WRN: " + text);
     }
 
-    public void
-    notice (String text)
-    {
+    @Override
+    public void notice(String text) {
         System.err.println(getThreadID() + " NTC: " + text);
     }
 
-    public void
-    debug (String text)
-    {
+    @Override
+    public void debug(String text) {
         System.err.println(getThreadID() + " DBG: " + text);
     }
 
-    public void
-    dump (String text, byte[] data, int offset, int length)
-    {
+    @Override
+    public void dump(String text, byte[] data, int offset, int length) {
         String tidstr = getThreadID();
         for (int i = 0; i < length; i += 16) {
-            System.err.println(tidstr + " DMP: " + text + ": " + dumpHex(data, offset + i, length - i));
+            System.err.println(tidstr + " DMP: " + text + ": "
+                    + dumpHex(data, offset + i, length - i));
         }
     }
 
-    private String
-    dumpHex (byte[] data, int offset, int length)
-    {
+    private String dumpHex(byte[] data, int offset, int length) {
         StringBuffer hex = new StringBuffer();
         StringBuffer ascii = new StringBuffer();
 
@@ -85,7 +77,7 @@ public class ConsoleLog
                 ascii.append(' ');
             } else {
                 byte b = data[offset + i];
-                String x = Integer.toHexString((int)b & 0xff).toUpperCase();
+                String x = Integer.toHexString(b & 0xff).toUpperCase();
                 if (x.length() < 2) {
                     hex.append('0');
                 }
@@ -93,7 +85,7 @@ public class ConsoleLog
                 hex.append(' ');
 
                 if ((b > 32) && (b < 127)) {
-                    ascii.append((char)b);
+                    ascii.append((char) b);
                 } else {
                     ascii.append('.');
                 }
@@ -103,14 +95,15 @@ public class ConsoleLog
         return hex.toString() + "   " + ascii.toString();
     }
 
-    private String
-    getThreadID ()
-    {
-        // don't assume we have SimpleDateFormatter; some embedded devices don't.
+    private String getThreadID() {
+        // don't assume we have SimpleDateFormatter; some embedded devices
+        // don't.
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(System.currentTimeMillis());
-        String timestamp = pad(cal.get(Calendar.HOUR_OF_DAY), 2) + ":" + pad(cal.get(Calendar.MINUTE), 2) +
-            ":" + pad(cal.get(Calendar.SECOND), 2) + "." + pad(cal.get(Calendar.MILLISECOND), 3);
+        String timestamp = pad(cal.get(Calendar.HOUR_OF_DAY), 2) + ":"
+                + pad(cal.get(Calendar.MINUTE), 2) + ":"
+                + pad(cal.get(Calendar.SECOND), 2) + "."
+                + pad(cal.get(Calendar.MILLISECOND), 3);
 
         int tid = ((Integer) sThreadID.get()).intValue();
         String tidstr = "t" + Integer.toString(tid);
@@ -122,9 +115,7 @@ public class ConsoleLog
         return timestamp + " " + tidstr;
     }
 
-    private String
-    pad (int num, int places)
-    {
+    private String pad(int num, int places) {
         String out = Integer.toString(num);
         while (out.length() < places) {
             out = "0" + out;
@@ -132,10 +123,10 @@ public class ConsoleLog
         return out;
     }
 
-
     private static int sNextThreadID = 1;
     private static ThreadLocal sThreadID = new ThreadLocal() {
-        protected synchronized Object initialValue () {
+        @Override
+        protected synchronized Object initialValue() {
             synchronized (ConsoleLog.class) {
                 return new Integer(sNextThreadID++);
             }

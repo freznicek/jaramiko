@@ -27,66 +27,54 @@ package net.lag.jaramiko;
 
 import java.math.BigInteger;
 
-
 /**
  * Stubbed-out KexTransportInterface for testing key-exchange implementations.
  */
-public class FakeKexTransport
-    implements KexTransportInterface
-{
-    public String
-    getRemoteVersion ()
-    {
+public class FakeKexTransport implements KexTransportInterface {
+    @Override
+    public String getRemoteVersion() {
         return "SSH-2.0-lame";
     }
 
-    public String
-    getLocalVersion ()
-    {
+    @Override
+    public String getLocalVersion() {
         return "SSH-2.0-paramiko_1.0";
     }
 
-    public byte[]
-    getRemoteKexInit ()
-    {
+    @Override
+    public byte[] getRemoteKexInit() {
         return "remote-kex-init".getBytes();
     }
 
-    public byte[]
-    getLocalKexInit ()
-    {
+    @Override
+    public byte[] getLocalKexInit() {
         return "local-kex-init".getBytes();
     }
 
-    public void
-    registerMessageHandler (byte ptype, MessageHandler handler)
-    {
+    @Override
+    public void registerMessageHandler(byte ptype, MessageHandler handler) {
         // pass
     }
 
-    public void
-    expectPacket (byte expect)
-    {
+    @Override
+    public void expectPacket(byte expect) {
         mExpect1 = expect;
         mExpect2 = 0;
     }
 
-    public void
-    expectPacket (byte expect1, byte expect2)
-    {
+    @Override
+    public void expectPacket(byte expect1, byte expect2) {
         mExpect1 = expect1;
         mExpect2 = expect2;
     }
 
-    public void
-    sendMessage (Message m)
-    {
+    @Override
+    public void sendMessage(Message m) {
         mMessage = m;
     }
 
-    public PKey
-    getServerKey ()
-    {
+    @Override
+    public PKey getServerKey() {
         if (mServerMode) {
             return new FakeKey();
         } else {
@@ -94,32 +82,27 @@ public class FakeKexTransport
         }
     }
 
-    public void
-    verifyKey (byte[] key, byte[] sig)
-    {
+    @Override
+    public void verifyKey(byte[] key, byte[] sig) {
         mVerifyKey = key;
         mVerifySig = sig;
     }
 
-    public void
-    setKH (BigInteger k, byte[] h)
-    {
+    @Override
+    public void setKH(BigInteger k, byte[] h) {
         mK = k;
         mH = h;
     }
 
-    public void
-    kexComplete ()
-    {
+    @Override
+    public void kexComplete() {
         mActivated = true;
     }
 
-    public LogSink
-    getLog ()
-    {
+    @Override
+    public LogSink getLog() {
         return new NullLog();
     }
-
 
     public Message mMessage;
     public Message mUserMessage;

@@ -27,41 +27,45 @@ package net.lag.jaramiko;
 
 import java.util.List;
 
-
 /**
- * Simple interface for a factory to create Channels.  You only need to use
- * this if you are creating custom channel types that need special features
- * like ChannelRequests -- in other words, implementing new protocols over
- * SSH.  Use {@link Transport#registerChannelKind} to register the factory
- * with your Transport.
+ * Simple interface for a factory to create Channels. You only need to use this
+ * if you are creating custom channel types that need special features like
+ * ChannelRequests -- in other words, implementing new protocols over SSH. Use
+ * {@link Transport#registerChannelKind} to register the factory with your
+ * Transport.
  */
-public interface ChannelFactory
-{
+public interface ChannelFactory {
     /**
-     * Create a channel from parameters that are in the form of a list.  This
-     * is called from {@link ClientTransport} when a client channel is opened.
-     *
-     * @param kind arbitrary string (defined by the argument to
-     *     {@link ClientTransport#openChannel}) indicating the kind of channel
-     *     to open
-     * @param chanid the transport-defined ID for the channel
-     * @param params any parameters that were passed from openChannel.
+     * Create a channel from parameters that are in the form of a list. This is
+     * called from {@link ClientTransport} when a client channel is opened.
+     * 
+     * @param kind
+     *            arbitrary string (defined by the argument to
+     *            {@link ClientTransport#openChannel}) indicating the kind of
+     *            channel to open
+     * @param chanid
+     *            the transport-defined ID for the channel
+     * @param params
+     *            any parameters that were passed from openChannel.
      * @return an appropriate Channel object.
      */
     public Channel createChannel(String kind, int chanid, List params);
 
     /**
      * Create a channel from parameters that are in the form of an SSH
-     * {@link Message}.  This is called from {@link ServerTransport} when the
-     * remote client has requested a special channel type.  The parameters
-     * (if any) can be retrieved from the Message object.
-     *
-     * @param kind arbitrary string (defined by the argument to
-     *     {@link ClientTransport#openChannel}) string indicating the kind of
-     *     channel to open
-     * @param chanid the transport-defined ID for the channel
-     * @param params parameters that were originally passed by the remote
-     *     client as a List.
+     * {@link Message}. This is called from {@link ServerTransport} when the
+     * remote client has requested a special channel type. The parameters (if
+     * any) can be retrieved from the Message object.
+     * 
+     * @param kind
+     *            arbitrary string (defined by the argument to
+     *            {@link ClientTransport#openChannel}) string indicating the
+     *            kind of channel to open
+     * @param chanid
+     *            the transport-defined ID for the channel
+     * @param params
+     *            parameters that were originally passed by the remote client as
+     *            a List.
      * @return an appropriate Channel object
      */
     public Channel createChannel(String kind, int chanid, Message params);

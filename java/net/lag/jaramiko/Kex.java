@@ -26,15 +26,14 @@
 package net.lag.jaramiko;
 
 import java.io.IOException;
-import net.lag.crai.Crai;
 
+import net.lag.crai.Crai;
 
 /**
  * Interface for implementing a key-exchange algorithm.
  */
-/* package */ interface Kex
-    extends MessageHandler
-{
-    public String getName ();
-    public void startKex (KexTransportInterface t, Crai crai) throws IOException;
+/* package */interface Kex extends MessageHandler {
+    public String getName();
+
+    public void startKex(KexTransportInterface t, Crai crai) throws IOException;
 }

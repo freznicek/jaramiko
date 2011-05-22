@@ -26,103 +26,96 @@
 package net.lag.jaramiko;
 
 import java.math.BigInteger;
-import net.lag.crai.*;
-import net.lag.craijce.CraiJCE;
 
+import net.lag.crai.Crai;
+import net.lag.crai.CraiCipher;
+import net.lag.crai.CraiCipherAlgorithm;
+import net.lag.crai.CraiDigest;
+import net.lag.crai.CraiException;
+import net.lag.crai.CraiKeyPair;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
+import net.lag.crai.CraiRandom;
+import net.lag.craijce.CraiJCE;
 
 /**
  * This only exists to allow a test to use FakeRandom.
- *
+ * 
  * @author robey
  */
-public class FakeCrai
-    implements Crai
-{
-    public
-    FakeCrai ()
-    {
+public class FakeCrai implements Crai {
+    public FakeCrai() {
         mCraiJCE.mCraiRandom = new FakeRandom();
     }
 
-    public CraiRandom
-    getPRNG ()
-    {
+    @Override
+    public CraiRandom getPRNG() {
         return new FakeRandom();
     }
 
-    public CraiPrivateKey
-    makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
-    {
+    @Override
+    public CraiPrivateKey makePrivateRSAKey(BigInteger n, BigInteger d,
+            BigInteger p, BigInteger q) {
         return mCraiJCE.makePrivateRSAKey(n, d, p, q);
     }
 
-    public CraiPrivateKey
-    makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
-    {
+    @Override
+    public CraiPrivateKey makePrivateDSAKey(BigInteger x, BigInteger p,
+            BigInteger q, BigInteger g) {
         return mCraiJCE.makePrivateDSAKey(x, p, q, g);
     }
 
-    public CraiPublicKey
-    makePublicRSAKey (BigInteger n, BigInteger e)
-    {
+    @Override
+    public CraiPublicKey makePublicRSAKey(BigInteger n, BigInteger e) {
         return mCraiJCE.makePublicRSAKey(n, e);
     }
 
-    public CraiPublicKey
-    makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
-    {
+    @Override
+    public CraiPublicKey makePublicDSAKey(BigInteger y, BigInteger p,
+            BigInteger q, BigInteger g) {
         return mCraiJCE.makePublicDSAKey(y, p, q, g);
     }
 
-    public CraiKeyPair
-    generateRSAKeyPair (int bits)
-    {
+    @Override
+    public CraiKeyPair generateRSAKeyPair(int bits) {
         return mCraiJCE.generateRSAKeyPair(bits);
     }
 
-    public CraiKeyPair
-    generateDSAKeyPair (int bits)
-    {
+    @Override
+    public CraiKeyPair generateDSAKeyPair(int bits) {
         return mCraiJCE.generateDSAKeyPair(bits);
     }
 
-    public CraiDigest
-    makeSHA1 ()
-    {
+    @Override
+    public CraiDigest makeSHA1() {
         return mCraiJCE.makeSHA1();
     }
 
-    public CraiDigest
-    makeMD5 ()
-    {
+    @Override
+    public CraiDigest makeMD5() {
         return mCraiJCE.makeMD5();
     }
 
-    public CraiDigest
-    makeSHA1HMAC (byte[] key)
-    {
+    @Override
+    public CraiDigest makeSHA1HMAC(byte[] key) {
         return mCraiJCE.makeSHA1HMAC(key);
     }
 
-    public CraiDigest
-    makeMD5HMAC (byte[] key)
-    {
+    @Override
+    public CraiDigest makeMD5HMAC(byte[] key) {
         return mCraiJCE.makeMD5HMAC(key);
     }
 
-    public CraiCipher
-    getCipher (CraiCipherAlgorithm algorithm)
-        throws CraiException
-    {
+    @Override
+    public CraiCipher getCipher(CraiCipherAlgorithm algorithm)
+            throws CraiException {
         return mCraiJCE.getCipher(algorithm);
     }
 
-    public BigInteger
-    modPow (BigInteger b, BigInteger e, BigInteger m)
-    {
+    @Override
+    public BigInteger modPow(BigInteger b, BigInteger e, BigInteger m) {
         return mCraiJCE.modPow(b, e, m);
     }
-
 
     private CraiJCE mCraiJCE = new CraiJCE();
 }

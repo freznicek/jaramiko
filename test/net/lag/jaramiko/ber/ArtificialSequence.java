@@ -25,66 +25,53 @@
 
 package net.lag.jaramiko.ber;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-
-public class ArtificialSequence
-{
-    public
-    ArtificialSequence (Iterable list)
-    {
+public class ArtificialSequence {
+    public ArtificialSequence(Iterable list) {
         mList = new ArrayList();
         if (list != null) {
-            for (Iterator iter = list.iterator(); iter.hasNext(); ) {
+            for (Iterator iter = list.iterator(); iter.hasNext();) {
                 mList.add(iter.next());
             }
         }
     }
 
-    public boolean
-    equals (Object obj)
-    {
+    @Override
+    public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
-        if (! (obj instanceof ArtificialSequence)) {
+        if (!(obj instanceof ArtificialSequence)) {
             return false;
         }
         return ((ArtificialSequence) obj).mList.equals(mList);
     }
 
-
     public List mList;
 
     private static Tag TAG = Tag.createContainer(Tag.APPLICATION, 200);
 
-
-    private static class Encoder
-        implements BEROutputStream.Encoder
-    {
-        public void
-        encode (OutputStream out, Object obj, boolean useIndefiniteLength)
-            throws IOException
-        {
-            BEROutputStream.writeContainer(out, TAG, ((ArtificialSequence) obj).mList, useIndefiniteLength);
+    private static class Encoder implements BEROutputStream.Encoder {
+        @Override
+        public void encode(OutputStream out, Object obj,
+                boolean useIndefiniteLength) throws IOException {
+            BEROutputStream.writeContainer(out, TAG,
+                    ((ArtificialSequence) obj).mList, useIndefiniteLength);
         }
     }
 
-
-    private static class Decoder
-        implements BERInputStream.Decoder
-    {
-        public Object
-        decode (InputStream in, Tag tag)
-            throws IOException
-        {
+    private static class Decoder implements BERInputStream.Decoder {
+        @Override
+        public Object decode(InputStream in, Tag tag) throws IOException {
             return new ArtificialSequence(BERInputStream.decodeContainer(in));
         }
     }
-
 
     static {
         BEROutputStream.register(ArtificialSequence.class, new Encoder());

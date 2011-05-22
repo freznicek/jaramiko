@@ -32,35 +32,29 @@ import java.util.List;
  * ServerInterface implementation that just records which methods were called
  * and what parameters were passed in.
  */
-public class FakeServer
-    implements ServerInterface
-{
-    public
-    FakeServer ()
-        throws Exception
-    {
+public class FakeServer implements ServerInterface {
+    public FakeServer() throws Exception {
         mParanoidDidPassword = false;
         mParanoidDidPublicKey = false;
-        mParanoidKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_dss.key"), null);
+        mParanoidKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_dss.key"), null);
     }
 
-    public int
-    checkChannelRequest (String kind, int chanID)
-    {
+    @Override
+    public int checkChannelRequest(String kind, int chanID) {
         if (kind.equals("bogus")) {
             return ChannelError.ADMINISTRATIVELY_PROHIBITED;
         }
         return ChannelError.SUCCESS;
     }
 
-    public String
-    getAllowedAuths (String username)
-    {
+    @Override
+    public String getAllowedAuths(String username) {
         if (username.equals("slowdive")) {
             return "publickey,password";
         }
         if (username.equals("paranoid")) {
-            if (! mParanoidDidPassword && ! mParanoidDidPublicKey) {
+            if (!mParanoidDidPassword && !mParanoidDidPublicKey) {
                 return "publickey,password";
             } else if (mParanoidDidPassword) {
                 return "publickey";
@@ -74,15 +68,13 @@ public class FakeServer
         return "publickey";
     }
 
-    public int
-    checkAuthNone (String username)
-    {
+    @Override
+    public int checkAuthNone(String username) {
         return AuthError.FAILED;
     }
 
-    public int
-    checkAuthPassword (String username, String password)
-    {
+    @Override
+    public int checkAuthPassword(String username, String password) {
         if (username.equals("slowdive") && password.equals("pygmalion")) {
             return AuthError.SUCCESS;
         }
@@ -97,9 +89,8 @@ public class FakeServer
         return AuthError.FAILED;
     }
 
-    public int
-    checkAuthPublicKey (String username, PKey key)
-    {
+    @Override
+    public int checkAuthPublicKey(String username, PKey key) {
         if (username.equals("paranoid") && key.equals(mParanoidKey)) {
             // 2-part auth
             mParanoidDidPublicKey = true;
@@ -111,9 +102,9 @@ public class FakeServer
         return AuthError.FAILED;
     }
 
-    public InteractiveQuery
-    checkAuthInteractive (String username, String[] methods)
-    {
+    @Override
+    public InteractiveQuery checkAuthInteractive(String username,
+            String[] methods) {
         if (username.equals("commie")) {
             mUsername = username;
             InteractiveQuery query = new InteractiveQuery();
@@ -128,9 +119,8 @@ public class FakeServer
         return null;
     }
 
-    public int
-    checkAuthInteractiveResponse (String[] responses)
-    {
+    @Override
+    public int checkAuthInteractiveResponse(String[] responses) {
         if (mUsername.equals("commie")) {
             if ((responses.length == 1) && responses[0].equals("cat")) {
                 return AuthError.SUCCESS;
@@ -139,18 +129,15 @@ public class FakeServer
         return AuthError.FAILED;
     }
 
-    public List
-    checkGlobalRequest (String kind, Message m)
-    {
+    @Override
+    public List checkGlobalRequest(String kind, Message m) {
         mGlobalRequest = kind;
         return null;
     }
 
-    public boolean
-    checkChannelPTYRequest (Channel c, String term, int width,
-                            int height, int pixelWidth,
-                            int pixelHeight, TerminalModes modes)
-    {
+    @Override
+    public boolean checkChannelPTYRequest(Channel c, String term, int width,
+            int height, int pixelWidth, int pixelHeight, TerminalModes modes) {
         mPTYTerm = term;
         mPTYWidth = width;
         mPTYHeight = height;
@@ -158,35 +145,29 @@ public class FakeServer
         return true;
     }
 
-    public boolean
-    checkChannelShellRequest (Channel c)
-    {
+    @Override
+    public boolean checkChannelShellRequest(Channel c) {
         return true;
     }
 
-    public boolean
-    checkChannelExecRequest (Channel c, String command)
-    {
-        if (! command.equals("yes")) {
+    @Override
+    public boolean checkChannelExecRequest(Channel c, String command) {
+        if (!command.equals("yes")) {
             return false;
         }
         return true;
     }
 
-    public boolean
-    checkChannelSubsystemRequest (Channel c, String name)
-    {
+    @Override
+    public boolean checkChannelSubsystemRequest(Channel c, String name) {
         return false;
     }
 
-    public boolean
-    checkChannelWindowChangeRequest (Channel c, int width,
-                                     int height, int pixelWidth,
-                                     int pixelHeight)
-    {
+    @Override
+    public boolean checkChannelWindowChangeRequest(Channel c, int width,
+            int height, int pixelWidth, int pixelHeight) {
         return false;
     }
-
 
     public boolean mParanoidDidPassword;
     public boolean mParanoidDidPublicKey;

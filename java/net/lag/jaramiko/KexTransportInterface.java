@@ -28,26 +28,34 @@ package net.lag.jaramiko;
 import java.io.IOException;
 import java.math.BigInteger;
 
-
 /**
  * This makes it easier to unit-test the Kex implementations, by letting the
  * Transport interface be easily stubbed out.
  */
-/* package */ interface KexTransportInterface
-{
-    public String getLocalVersion ();
-    public String getRemoteVersion ();
-    public byte[] getLocalKexInit ();
-    public byte[] getRemoteKexInit ();
+/* package */interface KexTransportInterface {
+    public String getLocalVersion();
 
-    public void registerMessageHandler (byte ptype, MessageHandler handler);
-    public void expectPacket (byte ptype);
-    public void expectPacket (byte ptype1, byte ptype2);
-    public void sendMessage (Message m) throws IOException;
+    public String getRemoteVersion();
 
-    public LogSink getLog ();
-    public PKey getServerKey ();
-    public void verifyKey (byte[] hostKey, byte[] sig) throws SSHException;
-    public void setKH (BigInteger k, byte[] h);
-    public void kexComplete () throws IOException;
+    public byte[] getLocalKexInit();
+
+    public byte[] getRemoteKexInit();
+
+    public void registerMessageHandler(byte ptype, MessageHandler handler);
+
+    public void expectPacket(byte ptype);
+
+    public void expectPacket(byte ptype1, byte ptype2);
+
+    public void sendMessage(Message m) throws IOException;
+
+    public LogSink getLog();
+
+    public PKey getServerKey();
+
+    public void verifyKey(byte[] hostKey, byte[] sig) throws SSHException;
+
+    public void setKH(BigInteger k, byte[] h);
+
+    public void kexComplete() throws IOException;
 }

@@ -40,15 +40,11 @@ import net.lag.jaramiko.HostKeys;
 import net.lag.jaramiko.PKey;
 import net.lag.jaramiko.sftp.Client;
 
-
-public class SimpleDemo
-{
+public class SimpleDemo {
     private static final int SSH_PORT = 22;
 
-
-    private static void
-    executeCommand (String serverName, PKey hostkey, String username, String password, String command)
-    {
+    private static void executeCommand(String serverName, PKey hostkey,
+            String username, String password, String command) {
         ClientTransport transport = null;
 
         try {
@@ -61,27 +57,18 @@ public class SimpleDemo
             System.out.println("--- Authenticating...");
             String[] next = transport.authPassword(username, password, 15000);
             if (next.length > 0) {
-                throw new IOException("Auth too complex: " + Arrays.asList(next));
+                throw new IOException("Auth too complex: "
+                        + Arrays.asList(next));
             }
             System.out.println("--- Executing...");
-            /*Channel channel = transport.openSession(15000);
-            channel.execCommand(command, 15000);
-            InputStream chanIn = channel.getInputStream();
-            byte[] buffer = new byte[512];
-            while (true) {
-                try {
-                    int n = chanIn.read(buffer);
-                    if (n < 0) {
-                        break;
-                    }
-                    if (n > 0) {
-                        System.out.write(buffer, 0, n);
-                    }
-                } catch (IOException x) {
-                    break;
-                }
-            }
-            channel.close();*/
+            /*
+             * Channel channel = transport.openSession(15000);
+             * channel.execCommand(command, 15000); InputStream chanIn =
+             * channel.getInputStream(); byte[] buffer = new byte[512]; while
+             * (true) { try { int n = chanIn.read(buffer); if (n < 0) { break; }
+             * if (n > 0) { System.out.write(buffer, 0, n); } } catch
+             * (IOException x) { break; } } channel.close();
+             */
 
             Client SFTP = Client.fromTransport(transport);
             try {
@@ -93,7 +80,6 @@ public class SimpleDemo
 
                 try {
                     InputStreamReader reader = new InputStreamReader(stream);
-
 
                     char[] buffer = new char[32768];
                     int readCount = 0;
@@ -120,29 +106,32 @@ public class SimpleDemo
         }
     }
 
-    public static void main (String[] args) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.println();
-        System.out.println("This demo will connect to an SSH server, login with a username and");
+        System.out
+                .println("This demo will connect to an SSH server, login with a username and");
         System.out.println("password, and execute a single command.");
         System.out.println();
 
-        //System.out.print("Server [localhost]: ");
+        // System.out.print("Server [localhost]: ");
         String serverName = "sion.f000.d0188.sd.spardat.at"; // in.readLine();
         if (serverName.length() == 0) {
             serverName = "localhost";
         }
-        //System.out.print("Username: ");
+        // System.out.print("Username: ");
         String username = "test"; // FIXME in.readLine();
-        String password = "test"; // FIXME new String(PasswordInput.getPassword(System.in, "Password: "));
-        //System.out.print("Hostkeys file location [/home/" + username + "/.ssh/known_hosts]: ");
+        String password = "test"; // FIXME new
+                                  // String(PasswordInput.getPassword(System.in,
+                                  // "Password: "));
+        // System.out.print("Hostkeys file location [/home/" + username +
+        // "/.ssh/known_hosts]: ");
         String hostkeysFilename = ""; // in.readLine();
         if (hostkeysFilename.length() == 0) {
             hostkeysFilename = "/home/" + username + "/.ssh/known_hosts";
         }
-        //System.out.print("Command [ls]: ");
+        // System.out.print("Command [ls]: ");
         String command = ""; // in.readLine();
         if (command.length() == 0) {
             command = "ls";
@@ -155,14 +144,16 @@ public class SimpleDemo
             keys.load(hostkeysFile);
             Map keymap = keys.lookup(serverName);
             if (keymap.size() == 0) {
-                System.out.println("!!! Couldn't find hostkey for " + serverName);
+                System.out.println("!!! Couldn't find hostkey for "
+                        + serverName);
             } else {
                 // just grab the first one.
                 hostkey = (PKey) keymap.values().iterator().next();
             }
         } catch (IOException x) {
             System.out.println("!!! Couldn't open hostkeys file: " + x);
-            System.out.println("!!! Therefore, no host key checking will be done, which is insecure.");
+            System.out
+                    .println("!!! Therefore, no host key checking will be done, which is insecure.");
         }
 
         executeCommand(serverName, hostkey, username, password, command);

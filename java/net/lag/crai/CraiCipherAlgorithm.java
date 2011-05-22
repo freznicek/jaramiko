@@ -25,26 +25,22 @@
 
 package net.lag.crai;
 
-
-public final class CraiCipherAlgorithm
-{
-    private
-    CraiCipherAlgorithm (String name)
-    {
+public final class CraiCipherAlgorithm {
+    private CraiCipherAlgorithm(String name) {
         // pass
     }
 
-    public String
-    toString ()
-    {
+    @Override
+    public String toString() {
         return mName;
     }
 
-
     private String mName;
 
-
-    public final static CraiCipherAlgorithm DES3_CBC = new CraiCipherAlgorithm("DES3_CBC");
-    public final static CraiCipherAlgorithm AES_CBC = new CraiCipherAlgorithm("AES_CBC");
-    public final static CraiCipherAlgorithm BLOWFISH_CBC = new CraiCipherAlgorithm("BLOWFISH_CBC");
+    public final static CraiCipherAlgorithm DES3_CBC = new CraiCipherAlgorithm(
+            "DES3_CBC");
+    public final static CraiCipherAlgorithm AES_CBC = new CraiCipherAlgorithm(
+            "AES_CBC");
+    public final static CraiCipherAlgorithm BLOWFISH_CBC = new CraiCipherAlgorithm(
+            "BLOWFISH_CBC");
 }

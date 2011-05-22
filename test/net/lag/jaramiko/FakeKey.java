@@ -33,79 +33,65 @@ import net.lag.crai.Crai;
 import net.lag.crai.CraiPrivateKey;
 import net.lag.crai.CraiPublicKey;
 
-
 /**
  * Stub out PKey for some tests.
  */
-public class FakeKey
-    extends PKey
-{
-    public Message
-    signSSHData (Crai crai, byte[] data)
-    {
+public class FakeKey extends PKey {
+    @Override
+    public Message signSSHData(Crai crai, byte[] data) {
         Message m = new Message();
         m.putBytes("fake-sig".getBytes());
         return m;
     }
 
-    public boolean
-    verifySSHSignature (Crai crai, byte[] data, Message sig)
-    {
+    @Override
+    public boolean verifySSHSignature(Crai crai, byte[] data, Message sig) {
         return false;
     }
 
-    protected void
-    buildFromBER (BigInteger[] ints)
-    {
+    @Override
+    protected void buildFromBER(BigInteger[] ints) {
         // pass
     }
 
-    protected void
-    buildFromMessage (Message m)
-    {
+    @Override
+    protected void buildFromMessage(Message m) {
         // pass
     }
 
-    public void
-    writePrivateKeyToStream (OutputStream os, String password)
-        throws IOException
-    {
+    @Override
+    public void writePrivateKeyToStream(OutputStream os, String password)
+            throws IOException {
         // pass
     }
 
-    public byte[]
-    toByteArray ()
-    {
+    @Override
+    public byte[] toByteArray() {
         return "fake-key".getBytes();
     }
 
-    public boolean
-    canSign ()
-    {
+    @Override
+    public boolean canSign() {
         return true;
     }
 
-    public int
-    getBits ()
-    {
+    @Override
+    public int getBits() {
         return 0;
     }
 
-    public String
-    getSSHName ()
-    {
+    @Override
+    public String getSSHName() {
         return "none";
     }
 
-    public CraiPublicKey
-    toPublicKey (Crai crai)
-    {
+    @Override
+    public CraiPublicKey toPublicKey(Crai crai) {
         return null;
     }
 
-    public CraiPrivateKey
-    toPrivateKey (Crai crai)
-    {
+    @Override
+    public CraiPrivateKey toPrivateKey(Crai crai) {
         return null;
     }
 }

@@ -25,25 +25,19 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Exception raised when an authentication attempt has failed.
  */
-public class AuthenticationFailedException
-    extends SSHException
-{
+public class AuthenticationFailedException extends SSHException {
     /* package */
-    AuthenticationFailedException (String message)
-    {
+    AuthenticationFailedException(String message) {
         super(message);
     }
 
     /* package */
-    AuthenticationFailedException ()
-    {
+    AuthenticationFailedException() {
         super("Authentication failed.");
     }
-
 
     private static final long serialVersionUID = 0;
 }

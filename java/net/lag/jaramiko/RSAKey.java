@@ -35,17 +35,12 @@ import net.lag.crai.CraiKeyPair;
 import net.lag.crai.CraiPrivateKey;
 import net.lag.crai.CraiPublicKey;
 
-
 /**
- * Standard RSA public/private key algorithm for signing and verification.
- * This wraps the java library in some SSH-specific functionality.
+ * Standard RSA public/private key algorithm for signing and verification. This
+ * wraps the java library in some SSH-specific functionality.
  */
-public final class RSAKey
-    extends PKey
-{
-    protected
-    RSAKey ()
-    {
+public final class RSAKey extends PKey {
+    protected RSAKey() {
         mD = null;
         mE = null;
         mN = null;
@@ -53,27 +48,23 @@ public final class RSAKey
         mQ = null;
     }
 
-    public String
-    getSSHName ()
-    {
+    @Override
+    public String getSSHName() {
         return "ssh-rsa";
     }
 
-    public boolean
-    canSign ()
-    {
+    @Override
+    public boolean canSign() {
         return (mD != null);
     }
 
-    public int
-    getBits ()
-    {
+    @Override
+    public int getBits() {
         return mN.bitLength();
     }
 
-    public byte[]
-    toByteArray()
-    {
+    @Override
+    public byte[] toByteArray() {
         Message m = new Message();
         m.putString(getSSHName());
         m.putMPZ(mE);
@@ -81,10 +72,8 @@ public final class RSAKey
         return m.toByteArray();
     }
 
-    public Message
-    signSSHData (Crai crai, byte[] data)
-        throws SSHException
-    {
+    @Override
+    public Message signSSHData(Crai crai, byte[] data) throws SSHException {
         try {
             CraiPrivateKey rsa = crai.makePrivateRSAKey(mN, mD, mP, mQ);
             Message m = new Message();
@@ -97,12 +86,11 @@ public final class RSAKey
         }
     }
 
-    public boolean
-    verifySSHSignature (Crai crai, byte[] data, Message sig)
-        throws SSHException
-    {
+    @Override
+    public boolean verifySSHSignature(Crai crai, byte[] data, Message sig)
+            throws SSHException {
         try {
-            if (! sig.getString().equals("ssh-rsa")) {
+            if (!sig.getString().equals("ssh-rsa")) {
                 return false;
             }
             byte[] sigData = sig.getByteString();
@@ -114,12 +102,11 @@ public final class RSAKey
         }
     }
 
-    protected void
-    buildFromBER (BigInteger[] ints)
-        throws SSHException
-    {
+    @Override
+    protected void buildFromBER(BigInteger[] ints) throws SSHException {
         if (ints.length < 6) {
-            throw new SSHException("Not a valid RSA private key file (bad ber encoding)");
+            throw new SSHException(
+                    "Not a valid RSA private key file (bad ber encoding)");
         }
         mN = ints[1];
         mE = ints[2];
@@ -128,18 +115,15 @@ public final class RSAKey
         mQ = ints[5];
     }
 
-    protected void
-    buildFromMessage (Message m)
-        throws SSHException
-    {
+    @Override
+    protected void buildFromMessage(Message m) throws SSHException {
         mE = m.getMPZ();
         mN = m.getMPZ();
     }
 
-    public void
-    writePrivateKeyToStream (OutputStream os, String password)
-        throws IOException
-    {
+    @Override
+    public void writePrivateKeyToStream(OutputStream os, String password)
+            throws IOException {
         BigInteger[] nums = new BigInteger[9];
         nums[0] = BigInteger.ZERO;
         nums[1] = mN;
@@ -155,23 +139,23 @@ public final class RSAKey
     }
 
     /**
-     * Generate a new RSA private/public key pair.  This operation may take
-     * a non-trivial amount of time.  The actual key generation is
-     * delegated to {@link Crai}.
-     *
-     * @param bits bit size of the key to generate
+     * Generate a new RSA private/public key pair. This operation may take a
+     * non-trivial amount of time. The actual key generation is delegated to
+     * {@link Crai}.
+     * 
+     * @param bits
+     *            bit size of the key to generate
      * @return a new RSA key
-     * @throws SSHException if there's an error within the underlying crypto
-     *     library
+     * @throws SSHException
+     *             if there's an error within the underlying crypto library
      */
-    public static RSAKey
-    generate (Crai crai, int bits)
-        throws SSHException
-    {
+    public static RSAKey generate(Crai crai, int bits) throws SSHException {
         try {
             CraiKeyPair pair = crai.generateRSAKeyPair(bits);
-            CraiPrivateKey.RSAContents priv = (CraiPrivateKey.RSAContents) pair.getPrivateKey().getContents();
-            CraiPublicKey.RSAContents pub = (CraiPublicKey.RSAContents) pair.getPublicKey().getContents();
+            CraiPrivateKey.RSAContents priv = (CraiPrivateKey.RSAContents) pair
+                    .getPrivateKey().getContents();
+            CraiPublicKey.RSAContents pub = (CraiPublicKey.RSAContents) pair
+                    .getPublicKey().getContents();
 
             RSAKey key = new RSAKey();
             key.mE = pub.getE();
@@ -186,25 +170,29 @@ public final class RSAKey
     }
 
     /**
-     * Create an RSA private key object from the component integers. This
-     * method assumes the integers have come from some other reliable source.
-     * The parameter names identify the required numbers from the RSA
-     * algorithm.
-     *
-     * <p> Please don't use this method to generate a new key from scratch.
-     * Picking correct values for these parameters is tricky.
-     * Use {@link #generate(Crai, int)} to generate a new key.
-     *
-     * @param e the RSA "e"
-     * @param d the RSA "d"
-     * @param n the RSA "n"
-     * @param p the RSA "p"
-     * @param q the RSA "q"
+     * Create an RSA private key object from the component integers. This method
+     * assumes the integers have come from some other reliable source. The
+     * parameter names identify the required numbers from the RSA algorithm.
+     * 
+     * <p>
+     * Please don't use this method to generate a new key from scratch. Picking
+     * correct values for these parameters is tricky. Use
+     * {@link #generate(Crai, int)} to generate a new key.
+     * 
+     * @param e
+     *            the RSA "e"
+     * @param d
+     *            the RSA "d"
+     * @param n
+     *            the RSA "n"
+     * @param p
+     *            the RSA "p"
+     * @param q
+     *            the RSA "q"
      * @return an RSA private key object
      */
-    public static RSAKey
-    build (BigInteger e, BigInteger d, BigInteger n, BigInteger p, BigInteger q)
-    {
+    public static RSAKey build(BigInteger e, BigInteger d, BigInteger n,
+            BigInteger p, BigInteger q) {
         RSAKey key = new RSAKey();
         key.mE = e;
         key.mD = d;
@@ -217,32 +205,29 @@ public final class RSAKey
     /**
      * Create an RSA public key object from the component integers. Such a key
      * can be used only to verify signatures, not sign data.
-     *
-     * @param e the RSA "e"
-     * @param n the RSA "n"
+     * 
+     * @param e
+     *            the RSA "e"
+     * @param n
+     *            the RSA "n"
      * @return an RSA public key object
      */
-    public static RSAKey
-    build (BigInteger e, BigInteger n)
-    {
+    public static RSAKey build(BigInteger e, BigInteger n) {
         RSAKey key = new RSAKey();
         key.mE = e;
         key.mN = n;
         return key;
     }
 
-    public CraiPrivateKey
-    toPrivateKey (Crai crai)
-    {
+    @Override
+    public CraiPrivateKey toPrivateKey(Crai crai) {
         return crai.makePrivateRSAKey(mN, mD, mP, mQ);
     }
 
-    public CraiPublicKey
-    toPublicKey (Crai crai)
-    {
+    @Override
+    public CraiPublicKey toPublicKey(Crai crai) {
         return crai.makePublicRSAKey(mN, mE);
     }
-
 
     private BigInteger mE;
     private BigInteger mD;

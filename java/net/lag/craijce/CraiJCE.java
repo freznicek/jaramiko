@@ -46,62 +46,58 @@ import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import net.lag.crai.*;
+import net.lag.crai.Crai;
+import net.lag.crai.CraiCipher;
+import net.lag.crai.CraiCipherAlgorithm;
+import net.lag.crai.CraiDigest;
+import net.lag.crai.CraiException;
+import net.lag.crai.CraiKeyPair;
+import net.lag.crai.CraiPrivateKey;
+import net.lag.crai.CraiPublicKey;
+import net.lag.crai.CraiRandom;
 import net.lag.jaramiko.Util;
-
 
 /**
  * Default Crai implementation that just wraps java's JCE classes.
  */
-public class CraiJCE
-    implements Crai
-{
-    private static class JCERandom
-        implements CraiRandom
-    {
-        public
-        JCERandom ()
-        {
+public class CraiJCE implements Crai {
+    private static class JCERandom implements CraiRandom {
+        public JCERandom() {
             mRandom = new SecureRandom();
         }
 
-        public void
-        getBytes (byte[] b)
-        {
+        @Override
+        public void getBytes(byte[] b) {
             mRandom.nextBytes(b);
         }
-
 
         public SecureRandom mRandom;
     }
 
-
-    private class JCEPrivateRSAKey
-        implements CraiPrivateKey
-    {
-        public
-        JCEPrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
-        {
+    private class JCEPrivateRSAKey implements CraiPrivateKey {
+        public JCEPrivateRSAKey(BigInteger n, BigInteger d, BigInteger p,
+                BigInteger q) {
             mN = n;
             mD = d;
             mP = p;
             mQ = q;
         }
 
-        public byte[]
-        sign(byte[] b, int off, int len)
-            throws CraiException
-        {
+        @Override
+        public byte[] sign(byte[] b, int off, int len) throws CraiException {
             try {
-                // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS SO PAINFUL?!?!?!
+                // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS
+                // SO PAINFUL?!?!?!
                 Signature s = Signature.getInstance("SHA1withRSA");
                 KeyFactory keyFac = KeyFactory.getInstance("RSA");
-                PrivateKey key = keyFac.generatePrivate(new RSAPrivateKeySpec(mN, mD));
+                PrivateKey key = keyFac.generatePrivate(new RSAPrivateKeySpec(
+                        mN, mD));
                 s.initSign(key, ((JCERandom) mCraiRandom).mRandom);
                 s.update(b, off, len);
                 return s.sign();
@@ -111,28 +107,30 @@ public class CraiJCE
             }
         }
 
-        public CraiPrivateKey.Contents
-        getContents ()
-        {
+        @Override
+        public CraiPrivateKey.Contents getContents() {
             return new CraiPrivateKey.RSAContents() {
+                @Override
                 public BigInteger getN() {
                     return mN;
                 }
 
+                @Override
                 public BigInteger getD() {
                     return mD;
                 }
 
+                @Override
                 public BigInteger getP() {
                     return mP;
                 }
 
+                @Override
                 public BigInteger getQ() {
                     return mQ;
                 }
             };
         }
-
 
         private BigInteger mN;
         private BigInteger mD;
@@ -140,36 +138,33 @@ public class CraiJCE
         private BigInteger mQ;
     }
 
-
-    private class JCEPrivateDSAKey
-        implements CraiPrivateKey
-    {
-        public
-        JCEPrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
-        {
+    private class JCEPrivateDSAKey implements CraiPrivateKey {
+        public JCEPrivateDSAKey(BigInteger x, BigInteger p, BigInteger q,
+                BigInteger g) {
             mX = x;
             mP = p;
             mQ = q;
             mG = g;
         }
 
-        public byte[]
-        sign(byte[] b, int off, int len)
-            throws CraiException
-        {
+        @Override
+        public byte[] sign(byte[] b, int off, int len) throws CraiException {
             try {
-                // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS SO PAINFUL?!?!?!
+                // HOLY FREAKING MOTHER OF A GOAT SCROAT WHY DOES JAVA MAKE THIS
+                // SO PAINFUL?!?!?!
                 Signature s = Signature.getInstance("SHA1withDSA");
                 KeyFactory keyFac = KeyFactory.getInstance("DSA");
-                PrivateKey key = keyFac.generatePrivate(new DSAPrivateKeySpec(mX, mP, mQ, mG));
+                PrivateKey key = keyFac.generatePrivate(new DSAPrivateKeySpec(
+                        mX, mP, mQ, mG));
                 s.initSign(key, ((JCERandom) mCraiRandom).mRandom);
                 s.update(b, off, len);
                 byte[] sig = s.sign();
 
-                /* decode java's odd signature format:
-                 * java returns a ber sequence containing (r, s) but ssh2 expects
-                 * a 40-byte buffer containing the 20 bytes of r followed by the
-                 * 20 bytes of s, with no sign extension.
+                /*
+                 * decode java's odd signature format: java returns a ber
+                 * sequence containing (r, s) but ssh2 expects a 40-byte buffer
+                 * containing the 20 bytes of r followed by the 20 bytes of s,
+                 * with no sign extension.
                  */
                 BigInteger[] rs = Util.decodeBERSequence(sig);
                 byte[] rb = rs[0].toByteArray();
@@ -185,28 +180,30 @@ public class CraiJCE
             }
         }
 
-        public CraiPrivateKey.Contents
-        getContents ()
-        {
+        @Override
+        public CraiPrivateKey.Contents getContents() {
             return new CraiPrivateKey.DSAContents() {
+                @Override
                 public BigInteger getP() {
                     return mP;
                 }
 
+                @Override
                 public BigInteger getQ() {
                     return mQ;
                 }
 
+                @Override
                 public BigInteger getG() {
                     return mG;
                 }
 
+                @Override
                 public BigInteger getX() {
                     return mX;
                 }
             };
         }
-
 
         private BigInteger mX;
         private BigInteger mP;
@@ -214,25 +211,20 @@ public class CraiJCE
         private BigInteger mG;
     }
 
-
-    private class JCEPublicRSAKey
-        implements CraiPublicKey
-    {
-        public
-        JCEPublicRSAKey (BigInteger n, BigInteger e)
-        {
+    private class JCEPublicRSAKey implements CraiPublicKey {
+        public JCEPublicRSAKey(BigInteger n, BigInteger e) {
             mN = n;
             mE = e;
         }
 
-        public boolean
-        verify (byte[] data, int off, int len, byte[] signature)
-            throws CraiException
-        {
+        @Override
+        public boolean verify(byte[] data, int off, int len, byte[] signature)
+                throws CraiException {
             try {
                 Signature s = Signature.getInstance("SHA1withRSA");
                 KeyFactory keyFac = KeyFactory.getInstance("RSA");
-                PublicKey key = keyFac.generatePublic(new RSAPublicKeySpec(mN, mE));
+                PublicKey key = keyFac.generatePublic(new RSAPublicKeySpec(mN,
+                        mE));
                 s.initVerify(key);
                 s.update(data);
                 return s.verify(signature);
@@ -241,46 +233,42 @@ public class CraiJCE
             }
         }
 
-        public CraiPublicKey.Contents
-        getContents ()
-        {
+        @Override
+        public CraiPublicKey.Contents getContents() {
             return new CraiPublicKey.RSAContents() {
+                @Override
                 public BigInteger getN() {
                     return mN;
                 }
 
+                @Override
                 public BigInteger getE() {
                     return mE;
                 }
             };
         }
 
-
         private BigInteger mN;
         private BigInteger mE;
     }
 
-
-    private class JCEPublicDSAKey
-        implements CraiPublicKey
-    {
-        public
-        JCEPublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
-        {
+    private class JCEPublicDSAKey implements CraiPublicKey {
+        public JCEPublicDSAKey(BigInteger y, BigInteger p, BigInteger q,
+                BigInteger g) {
             mY = y;
             mP = p;
             mQ = q;
             mG = g;
         }
 
-        public boolean
-        verify (byte[] data, int off, int len, byte[] signature)
-            throws CraiException
-        {
-            /* build up a fake ber sequence containing r and s.  this is
-             * terrible to behold but i didn't feel like implementing the
-             * ber encoding algorithm just to workaround one tiny bit of
-             * oddness with java's API.
+        @Override
+        public boolean verify(byte[] data, int off, int len, byte[] signature)
+                throws CraiException {
+            /*
+             * build up a fake ber sequence containing r and s. this is terrible
+             * to behold but i didn't feel like implementing the ber encoding
+             * algorithm just to workaround one tiny bit of oddness with java's
+             * API.
              */
             byte[] argh = new byte[48];
             argh[0] = 0x30;
@@ -297,7 +285,8 @@ public class CraiJCE
             try {
                 Signature s = Signature.getInstance("SHA1withDSA");
                 KeyFactory keyFac = KeyFactory.getInstance("DSA");
-                PublicKey key = keyFac.generatePublic(new DSAPublicKeySpec(mY, mP, mQ, mG));
+                PublicKey key = keyFac.generatePublic(new DSAPublicKeySpec(mY,
+                        mP, mQ, mG));
                 s.initVerify(key);
                 s.update(data, off, len);
                 return s.verify(argh);
@@ -306,28 +295,30 @@ public class CraiJCE
             }
         }
 
-        public CraiPublicKey.Contents
-        getContents ()
-        {
+        @Override
+        public CraiPublicKey.Contents getContents() {
             return new CraiPublicKey.DSAContents() {
+                @Override
                 public BigInteger getP() {
                     return mP;
                 }
 
+                @Override
                 public BigInteger getQ() {
                     return mQ;
                 }
 
+                @Override
                 public BigInteger getG() {
                     return mG;
                 }
 
+                @Override
                 public BigInteger getY() {
                     return mY;
                 }
             };
         }
-
 
         private BigInteger mY;
         private BigInteger mP;
@@ -335,38 +326,28 @@ public class CraiJCE
         private BigInteger mG;
     }
 
-
-    private static class JCEDigest
-        implements CraiDigest
-    {
-        public
-        JCEDigest (MessageDigest d)
-        {
+    private static class JCEDigest implements CraiDigest {
+        public JCEDigest(MessageDigest d) {
             mDigest = d;
         }
 
-        public void
-        reset ()
-        {
+        @Override
+        public void reset() {
             mDigest.reset();
         }
 
-        public void
-        update (byte[] data, int off, int len)
-        {
+        @Override
+        public void update(byte[] data, int off, int len) {
             mDigest.update(data, off, len);
         }
 
-        public byte[]
-        finish ()
-        {
+        @Override
+        public byte[] finish() {
             return mDigest.digest();
         }
 
-        public void
-        finish (byte[] out, int off)
-            throws CraiException
-        {
+        @Override
+        public void finish(byte[] out, int off) throws CraiException {
             try {
                 mDigest.digest(out, off, mDigest.getDigestLength());
             } catch (GeneralSecurityException x) {
@@ -374,42 +355,31 @@ public class CraiJCE
             }
         }
 
-
         private MessageDigest mDigest;
     }
 
-
-    private static class JCEHMAC
-        implements CraiDigest
-    {
-        public
-        JCEHMAC (Mac mac)
-        {
+    private static class JCEHMAC implements CraiDigest {
+        public JCEHMAC(Mac mac) {
             mMac = mac;
         }
 
-        public void
-        reset ()
-        {
+        @Override
+        public void reset() {
             mMac.reset();
         }
 
-        public void
-        update (byte[] data, int off, int len)
-        {
+        @Override
+        public void update(byte[] data, int off, int len) {
             mMac.update(data, off, len);
         }
 
-        public byte[]
-        finish ()
-        {
+        @Override
+        public byte[] finish() {
             return mMac.doFinal();
         }
 
-        public void
-        finish (byte[] out, int off)
-            throws CraiException
-        {
+        @Override
+        public void finish(byte[] out, int off) throws CraiException {
             try {
                 mMac.doFinal(out, off);
             } catch (GeneralSecurityException x) {
@@ -417,114 +387,107 @@ public class CraiJCE
             }
         }
 
-
         private Mac mMac;
     }
 
-
-    private static class JCECipher
-        implements CraiCipher
-    {
-        public
-        JCECipher (String javaName)
-            throws CraiException
-        {
+    private static class JCECipher implements CraiCipher {
+        public JCECipher(String javaName) throws CraiException {
             mJavaName = javaName;
             try {
                 mCipher = Cipher.getInstance(javaName);
             } catch (GeneralSecurityException x) {
-                throw new CraiException("cipher " + javaName + " not found: " + x);
+                throw new CraiException("cipher " + javaName + " not found: "
+                        + x);
             }
         }
 
-        public void
-        initEncrypt (byte[] key, byte[] iv)
-            throws CraiException
-        {
+        @Override
+        public void initEncrypt(byte[] key, byte[] iv) throws CraiException {
             // isn't this insane?
             String algName = mJavaName.split("/")[0];
             try {
-                AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+                AlgorithmParameters param = AlgorithmParameters
+                        .getInstance(algName);
                 param.init(new IvParameterSpec(iv));
-                mCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, algName), param);
+                mCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key,
+                        algName), param);
             } catch (GeneralSecurityException x) {
-                throw new CraiException("cipher " + mJavaName + " encrypt init error: " + x);
+                throw new CraiException("cipher " + mJavaName
+                        + " encrypt init error: " + x);
             } catch (SecurityException x) {
-                throw new CraiException("cipher " + mJavaName + " encrypt init error: " + x);
+                throw new CraiException("cipher " + mJavaName
+                        + " encrypt init error: " + x);
             }
         }
 
-        public void
-        initDecrypt (byte[] key, byte[] iv)
-            throws CraiException
-        {
+        @Override
+        public void initDecrypt(byte[] key, byte[] iv) throws CraiException {
             String algName = mJavaName.split("/")[0];
             try {
-                AlgorithmParameters param = AlgorithmParameters.getInstance(algName);
+                AlgorithmParameters param = AlgorithmParameters
+                        .getInstance(algName);
                 param.init(new IvParameterSpec(iv));
-                mCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, algName), param);
+                mCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key,
+                        algName), param);
             } catch (GeneralSecurityException x) {
-                throw new CraiException("cipher " + mJavaName + " decrypt init error: " + x);
+                throw new CraiException("cipher " + mJavaName
+                        + " decrypt init error: " + x);
             } catch (SecurityException x) {
-                throw new CraiException("cipher " + mJavaName + " decrypt init error: " + x);
+                throw new CraiException("cipher " + mJavaName
+                        + " decrypt init error: " + x);
             }
         }
 
-        public void
-        process (byte[] in, int off, int len, byte[] out, int off_out)
-            throws CraiException
-        {
-            try{
+        @Override
+        public void process(byte[] in, int off, int len, byte[] out, int off_out)
+                throws CraiException {
+            try {
                 mCipher.update(in, off, len, out, off_out);
             } catch (GeneralSecurityException x) {
-                throw new CraiException("cipher " + mJavaName + " process error: " + x);
+                throw new CraiException("cipher " + mJavaName
+                        + " process error: " + x);
             }
         }
-
 
         private String mJavaName;
         private Cipher mCipher;
     }
 
-
-    public CraiRandom
-    getPRNG ()
-    {
+    @Override
+    public CraiRandom getPRNG() {
         return mCraiRandom;
     }
 
-    public CraiPrivateKey
-    makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q)
-    {
+    @Override
+    public CraiPrivateKey makePrivateRSAKey(BigInteger n, BigInteger d,
+            BigInteger p, BigInteger q) {
         return new JCEPrivateRSAKey(n, d, p, q);
     }
 
-    public CraiPrivateKey
-    makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g)
-    {
+    @Override
+    public CraiPrivateKey makePrivateDSAKey(BigInteger x, BigInteger p,
+            BigInteger q, BigInteger g) {
         return new JCEPrivateDSAKey(x, p, q, g);
     }
 
-    public CraiPublicKey
-    makePublicRSAKey (BigInteger n, BigInteger e)
-    {
+    @Override
+    public CraiPublicKey makePublicRSAKey(BigInteger n, BigInteger e) {
         return new JCEPublicRSAKey(n, e);
     }
 
-    public CraiPublicKey
-    makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g)
-    {
+    @Override
+    public CraiPublicKey makePublicDSAKey(BigInteger y, BigInteger p,
+            BigInteger q, BigInteger g) {
         return new JCEPublicDSAKey(y, p, q, g);
     }
 
-    public CraiKeyPair
-    generateRSAKeyPair (int bits)
-    {
+    @Override
+    public CraiKeyPair generateRSAKeyPair(int bits) {
         /*
-        RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(bits, RSAKeyGenParameterSpec.F4);
-        AlgorithmParameters param = AlgorithmParameters.getInstance("RSA");
-        param.init(spec);
-        */
+         * RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(bits,
+         * RSAKeyGenParameterSpec.F4); AlgorithmParameters param =
+         * AlgorithmParameters.getInstance("RSA"); param.init(spec);
+         */
         KeyPair pair = null;
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
@@ -540,14 +503,16 @@ public class CraiJCE
         BigInteger n = priv.getModulus();
         BigInteger d = priv.getPrivateExponent();
         BigInteger e = pub.getPublicExponent();
-        BigInteger p = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv).getPrimeP() : null;
-        BigInteger q = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv).getPrimeQ() : null;
-        return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(n, d, p, q));
+        BigInteger p = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv)
+                .getPrimeP() : null;
+        BigInteger q = (priv instanceof RSAPrivateCrtKey) ? ((RSAPrivateCrtKey) priv)
+                .getPrimeQ() : null;
+        return new CraiKeyPair(new JCEPublicRSAKey(n, e), new JCEPrivateRSAKey(
+                n, d, p, q));
     }
 
-    public CraiKeyPair
-    generateDSAKeyPair (int bits)
-    {
+    @Override
+    public CraiKeyPair generateDSAKeyPair(int bits) {
         KeyPair pair = null;
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("DSA");
@@ -565,12 +530,12 @@ public class CraiJCE
         BigInteger g = priv.getParams().getG();
         BigInteger x = priv.getX();
         BigInteger y = pub.getY();
-        return new CraiKeyPair(new JCEPublicDSAKey(y, p, q, g), new JCEPrivateDSAKey(x, p, q, g));
+        return new CraiKeyPair(new JCEPublicDSAKey(y, p, q, g),
+                new JCEPrivateDSAKey(x, p, q, g));
     }
 
-    public CraiDigest
-    makeSHA1 ()
-    {
+    @Override
+    public CraiDigest makeSHA1() {
         try {
             MessageDigest sha = MessageDigest.getInstance("SHA-1");
             return new JCEDigest(sha);
@@ -579,9 +544,8 @@ public class CraiJCE
         }
     }
 
-    public CraiDigest
-    makeMD5 ()
-    {
+    @Override
+    public CraiDigest makeMD5() {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             return new JCEDigest(md5);
@@ -590,9 +554,8 @@ public class CraiJCE
         }
     }
 
-    public CraiDigest
-    makeSHA1HMAC (byte[] key)
-    {
+    @Override
+    public CraiDigest makeSHA1HMAC(byte[] key) {
         try {
             Mac mac = Mac.getInstance("HmacSHA1");
             mac.init(new SecretKeySpec(key, "HmacSHA1"));
@@ -602,9 +565,8 @@ public class CraiJCE
         }
     }
 
-    public CraiDigest
-    makeMD5HMAC (byte[] key)
-    {
+    @Override
+    public CraiDigest makeMD5HMAC(byte[] key) {
         try {
             Mac mac = Mac.getInstance("HmacMD5");
             mac.init(new SecretKeySpec(key, "HmacMD5"));
@@ -614,10 +576,9 @@ public class CraiJCE
         }
     }
 
-    public CraiCipher
-    getCipher (CraiCipherAlgorithm algorithm)
-        throws CraiException
-    {
+    @Override
+    public CraiCipher getCipher(CraiCipherAlgorithm algorithm)
+            throws CraiException {
         if (algorithm == CraiCipherAlgorithm.DES3_CBC) {
             return new JCECipher("DESede/CBC/NoPadding");
         } else if (algorithm == CraiCipherAlgorithm.AES_CBC) {
@@ -629,12 +590,10 @@ public class CraiJCE
         }
     }
 
-    public BigInteger
-    modPow (BigInteger b, BigInteger e, BigInteger m)
-    {
+    @Override
+    public BigInteger modPow(BigInteger b, BigInteger e, BigInteger m) {
         return b.modPow(e, m);
     }
-
 
     public CraiRandom mCraiRandom = new JCERandom();
 }

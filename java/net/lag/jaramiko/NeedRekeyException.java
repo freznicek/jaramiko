@@ -27,20 +27,13 @@ package net.lag.jaramiko;
 
 import java.io.IOException;
 
-
 /**
- * Indication from {@link Packetizer} that key renegotiation should
- * commence.
+ * Indication from {@link Packetizer} that key renegotiation should commence.
  */
-/* package */ class NeedRekeyException
-    extends IOException
-{
-    public
-    NeedRekeyException ()
-    {
+/* package */class NeedRekeyException extends IOException {
+    public NeedRekeyException() {
         super();
     }
-
 
     private static final long serialVersionUID = 0;
 }

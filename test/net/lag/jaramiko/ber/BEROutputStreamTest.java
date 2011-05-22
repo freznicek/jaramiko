@@ -25,22 +25,16 @@
 
 package net.lag.jaramiko.ber;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import junit.framework.TestCase;
-
 import net.lag.jaramiko.Util;
 
-
-public class BEROutputStreamTest
-    extends TestCase
-{
-    public void
-    testSimple ()
-        throws Exception
-    {
+public class BEROutputStreamTest extends TestCase {
+    public void testSimple() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(Integer.valueOf(23));
         assertEquals("020117", Util.encodeHex(buffer.toByteArray()));
@@ -70,85 +64,90 @@ public class BEROutputStreamTest
         assertEquals("0C0666C3BC6E6B79", Util.encodeHex(buffer.toByteArray()));
     }
 
-    public void
-    testSimpleList ()
-        throws Exception
-    {
+    public void testSimpleList() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(new ArrayList());
         assertEquals("30800000", Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23, new byte[] { -1 }, Boolean.TRUE }));
-        assertEquals("30800201230401FF0101FF0000", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23,
+                new byte[] { -1 }, Boolean.TRUE }));
+        assertEquals("30800201230401FF0101FF0000",
+                Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }), Boolean.TRUE }));
-        assertEquals("3080020123308002010A00000101FF0000", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer).write(Arrays.asList(new Object[] { 0x23,
+                Arrays.asList(new Object[] { Integer.valueOf(10) }),
+                Boolean.TRUE }));
+        assertEquals("3080020123308002010A00000101FF0000",
+                Util.encodeHex(buffer.toByteArray()));
     }
 
-    public void
-    testDefiniteLengthList ()
-        throws Exception
-    {
+    public void testDefiniteLengthList() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer, false).write(new ArrayList());
         assertEquals("3000", Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] { 0x23, new byte[] { -1 }, Boolean.TRUE }));
-        assertEquals("30090201230401FF0101FF", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] {
+                0x23, new byte[] { -1 }, Boolean.TRUE }));
+        assertEquals("30090201230401FF0101FF",
+                Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] { 0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }), Boolean.TRUE }));
-        assertEquals("300B020123300302010A0101FF", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer, false).write(Arrays.asList(new Object[] {
+                0x23, Arrays.asList(new Object[] { Integer.valueOf(10) }),
+                Boolean.TRUE }));
+        assertEquals("300B020123300302010A0101FF",
+                Util.encodeHex(buffer.toByteArray()));
     }
 
-    public void
-    testEncodeData ()
-        throws Exception
-    {
+    public void testEncodeData() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new BEROutputStream(buffer).write(new ArtificialData("vox".getBytes()));
         assertEquals("9F6403766F78", Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(new ArtificialData(new byte[] { -1, 0 }));
+        new BEROutputStream(buffer).write(new ArtificialData(
+                new byte[] { -1, 0 }));
         assertEquals("9F6402FF00", Util.encodeHex(buffer.toByteArray()));
     }
 
-    public void
-    testEncodeSequence ()
-        throws Exception
-    {
+    public void testEncodeSequence() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays.asList(new Integer[] { 3, 9 })));
-        assertEquals("7F8148800201030201090000", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays
+                .asList(new Integer[] { 3, 9 })));
+        assertEquals("7F8148800201030201090000",
+                Util.encodeHex(buffer.toByteArray()));
 
         buffer = new ByteArrayOutputStream();
-        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays.asList(new Object[] {
-            Integer.valueOf(3), new byte[0], Boolean.FALSE
-        })));
-        assertEquals("7F81488002010304000101000000", Util.encodeHex(buffer.toByteArray()));
+        new BEROutputStream(buffer).write(new ArtificialSequence(Arrays
+                .asList(new Object[] { Integer.valueOf(3), new byte[0],
+                        Boolean.FALSE })));
+        assertEquals("7F81488002010304000101000000",
+                Util.encodeHex(buffer.toByteArray()));
     }
 
-    public void
-    testEncodeComplex ()
-        throws Exception
-    {
+    public void testEncodeComplex() throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ArtificialSequence timestamp1 = new ArtificialSequence(Arrays.asList(new Long[] { 1081589747L, 0L }));
-        ArtificialSequence timestamp2 = new ArtificialSequence(Arrays.asList(new Long[] { 1081589750L, 0L }));
-        ArtificialSequence s = new ArtificialSequence(Arrays.asList(new Object[] {
-            "README", "text/plain", Arrays.asList(new Object[] { Long.valueOf(0664), Long.valueOf(666), timestamp1, timestamp2 }),
-            Arrays.asList(new Object[] { "robey", Arrays.asList(new Object[] { "robey" }) }),
-        }));
+        ArtificialSequence timestamp1 = new ArtificialSequence(
+                Arrays.asList(new Long[] { 1081589747L, 0L }));
+        ArtificialSequence timestamp2 = new ArtificialSequence(
+                Arrays.asList(new Long[] { 1081589750L, 0L }));
+        ArtificialSequence s = new ArtificialSequence(
+                Arrays.asList(new Object[] {
+                        "README",
+                        "text/plain",
+                        Arrays.asList(new Object[] { Long.valueOf(0664),
+                                Long.valueOf(666), timestamp1, timestamp2 }),
+                        Arrays.asList(new Object[] { "robey",
+                                Arrays.asList(new Object[] { "robey" }) }), }));
 
         new BEROutputStream(buffer).write(s);
 
-        String exp = "7F8148800C06524541444D450C0A746578742F706C61696E308002" +
-            "0201B40202029A7F81488002044077BFF302010000007F81488002044077BF" +
-            "F60201000000000030800C05726F62657930800C05726F626579000000000000";
+        String exp = "7F8148800C06524541444D450C0A746578742F706C61696E308002"
+                + "0201B40202029A7F81488002044077BFF302010000007F81488002044077BF"
+                + "F60201000000000030800C05726F62657930800C05726F626579000000000000";
 
         assertEquals(exp, Util.encodeHex(buffer.toByteArray()));
 

@@ -11,21 +11,27 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
         super();
         this.filename = filename;
     }
+
     public String getLongname() {
         return longname;
     }
+
     public void setLongname(String longName) {
         this.longname = longName;
     }
+
     public String getFilename() {
         return filename;
     }
+
     public void setFilename(String fileName) {
         this.filename = fileName;
     }
+
     public Attributes getAttributes() {
         return attributes;
     }
+
     public void setAttributes(Attributes attributes) {
         this.attributes = attributes;
     }
@@ -41,7 +47,7 @@ public class DirectoryEntry implements Comparable<DirectoryEntry> {
     @Override
     public String toString() {
         // TODO Auto-generated method stub
-        return this.filename; //  + " " + this.attributes.toString();
+        return this.filename; // + " " + this.attributes.toString();
     }
 
     @Override

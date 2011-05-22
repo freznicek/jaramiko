@@ -25,15 +25,11 @@
 
 package net.lag.jaramiko;
 
-import com.jcraft.jzlib.*;
+import com.jcraft.jzlib.JZlib;
+import com.jcraft.jzlib.ZStream;
 
-
-/* package */ class ZlibCompressor
-    implements Compressor
-{
-    public
-    ZlibCompressor ()
-    {
+/* package */class ZlibCompressor implements Compressor {
+    public ZlibCompressor() {
         mInflateStream = new ZStream();
         mInflateStream.inflateInit();
         mDeflateStream = new ZStream();
@@ -41,9 +37,8 @@ import com.jcraft.jzlib.*;
         mBuffer = new byte[BUFFER_SIZE];
     }
 
-    public void
-    finalize ()
-    {
+    @Override
+    public void finalize() {
         mInflateStream.inflateEnd();
         mInflateStream.free();
         mDeflateStream.deflateEnd();
@@ -51,14 +46,13 @@ import com.jcraft.jzlib.*;
     }
 
     /**
-     * Create a byte[] by appending two existing buffers.  The <code>orig</code>
+     * Create a byte[] by appending two existing buffers. The <code>orig</code>
      * buffer may be <code>null</code>, in which case the <code>add</code>
-     * buffer is copied to a new buffer.  The returned buffer is always
-     * exactly the size of both buffers combined.
+     * buffer is copied to a new buffer. The returned buffer is always exactly
+     * the size of both buffers combined.
      */
-    private static byte[]
-    appendBytes (byte[] orig, byte[] add, int offset, int length)
-    {
+    private static byte[] appendBytes(byte[] orig, byte[] add, int offset,
+            int length) {
         byte[] out = null;
         int x = 0;
         if (orig == null) {
@@ -73,9 +67,8 @@ import com.jcraft.jzlib.*;
         return out;
     }
 
-    public byte[]
-    compress (byte[] data, int offset, int length)
-    {
+    @Override
+    public byte[] compress(byte[] data, int offset, int length) {
         byte[] out = null;
 
         /* i'm not a big fan of the ZStream API here. */
@@ -88,17 +81,18 @@ import com.jcraft.jzlib.*;
             mDeflateStream.next_out_index = 0;
             mDeflateStream.avail_out = BUFFER_SIZE;
             int status = mDeflateStream.deflate(JZlib.Z_PARTIAL_FLUSH);
-            out = appendBytes(out, mBuffer, 0, BUFFER_SIZE - mDeflateStream.avail_out);
+            out = appendBytes(out, mBuffer, 0, BUFFER_SIZE
+                    - mDeflateStream.avail_out);
             if (status != JZlib.Z_OK) {
                 return out;
             }
-        } while ((mDeflateStream.avail_in > 0) || (mDeflateStream.avail_out == 0));
+        } while ((mDeflateStream.avail_in > 0)
+                || (mDeflateStream.avail_out == 0));
         return out;
     }
 
-    public byte[]
-    uncompress (byte[] data, int offset, int length)
-    {
+    @Override
+    public byte[] uncompress(byte[] data, int offset, int length) {
         byte[] out = null;
 
         /* i'm not a big fan of the ZStream API here. */
@@ -111,14 +105,15 @@ import com.jcraft.jzlib.*;
             mInflateStream.next_out_index = 0;
             mInflateStream.avail_out = BUFFER_SIZE;
             int status = mInflateStream.inflate(JZlib.Z_PARTIAL_FLUSH);
-            out = appendBytes(out, mBuffer, 0, BUFFER_SIZE - mInflateStream.avail_out);
+            out = appendBytes(out, mBuffer, 0, BUFFER_SIZE
+                    - mInflateStream.avail_out);
             if (status != JZlib.Z_OK) {
                 return out;
             }
-        } while ((mInflateStream.avail_in > 0) || (mInflateStream.avail_out == 0));
+        } while ((mInflateStream.avail_in > 0)
+                || (mInflateStream.avail_out == 0));
         return out;
     }
-
 
     private ZStream mDeflateStream;
     private ZStream mInflateStream;

@@ -25,12 +25,10 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Constants used by jaramiko for SSH2 packet types.
  */
-/* package */ class MessageType
-{
+/* package */class MessageType {
     public static final byte DISCONNECT = 1;
     public static final byte IGNORE = 2;
     public static final byte UNIMPLEMENTED = 3;
@@ -73,10 +71,7 @@ package net.lag.jaramiko;
     public static final byte CHANNEL_SUCCESS = 99;
     public static final byte CHANNEL_FAILURE = 100;
 
-
-    public static String
-    getDescription (byte t)
-    {
+    public static String getDescription(byte t) {
         switch (t) {
         case DISCONNECT:
             return "disconnect";

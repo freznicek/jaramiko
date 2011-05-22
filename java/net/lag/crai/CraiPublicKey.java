@@ -27,66 +27,63 @@ package net.lag.crai;
 
 import java.math.BigInteger;
 
-
 /**
- * Abstract representation for a private key (of type RSA or DSA).  Objects
- * of this type can be used to sign data and retrieve the underlying key
- * contents.
+ * Abstract representation for a private key (of type RSA or DSA). Objects of
+ * this type can be used to sign data and retrieve the underlying key contents.
  */
-public interface CraiPublicKey
-{
+public interface CraiPublicKey {
     /**
      * Base interface for classes containing the public contents of a key.
      */
-    public static interface Contents
-    {
+    public static interface Contents {
         // nothing
     }
-
 
     /**
      * The public contents of an RSA key.
      */
-    public static interface RSAContents
-        extends Contents
-    {
+    public static interface RSAContents extends Contents {
         public BigInteger getN();
+
         public BigInteger getE();
     }
-
 
     /**
      * The public contents of a DSA key.
      */
-    public static interface DSAContents
-        extends Contents
-    {
+    public static interface DSAContents extends Contents {
         public BigInteger getP();
+
         public BigInteger getQ();
+
         public BigInteger getG();
+
         public BigInteger getY();
     }
 
-
     /**
-     * Verify that a signature of a block of data actually came from this
-     * key.
-     *
-     * @param data the data that was signed
-     * @param off offset into the data that was signed
-     * @param len number of bytes signed
-     * @param signature the signature
+     * Verify that a signature of a block of data actually came from this key.
+     * 
+     * @param data
+     *            the data that was signed
+     * @param off
+     *            offset into the data that was signed
+     * @param len
+     *            number of bytes signed
+     * @param signature
+     *            the signature
      * @return true if the signature verifies; false otherwise
-     * @throws CraiException if the underlying crypto library threw an
-     *     exception
+     * @throws CraiException
+     *             if the underlying crypto library threw an exception
      */
-    public boolean verify(byte[] data, int off, int len, byte[] signature) throws CraiException;
+    public boolean verify(byte[] data, int off, int len, byte[] signature)
+            throws CraiException;
 
     /**
      * Return an object containing the public contents of this key.
-     *
-     * @return an object which can be used to retrieve the underlying
-     *     contents (usually BigIntegers)
+     * 
+     * @return an object which can be used to retrieve the underlying contents
+     *         (usually BigIntegers)
      */
     public Contents getContents();
 }

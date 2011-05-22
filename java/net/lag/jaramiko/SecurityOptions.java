@@ -30,23 +30,21 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-
 /**
- * Simple object containing the security preferences of an SSH {@link Transport}.
- * These are lists of acceptable ciphers, digests, key types, and key exchange
+ * Simple object containing the security preferences of an SSH {@link Transport}
+ * . These are lists of acceptable ciphers, digests, key types, and key exchange
  * algorithms, listed in order of preference.
- *
- * <p>Changing the contents and/or order of these fields affects the
- * underlying {@link Transport}, but only if you change them before starting
- * the session.  If you try to add an algorithm that jaramiko doesn't
- * recognize, an IllegalArgumentException will be thrown.
+ * 
+ * <p>
+ * Changing the contents and/or order of these fields affects the underlying
+ * {@link Transport}, but only if you change them before starting the session.
+ * If you try to add an algorithm that jaramiko doesn't recognize, an
+ * IllegalArgumentException will be thrown.
  */
-public final class SecurityOptions
-{
+public final class SecurityOptions {
     /* package */
-    SecurityOptions (String[] knownCiphers, String[] knownMacs, String[] knownKeys, String[] knownKex,
-                     String[] knownCompressions)
-    {
+    SecurityOptions(String[] knownCiphers, String[] knownMacs,
+            String[] knownKeys, String[] knownKex, String[] knownCompressions) {
         mKnownCiphers = knownCiphers;
         mKnownMacs = knownMacs;
         mKnownKeys = knownKeys;
@@ -60,74 +58,51 @@ public final class SecurityOptions
         mCompressions = new ArrayList(Arrays.asList(knownCompressions));
     }
 
-    public void
-    setCiphers (List ciphers)
-    {
+    public void setCiphers(List ciphers) {
         setList(mCiphers, ciphers, mKnownCiphers);
     }
 
-    public void
-    setDigests (List macs)
-    {
+    public void setDigests(List macs) {
         setList(mMacs, macs, mKnownMacs);
     }
 
-    public void
-    setKeys (List keys)
-    {
+    public void setKeys(List keys) {
         setList(mKeys, keys, mKnownKeys);
     }
 
-    public void
-    setKex (List kex)
-    {
+    public void setKex(List kex) {
         setList(mKex, kex, mKnownKex);
     }
 
-    public void
-    setCompressions (List compressions)
-    {
+    public void setCompressions(List compressions) {
         setList(mCompressions, compressions, mKnownCompressions);
     }
 
-    public List
-    getCiphers ()
-    {
+    public List getCiphers() {
         return new ArrayList(mCiphers);
     }
 
-    public List
-    getDigests ()
-    {
+    public List getDigests() {
         return new ArrayList(mMacs);
     }
 
-    public List
-    getKeys ()
-    {
+    public List getKeys() {
         return new ArrayList(mKeys);
     }
 
-    public List
-    getKex ()
-    {
+    public List getKex() {
         return new ArrayList(mKex);
     }
 
-    public List
-    getCompressions ()
-    {
+    public List getCompressions() {
         return new ArrayList(mCompressions);
     }
 
-
-    private void
-    setList (List mine, List theirs, String[] valid)
-    {
+    private void setList(List mine, List theirs, String[] valid) {
         mine.clear();
-        for (Iterator i = theirs.iterator(); i.hasNext(); ) {
+        for (Iterator i = theirs.iterator(); i.hasNext();) {
             String x = (String) i.next();
-            if (! Arrays.asList(valid).contains(x)) {
+            if (!Arrays.asList(valid).contains(x)) {
                 throw new IllegalArgumentException();
             }
             mine.add(x);

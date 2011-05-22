@@ -36,41 +36,32 @@ import java.net.Socket;
 
 import junit.framework.TestCase;
 
-
-public class ChannelTest
-    extends TestCase
-{
-    private static Socket[]
-    makeSocketPair ()
-        throws IOException
-    {
+public class ChannelTest extends TestCase {
+    private static Socket[] makeSocketPair() throws IOException {
         ServerSocket serv = new ServerSocket();
         serv.bind(new InetSocketAddress(InetAddress.getByName("localhost"), 0));
 
         Socket client = new Socket();
-        client.connect(new InetSocketAddress(InetAddress.getByName("localhost"), serv.getLocalPort()));
+        client.connect(new InetSocketAddress(
+                InetAddress.getByName("localhost"), serv.getLocalPort()));
 
         Socket client2 = serv.accept();
         return new Socket[] { client2, client };
     }
 
-    public void
-    setUp ()
-        throws Exception
-    {
+    @Override
+    public void setUp() throws Exception {
         Socket[] pair = makeSocketPair();
         mSocketS = pair[0];
         mSocketC = pair[1];
         mTS = new ServerTransport(mSocketS);
         mTC = new ClientTransport(mSocketC);
-        //mTC.setLog(new ConsoleLog());
-        //mTS.setLog(new ConsoleLog());
+        // mTC.setLog(new ConsoleLog());
+        // mTS.setLog(new ConsoleLog());
     }
 
-    public void
-    tearDown ()
-        throws Exception
-    {
+    @Override
+    public void tearDown() throws Exception {
         mTC.close();
         mTS.close();
         mSocketC.close();
@@ -78,22 +69,21 @@ public class ChannelTest
     }
 
     // verify that exec_command() does something reasonable
-    public void
-    testExecCommand ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testExecCommand() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -123,10 +113,12 @@ public class ChannelTest
         schan.getStderrOutputStream().write("This is on stderr.\n".getBytes());
         schan.close();
 
-        BufferedReader r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(
+                chan.getInputStream()));
         assertEquals("Hello there.", r.readLine());
         assertEquals(null, r.readLine());
-        r = new BufferedReader(new InputStreamReader(chan.getStderrInputStream()));
+        r = new BufferedReader(new InputStreamReader(
+                chan.getStderrInputStream()));
         assertEquals("This is on stderr.", r.readLine());
         assertEquals(null, r.readLine());
         chan.close();
@@ -148,22 +140,21 @@ public class ChannelTest
     }
 
     // verify that invoke_shell() does something reasonable
-    public void
-    testInvokeShell ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testInvokeShell() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -182,28 +173,28 @@ public class ChannelTest
         chan.close();
         assertTrue(chan.isClosed());
 
-        BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(
+                schan.getInputStream()));
         assertEquals("communist j. cat", r.readLine());
         schan.close();
     }
 
     // verify that ChannelException is thrown for a bad channel-open request
-    public void
-    testChannelException ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testChannelException() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -218,27 +209,27 @@ public class ChannelTest
             mTC.openChannel("bogus", null, 5000);
             fail("expecting exception");
         } catch (ChannelException x) {
-            assertEquals(x.getChannelError(), ChannelError.ADMINISTRATIVELY_PROHIBITED);
+            assertEquals(x.getChannelError(),
+                    ChannelError.ADMINISTRATIVELY_PROHIBITED);
         }
     }
 
     // verify that getExitStatus works
-    public void
-    testExitStatus ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testExitStatus() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -259,7 +250,8 @@ public class ChannelTest
         schan.sendExitStatus(23);
         schan.close();
 
-        BufferedReader r = new BufferedReader(new InputStreamReader(chan.getInputStream()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(
+                chan.getInputStream()));
         assertEquals("Hello there.", r.readLine());
         assertEquals(null, r.readLine());
         assertEquals(23, chan.getExitStatus(5000));
@@ -267,11 +259,9 @@ public class ChannelTest
     }
 
     // verify that we can change the window & max packet sizes
-    public void
-    testChangeWindowSize ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testChangeWindowSize() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         mTC.setWindowSize(94321);
@@ -280,11 +270,12 @@ public class ChannelTest
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -307,22 +298,21 @@ public class ChannelTest
     }
 
     // verify that a pty request works
-    public void
-    testPTY ()
-        throws Exception
-    {
-        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream("test/test_rsa.key"), null);
+    public void testPTY() throws Exception {
+        PKey hostKey = PKey.readPrivateKeyFromStream(new FileInputStream(
+                "test/test_rsa.key"), null);
         PKey publicHostKey = PKey.createFromBase64(hostKey.getBase64());
         mTS.addServerKey(hostKey);
         final FakeServer server = new FakeServer();
 
         final Event sync = new Event();
         new Thread(new Runnable() {
-            public void run () {
+            @Override
+            public void run() {
                 try {
                     mTS.start(server, 15000);
                     sync.set();
-                } catch (IOException x) { }
+                } catch (IOException x) {}
             }
         }).start();
 
@@ -353,11 +343,11 @@ public class ChannelTest
         chan.close();
         assertTrue(chan.isClosed());
 
-        BufferedReader r = new BufferedReader(new InputStreamReader(schan.getInputStream()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(
+                schan.getInputStream()));
         assertEquals("communist j. cat", r.readLine());
         schan.close();
     }
-
 
     private Socket mSocketC;
     private Socket mSocketS;

@@ -26,36 +26,34 @@
 
 package net.lag.jaramiko;
 
-import java.util.*;
-
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A map of pseudo-terminal modes to configured values, as sent by the client
  * when requesting a pty over a {@link Channel}. These map key bindings to
  * events, among other arcana.
- *
- * The constants are from RFC 4254 Section 8:
- * <a href="http://www.ietf.org/rfc/rfc4254.txt">http://www.ietf.org/rfc/rfc4254.txt</a>
+ * 
+ * The constants are from RFC 4254 Section 8: <a
+ * href="http://www.ietf.org/rfc/rfc4254.txt"
+ * >http://www.ietf.org/rfc/rfc4254.txt</a>
  */
-public class TerminalModes
-{
-    public
-    TerminalModes ()
-    {
+public class TerminalModes {
+    public TerminalModes() {
         mParams = new HashMap();
     }
 
     /**
-     * Retrieve one of the values set by the client. If no value was defined
-     * for this key, 0 is returned.
-     *
-     * @param key one of the constants (like <code>VINTR</code>) defined by
-     *     RFC 4254
+     * Retrieve one of the values set by the client. If no value was defined for
+     * this key, 0 is returned.
+     * 
+     * @param key
+     *            one of the constants (like <code>VINTR</code>) defined by RFC
+     *            4254
      * @return the value, or 0
      */
-    public int
-    get (int key)
-    {
+    public int get(int key) {
         Integer value = (Integer) mParams.get(Integer.valueOf(key));
         if (value == null) {
             return 0;
@@ -66,37 +64,34 @@ public class TerminalModes
     /**
      * Return true if the requested key was defined by the client in its pty
      * request.
-     *
-     * @param key one of the constants (like <code>VINTR</code> defined by
-     *     RFC 4254
+     * 
+     * @param key
+     *            one of the constants (like <code>VINTR</code> defined by RFC
+     *            4254
      * @return true if the value was defined by the client; false if not
      */
-    public boolean
-    contains (int key)
-    {
+    public boolean contains(int key) {
         return mParams.containsKey(Integer.valueOf(key));
     }
 
     /**
      * Set a pty request parameter.
-     *
-     * @param key one of the constants (like <code>VINTR</code> defined by
-     *     RFC 4254
-     * @param value the value of this parameter
+     * 
+     * @param key
+     *            one of the constants (like <code>VINTR</code> defined by RFC
+     *            4254
+     * @param value
+     *            the value of this parameter
      */
-    public void
-    put (int key, int value)
-    {
+    public void put(int key, int value) {
         mParams.put(Integer.valueOf(key), Integer.valueOf(value));
     }
 
-    /* package */ static TerminalModes
-    fromBytes (byte[] data)
-    {
+    /* package */static TerminalModes fromBytes(byte[] data) {
         TerminalModes modes = new TerminalModes();
         Message m = new Message(data);
         while (m.getPosition() < m.getLength()) {
-            int key = (int) m.getByte();
+            int key = m.getByte();
             if ((key == 0) || (key > 159)) {
                 break;
             }
@@ -106,13 +101,12 @@ public class TerminalModes
         return modes;
     }
 
-    /* package */ byte[]
-    toBytes ()
-    {
+    /* package */byte[] toBytes() {
         Message m = new Message();
-        for (Iterator iter = mParams.keySet().iterator(); iter.hasNext(); ) {
+        for (Iterator iter = mParams.keySet().iterator(); iter.hasNext();) {
             int key = ((Integer) iter.next()).intValue();
-            int value = ((Integer) mParams.get(Integer.valueOf(key))).intValue();
+            int value = ((Integer) mParams.get(Integer.valueOf(key)))
+                    .intValue();
             m.putByte((byte) key);
             m.putInt(value);
         }
@@ -120,8 +114,7 @@ public class TerminalModes
         return m.toByteArray();
     }
 
-
-    private Map mParams;    // Map<Integer, Integer>
+    private Map mParams; // Map<Integer, Integer>
 
     public static final int TTY_OP_END = 0;
     public static final int VINTR = 1;

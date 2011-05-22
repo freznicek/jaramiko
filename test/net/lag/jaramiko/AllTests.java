@@ -25,18 +25,19 @@
 
 package net.lag.jaramiko;
 
-import junit.framework.*;
-
+import junit.framework.AssertionFailedError;
+import junit.framework.Test;
+import junit.framework.TestListener;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import net.lag.craijce.CraiJCE;
-import net.lag.jaramiko.ber.*;
+import net.lag.jaramiko.ber.BERInputStreamTest;
+import net.lag.jaramiko.ber.BEROutputStreamTest;
+import net.lag.jaramiko.ber.TagTest;
 
+public class AllTests {
 
-public class AllTests
-{
-
-    public static Test
-    suite ()
-    {
+    public static Test suite() {
         TestSuite ts = new TestSuite();
         ClientTransport.setCrai(new CraiJCE());
 
@@ -58,24 +59,26 @@ public class AllTests
         return ts;
     }
 
-    public static void
-    main (String[] args)
-    {
+    public static void main(String[] args) {
         Test suite = suite();
         TestResult r = new TestResult();
         TestListener listener = new TestListener() {
+            @Override
             public void addError(Test test, java.lang.Throwable t) {
                 System.err.println("ERROR.");
             }
 
+            @Override
             public void addFailure(Test test, AssertionFailedError t) {
                 System.err.println("FAILURE.");
             }
 
+            @Override
             public void endTest(Test test) {
                 System.err.println("<- " + test);
             }
 
+            @Override
             public void startTest(Test test) {
                 System.err.println("-> " + test);
             }

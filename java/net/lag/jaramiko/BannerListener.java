@@ -25,21 +25,20 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * A listener for receiving informational banners from an SSH server during
  * authentication.
  */
-public interface BannerListener
-{
+public interface BannerListener {
     /**
-     * An authentication banner has arrived from the server.  Some servers
-     * use the banner to advertise disclaimers or notify of service outages.
-     * This method will be called from a thread internal to jaramiko, so
-     * you shouldn't do much work in it.  An expected use is to queue the
-     * banner for use in your primary thread.
-     *
-     * @param banner the authentication banner from the server
+     * An authentication banner has arrived from the server. Some servers use
+     * the banner to advertise disclaimers or notify of service outages. This
+     * method will be called from a thread internal to jaramiko, so you
+     * shouldn't do much work in it. An expected use is to queue the banner for
+     * use in your primary thread.
+     * 
+     * @param banner
+     *            the authentication banner from the server
      */
-    public void authenticationBannerEvent (String banner);
+    public void authenticationBannerEvent(String banner);
 }

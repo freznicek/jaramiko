@@ -25,27 +25,19 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Indicates an authentication result that is successful so far, but needs to
  * continue with further steps (internal library use, not exposed).
  */
-/* package */ class PartialAuthentication
-    extends SSHException
-{
-    public
-    PartialAuthentication (String[] authList)
-    {
+/* package */class PartialAuthentication extends SSHException {
+    public PartialAuthentication(String[] authList) {
         super("PartialAuthentication");
         mAuthList = authList;
     }
 
-    public String[]
-    getAllowedTypes ()
-    {
+    public String[] getAllowedTypes() {
         return mAuthList;
     }
-
 
     private String[] mAuthList;
 

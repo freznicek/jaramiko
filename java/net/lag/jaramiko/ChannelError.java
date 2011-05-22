@@ -25,28 +25,21 @@
 
 package net.lag.jaramiko;
 
-
 /**
- * Error codes returned by an SSH2 server when it rejects a request to open
- * a new channel.
+ * Error codes returned by an SSH2 server when it rejects a request to open a
+ * new channel.
  */
-public final class ChannelError
-{
-    private
-    ChannelError ()
-    {
+public final class ChannelError {
+    private ChannelError() {
         // forbid
     }
 
-    static String
-    getDescription (int code)
-    {
+    static String getDescription(int code) {
         if ((code > 0) && (code < DESCRIPTION.length)) {
             return DESCRIPTION[code];
         }
         return "Unknown error";
     }
-
 
     public static final int SUCCESS = 0;
     public static final int ADMINISTRATIVELY_PROHIBITED = 1;
@@ -54,11 +47,7 @@ public final class ChannelError
     public static final int UNKNOWN_CHANNEL_TYPE = 3;
     public static final int RESOURCE_SHORTAGE = 4;
 
-    /* package */ static final String[] DESCRIPTION = {
-        "",
-        "Administratively prohibited",
-        "Connect failed",
-        "Unknown channel type",
-        "Resource shortage",
-    };
+    /* package */static final String[] DESCRIPTION = { "",
+            "Administratively prohibited", "Connect failed",
+            "Unknown channel type", "Resource shortage", };
 }

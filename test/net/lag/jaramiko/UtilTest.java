@@ -27,13 +27,8 @@ package net.lag.jaramiko;
 
 import junit.framework.TestCase;
 
-
-public class UtilTest
-    extends TestCase
-{
-    public void
-    testStrip ()
-    {
+public class UtilTest extends TestCase {
+    public void testStrip() {
         assertEquals("hello", Util.strip("  hello"));
         assertEquals("hello", Util.strip("hello\t\t"));
         assertEquals("hello", Util.strip("\thello  "));

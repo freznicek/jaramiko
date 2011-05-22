@@ -25,20 +25,15 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Error codes returned by an SSH2 server when it rejects an authentication
- * request.  These are used by the various authentication methods in
+ * request. These are used by the various authentication methods in
  * {@link ServerInterface}.
  */
-public final class AuthError
-{
-    private
-    AuthError ()
-    {
+public final class AuthError {
+    private AuthError() {
         // forbid
     }
-
 
     /**
      * The authentication was successful, and the authentication process is
@@ -47,10 +42,10 @@ public final class AuthError
     public static final int SUCCESS = 0;
 
     /**
-     * The authentication was successful, but more stages of authentication
-     * are required before authentication is complete.  In this case,
-     * {@link ServerInterface#getAllowedAuths} will be called to get a list
-     * of authentication methods that can be used to continue.
+     * The authentication was successful, but more stages of authentication are
+     * required before authentication is complete. In this case,
+     * {@link ServerInterface#getAllowedAuths} will be called to get a list of
+     * authentication methods that can be used to continue.
      */
     public static final int PARTIAL_SUCCESS = 1;
 
@@ -61,7 +56,7 @@ public final class AuthError
 
     /**
      * The authentication was successful so far, but there is another set of
-     * questions to answer.  This may only be used in "keyboard-interactive"
+     * questions to answer. This may only be used in "keyboard-interactive"
      * authentication.
      */
     public static final int CONTINUE_INTERACTIVE = 99;

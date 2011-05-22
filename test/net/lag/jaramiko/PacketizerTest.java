@@ -31,23 +31,17 @@ package net.lag.jaramiko;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
-import junit.framework.TestCase;
 
+import junit.framework.TestCase;
 import net.lag.crai.CraiCipher;
 import net.lag.crai.CraiCipherAlgorithm;
 import net.lag.crai.CraiDigest;
 
-
 /**
  * @author robey
  */
-public class PacketizerTest
-    extends TestCase
-{
-    public void
-    testWrite ()
-        throws Exception
-    {
+public class PacketizerTest extends TestCase {
+    public void testWrite() throws Exception {
         ByteArrayInputStream is = new ByteArrayInputStream(new byte[0]);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Packetizer p = new Packetizer(is, os, new FakeRandom());
@@ -59,7 +53,7 @@ public class PacketizerTest
         p.setOutboundCipher(c, 16, mac, 12);
 
         Message m = new Message();
-        m.putByte((byte)100);
+        m.putByte((byte) 100);
         m.putInt(100);
         m.putInt(1);
         m.putInt(900);
@@ -73,10 +67,7 @@ public class PacketizerTest
         assertTrue(Arrays.equals(got, EXP_WRITE));
     }
 
-    public void
-    testRead ()
-        throws Exception
-    {
+    public void testRead() throws Exception {
         ByteArrayInputStream is = new ByteArrayInputStream(DATA_READ);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Packetizer p = new Packetizer(is, os, new FakeRandom());
@@ -95,26 +86,23 @@ public class PacketizerTest
         assertEquals(900, m.getInt());
     }
 
+    private final static byte[] KEY = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0 };
+    private final static byte[] IV = { 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
+            0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 };
+    private final static byte[] MAC_KEY = { 31, 31, 31, 31, 31, 31, 31, 31, 31,
+            31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31 };
 
-    private final static byte[] KEY = { 0, 0, 0, 0, 0, 0, 0, 0,
-                                        0, 0, 0, 0, 0, 0, 0, 0 };
-    private final static byte[] IV = { 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55,
-                                       0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55 };
-    private final static byte[] MAC_KEY = { 31, 31, 31, 31, 31, 31, 31, 31,
-                                            31, 31, 31, 31, 31, 31, 31, 31,
-                                            31, 31, 31, 31 };
+    private final static byte[] EXP_WRITE = { 0x43, (byte) 0x91, (byte) 0x97,
+            (byte) 0xbd, 0x5b, 0x50, (byte) 0xac, 0x25, (byte) 0x87,
+            (byte) 0xc2, (byte) 0xc4, 0x6b, (byte) 0xc7, (byte) 0xe9, 0x38,
+            (byte) 0xc0 };
 
-    private final static byte[] EXP_WRITE = {
-        0x43, (byte)0x91, (byte)0x97, (byte)0xbd, 0x5b, 0x50, (byte)0xac, 0x25,
-        (byte)0x87, (byte)0xc2, (byte)0xc4, 0x6b, (byte)0xc7, (byte)0xe9, 0x38, (byte)0xc0
-    };
-
-    private final static byte[] DATA_READ = {
-        0x43, (byte)0x91, (byte)0x97, (byte)0xbd, 0x5b, 0x50, (byte)0xac, 0x25,
-        (byte)0x87, (byte)0xc2, (byte)0xc4, 0x6b, (byte)0xc7, (byte)0xe9, 0x38, (byte)0xc0,
-        (byte)0x90, (byte)0xd2, 0x16, 0x56, 0x0d, 0x71, 0x73, 0x61,
-        0x38, 0x7c, 0x4c, 0x3d, (byte)0xfb, (byte)0x97, 0x7d, (byte)0xe2,
-        0x6e, 0x03, (byte)0xb1, (byte)0xa0, (byte)0xc2, 0x1c, (byte)0xd6, 0x41,
-        0x41, 0x4c, (byte)0xb4, 0x59
-    };
+    private final static byte[] DATA_READ = { 0x43, (byte) 0x91, (byte) 0x97,
+            (byte) 0xbd, 0x5b, 0x50, (byte) 0xac, 0x25, (byte) 0x87,
+            (byte) 0xc2, (byte) 0xc4, 0x6b, (byte) 0xc7, (byte) 0xe9, 0x38,
+            (byte) 0xc0, (byte) 0x90, (byte) 0xd2, 0x16, 0x56, 0x0d, 0x71,
+            0x73, 0x61, 0x38, 0x7c, 0x4c, 0x3d, (byte) 0xfb, (byte) 0x97, 0x7d,
+            (byte) 0xe2, 0x6e, 0x03, (byte) 0xb1, (byte) 0xa0, (byte) 0xc2,
+            0x1c, (byte) 0xd6, 0x41, 0x41, 0x4c, (byte) 0xb4, 0x59 };
 }

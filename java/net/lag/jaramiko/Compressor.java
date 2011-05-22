@@ -25,12 +25,11 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Interface for a compression engine for the SSH2 protocol.
  */
-/* package */ interface Compressor
-{
-    public byte[] compress (byte[] data, int offset, int length);
-    public byte[] uncompress (byte[] data, int offset, int length);
+/* package */interface Compressor {
+    public byte[] compress(byte[] data, int offset, int length);
+
+    public byte[] uncompress(byte[] data, int offset, int length);
 }

@@ -33,59 +33,54 @@ import java.util.List;
 
 import net.lag.crai.CraiRandom;
 
-
 /**
  * SSH2's basic protocol unit, a byte stream that can encode ints, longs,
- * strings, booleans, bytes, and BigIntegers.  This class can build or parse
- * such streams.
+ * strings, booleans, bytes, and BigIntegers. This class can build or parse such
+ * streams.
  */
-public final class Message
-{
+public final class Message {
     /**
      * Create a new empty Message, suitable for writing.
      */
-    public
-    Message ()
-    {
+    public Message() {
         // start at position 5 to leave space for packetization
         init(new byte[DEFAULT_SIZE], 5, 0, 0);
     }
 
     /**
-     * Create a Message from a byte stream, suitable for reading.  This is
-     * equivalent to
-     * {@link #Message(byte[],int,int,int) Message(buf, 0, buf.length, 0)}.
-     *
-     * @param buf the bytes of the Message
+     * Create a Message from a byte stream, suitable for reading. This is
+     * equivalent to {@link #Message(byte[],int,int,int) Message(buf, 0,
+     * buf.length, 0)}.
+     * 
+     * @param buf
+     *            the bytes of the Message
      */
-    public
-    Message (byte[] buf)
-    {
+    public Message(byte[] buf) {
         init(buf, 0, buf.length, 0);
     }
 
     /**
      * Create a Message from an existing byte array, extending only for a
-     * subrange of the array, with a specific sequence number.  No data from
+     * subrange of the array, with a specific sequence number. No data from
      * beyond the given length will be read or written, but if an attempt is
-     * made, the internal buffer will be replaced with a newly-allocated
-     * array.  This method allows you to wrap a byte array into a Message,
-     * avoiding allocation in the normal case.
-     *
-     * @param buf the byte array to wrap
-     * @param position the starting position of data in the array
-     * @param length the number of bytes to include in the Message
-     * @param sequence an arbitrary "sequence number" to track
+     * made, the internal buffer will be replaced with a newly-allocated array.
+     * This method allows you to wrap a byte array into a Message, avoiding
+     * allocation in the normal case.
+     * 
+     * @param buf
+     *            the byte array to wrap
+     * @param position
+     *            the starting position of data in the array
+     * @param length
+     *            the number of bytes to include in the Message
+     * @param sequence
+     *            an arbitrary "sequence number" to track
      */
-    public
-    Message (byte[] buf, int position, int length, int sequence)
-    {
+    public Message(byte[] buf, int position, int length, int sequence) {
         init(buf, position, length, sequence);
     }
 
-    private void
-    init (byte[] buf, int position, int length, int sequence)
-    {
+    private void init(byte[] buf, int position, int length, int sequence) {
         mBuffer = buf;
         mStart = position;
         mPosition = position;
@@ -95,12 +90,10 @@ public final class Message
 
     /**
      * Return the byte stream format of this message.
-     *
+     * 
      * @return the bytes of this message
      */
-    public byte[]
-    toByteArray ()
-    {
+    public byte[] toByteArray() {
         if (mStart == 0) {
             return mBuffer;
         }
@@ -112,45 +105,38 @@ public final class Message
 
     /**
      * Return the current position within the byte stream (for reading or
-     * writing).  This is either the number of bytes read or written so far.
-     *
+     * writing). This is either the number of bytes read or written so far.
+     * 
      * @return current position
      */
-    public int
-    getPosition ()
-    {
+    public int getPosition() {
         return mPosition - mStart;
     }
 
     /**
      * Move the current position within the byte stream.
-     *
-     * @param position new position
+     * 
+     * @param position
+     *            new position
      */
-    public void
-    setPosition (int position)
-    {
+    public void setPosition(int position) {
         mPosition = position + mStart;
     }
 
     /**
-     * Rewind the byte stream to the beginning, effectively setting the
-     * position to zero.
+     * Rewind the byte stream to the beginning, effectively setting the position
+     * to zero.
      */
-    public void
-    rewind ()
-    {
+    public void rewind() {
         mPosition = mStart;
     }
 
     /**
      * Return the current length of the byte stream.
-     *
+     * 
      * @return length
      */
-    public int
-    getLength ()
-    {
+    public int getLength() {
         if (mLength > 0) {
             return mLength;
         }
@@ -158,77 +144,62 @@ public final class Message
     }
 
     /**
-     * Return the sequence number of this Message.  A sequence number will
-     * only be set if it was specified in the constructor, which typically
-     * means only for incoming Messages.
-     *
+     * Return the sequence number of this Message. A sequence number will only
+     * be set if it was specified in the constructor, which typically means only
+     * for incoming Messages.
+     * 
      * @return sequence number
      */
-    public int
-    getSequence ()
-    {
+    public int getSequence() {
         return mSequenceNumber;
     }
 
     /**
      * Write a byte to the Message.
-     *
-     * @param b byte
+     * 
+     * @param b
+     *            byte
      */
-    public void
-    putByte (byte b)
-    {
+    public void putByte(byte b) {
         ensureSpace(1);
         mBuffer[mPosition++] = b;
     }
 
-    public void
-    putBytes (byte[] b, int off, int len)
-    {
+    public void putBytes(byte[] b, int off, int len) {
         ensureSpace(len);
         System.arraycopy(b, off, mBuffer, mPosition, len);
         mPosition += len;
     }
 
-    public void
-    putBytes (byte[] b)
-    {
+    public void putBytes(byte[] b) {
         putBytes(b, 0, b.length);
     }
 
-    public void
-    putBoolean (boolean b)
-    {
-        putByte(b ? (byte)1 : (byte)0);
+    public void putBoolean(boolean b) {
+        putByte(b ? (byte) 1 : (byte) 0);
     }
 
-    public void
-    putInt (int i)
-    {
+    public void putInt(int i) {
         ensureSpace(4);
-        mBuffer[mPosition++] = (byte)((i >> 24) & 0xff);
-        mBuffer[mPosition++] = (byte)((i >> 16) & 0xff);
-        mBuffer[mPosition++] = (byte)((i >> 8) & 0xff);
-        mBuffer[mPosition++] = (byte)(i & 0xff);
+        mBuffer[mPosition++] = (byte) ((i >> 24) & 0xff);
+        mBuffer[mPosition++] = (byte) ((i >> 16) & 0xff);
+        mBuffer[mPosition++] = (byte) ((i >> 8) & 0xff);
+        mBuffer[mPosition++] = (byte) (i & 0xff);
     }
 
-    public void
-    putInt64 (long l)
-    {
+    public void putInt64(long l) {
         ensureSpace(8);
-        mBuffer[mPosition++] = (byte)((l >> 56) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 48) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 40) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 32) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 24) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 16) & 0xff);
-        mBuffer[mPosition++] = (byte)((l >> 8) & 0xff);
-        mBuffer[mPosition++] = (byte)(l & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 56) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 48) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 40) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 32) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 24) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 16) & 0xff);
+        mBuffer[mPosition++] = (byte) ((l >> 8) & 0xff);
+        mBuffer[mPosition++] = (byte) (l & 0xff);
     }
 
-    public void
-    putMPZ (BigInteger bi)
-    {
+    public void putMPZ(BigInteger bi) {
         byte[] b = bi.toByteArray();
         ensureSpace(4 + b.length);
         putInt(b.length);
@@ -236,24 +207,18 @@ public final class Message
         mPosition += b.length;
     }
 
-    public void
-    putByteString (byte[] b, int offset, int length)
-    {
+    public void putByteString(byte[] b, int offset, int length) {
         ensureSpace(4 + length);
         putInt(length);
         System.arraycopy(b, offset, mBuffer, mPosition, length);
         mPosition += length;
     }
 
-    public void
-    putByteString (byte[] b)
-    {
+    public void putByteString(byte[] b) {
         putByteString(b, 0, b.length);
     }
 
-    public void
-    putString (String s)
-    {
+    public void putString(String s) {
         byte[] b;
         try {
             b = s.getBytes("UTF-8");
@@ -263,11 +228,9 @@ public final class Message
         putByteString(b);
     }
 
-    public void
-    putList (List l)
-    {
+    public void putList(List l) {
         StringBuffer out = new StringBuffer();
-        for (Iterator i = l.iterator(); i.hasNext(); ) {
+        for (Iterator i = l.iterator(); i.hasNext();) {
             String s = i.next().toString();
             out.append(s);
             out.append(',');
@@ -280,22 +243,21 @@ public final class Message
     }
 
     /**
-     * Given a list of encodable types, iterate the list and add each item
-     * as if the appropriate <code>put*</code> call was made.  This is useful
-     * if you may be receiving an arbitrary list of objects from an outside
-     * source.
-     *
-     * <p>If any object in the list can't be encoded, an
-     * IllegalArgumentException will be thrown.  Encodable object types are:
-     * <code>Byte</code>, <code>Boolean</code>, <code>Integer</code>,
-     * <code>Long</code>, <code>BigInteger</code>, and <code>byte[]</code>.
-     *
-     * @param l the list of objects to add to this Message
+     * Given a list of encodable types, iterate the list and add each item as if
+     * the appropriate <code>put*</code> call was made. This is useful if you
+     * may be receiving an arbitrary list of objects from an outside source.
+     * 
+     * <p>
+     * If any object in the list can't be encoded, an IllegalArgumentException
+     * will be thrown. Encodable object types are: <code>Byte</code>,
+     * <code>Boolean</code>, <code>Integer</code>, <code>Long</code>,
+     * <code>BigInteger</code>, and <code>byte[]</code>.
+     * 
+     * @param l
+     *            the list of objects to add to this Message
      */
-    public void
-    putAll (List l)
-    {
-        for (Iterator i = l.iterator(); i.hasNext(); ) {
+    public void putAll(List l) {
+        for (Iterator i = l.iterator(); i.hasNext();) {
             Object obj = i.next();
             if (obj instanceof String) {
                 putString((String) obj);
@@ -312,21 +274,18 @@ public final class Message
             } else if (obj instanceof byte[]) {
                 putByteString((byte[]) obj);
             } else {
-                throw new IllegalArgumentException("Unknown encoding type: " + obj.getClass().getName());
+                throw new IllegalArgumentException("Unknown encoding type: "
+                        + obj.getClass().getName());
             }
         }
     }
 
-    public byte
-    getByte ()
-    {
+    public byte getByte() {
         ensureSpace(1);
         return mBuffer[mPosition++];
     }
 
-    public byte[]
-    getBytes (int n)
-    {
+    public byte[] getBytes(int n) {
         ensureSpace(n);
         byte[] out = new byte[n];
         System.arraycopy(mBuffer, mPosition, out, 0, n);
@@ -334,40 +293,32 @@ public final class Message
         return out;
     }
 
-    public boolean
-    getBoolean ()
-    {
+    public boolean getBoolean() {
         ensureSpace(1);
         return (mBuffer[mPosition++] != 0);
     }
 
-    public int
-    getInt ()
-    {
+    public int getInt() {
         ensureSpace(4);
-        return (((int) mBuffer[mPosition++] & 0xff) << 24) |
-            (((int) mBuffer[mPosition++] & 0xff) << 16) |
-            (((int) mBuffer[mPosition++] & 0xff) << 8) |
-            ((int) mBuffer[mPosition++] & 0xff);
+        return ((mBuffer[mPosition++] & 0xff) << 24)
+                | ((mBuffer[mPosition++] & 0xff) << 16)
+                | ((mBuffer[mPosition++] & 0xff) << 8)
+                | (mBuffer[mPosition++] & 0xff);
     }
 
-    public long
-    getInt64 ()
-    {
+    public long getInt64() {
         ensureSpace(8);
-        return (((long) mBuffer[mPosition++] & 0xff) << 56) |
-            (((long) mBuffer[mPosition++] & 0xff) << 48) |
-            (((long) mBuffer[mPosition++] & 0xff) << 40) |
-            (((long) mBuffer[mPosition++] & 0xff) << 32) |
-            (((long) mBuffer[mPosition++] & 0xff) << 24) |
-            (((long) mBuffer[mPosition++] & 0xff) << 16) |
-            (((long) mBuffer[mPosition++] & 0xff) << 8) |
-            ((long) mBuffer[mPosition++] & 0xff);
+        return (((long) mBuffer[mPosition++] & 0xff) << 56)
+                | (((long) mBuffer[mPosition++] & 0xff) << 48)
+                | (((long) mBuffer[mPosition++] & 0xff) << 40)
+                | (((long) mBuffer[mPosition++] & 0xff) << 32)
+                | (((long) mBuffer[mPosition++] & 0xff) << 24)
+                | (((long) mBuffer[mPosition++] & 0xff) << 16)
+                | (((long) mBuffer[mPosition++] & 0xff) << 8)
+                | ((long) mBuffer[mPosition++] & 0xff);
     }
 
-    public BigInteger
-    getMPZ ()
-    {
+    public BigInteger getMPZ() {
         int len = getInt();
         byte[] b = new byte[len];
         ensureSpace(len);
@@ -376,9 +327,7 @@ public final class Message
         return new BigInteger(b);
     }
 
-    public byte[]
-    getByteString ()
-    {
+    public byte[] getByteString() {
         int len = getInt();
         byte[] b = new byte[len];
         ensureSpace(len);
@@ -387,9 +336,7 @@ public final class Message
         return b;
     }
 
-    public String
-    getString ()
-    {
+    public String getString() {
         byte[] b = getByteString();
         try {
             return new String(b, "UTF-8");
@@ -398,26 +345,25 @@ public final class Message
         }
     }
 
-    public List
-    getList ()
-    {
+    public List getList() {
         return Arrays.asList(Util.splitString(getString(), ","));
     }
 
     /**
-     * Pack the SSH2 message into a proper SSH2 packet, with its length being
-     * a whole multiple of the given block size.  Padding is added from the
-     * secure random generator.  Normally you only want to call this method
-     * once.
-     *
-     * @param random a source of secure random bytes (used for padding)
-     * @param blockSize the block size to pad up to
-     * @param encrypting true if this packet will be encrypted (used for
-     *     optimizing the use of entropy)
+     * Pack the SSH2 message into a proper SSH2 packet, with its length being a
+     * whole multiple of the given block size. Padding is added from the secure
+     * random generator. Normally you only want to call this method once.
+     * 
+     * @param random
+     *            a source of secure random bytes (used for padding)
+     * @param blockSize
+     *            the block size to pad up to
+     * @param encrypting
+     *            true if this packet will be encrypted (used for optimizing the
+     *            use of entropy)
      */
-    /* package */ void
-    packetize (CraiRandom random, int blockSize, boolean encrypting)
-    {
+    /* package */void packetize(CraiRandom random, int blockSize,
+            boolean encrypting) {
         // pad up at least 4 bytes, to nearest block-size (usually 8)
         int padding = 3 + blockSize - ((mPosition - mStart + 8) % blockSize);
         byte[] pad = new byte[padding];
@@ -429,7 +375,8 @@ public final class Message
         if (mStart < 5) {
             // push everything forward 5 bytes, so we have room for a header
             ensureSpace(5);
-            System.arraycopy(mBuffer, mStart, mBuffer, mStart + 5, mPosition - mStart);
+            System.arraycopy(mBuffer, mStart, mBuffer, mStart + 5, mPosition
+                    - mStart);
             mStart += 5;
             mPosition += 5;
         }
@@ -449,9 +396,7 @@ public final class Message
     }
 
     // call before packetizing
-    /* package */ void
-    compress (Compressor compressor)
-    {
+    /* package */void compress(Compressor compressor) {
         byte[] out = compressor.compress(mBuffer, mStart, mPosition - mStart);
         mPosition = mStart;
         ensureSpace(out.length);
@@ -460,19 +405,15 @@ public final class Message
     }
 
     /**
-     * Return a description of the command code from this message.  This only
+     * Return a description of the command code from this message. This only
      * works before the message has been packetized, and is used for logging
      * from within the packetizer.
      */
-    /* package */ String
-    getCommandDescription ()
-    {
+    /* package */String getCommandDescription() {
         return MessageType.getDescription(mBuffer[mStart]);
     }
 
-    private void
-    ensureSpace (int n)
-    {
+    private void ensureSpace(int n) {
         int max = mBuffer.length;
         if ((mLength > 0) && (mLength + mStart < max)) {
             max = mLength + mStart;
@@ -489,7 +430,6 @@ public final class Message
             mLength = 0;
         }
     }
-
 
     private byte[] mBuffer;
     private int mPosition = 0;

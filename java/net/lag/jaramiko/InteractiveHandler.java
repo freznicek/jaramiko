@@ -25,21 +25,21 @@
 
 package net.lag.jaramiko;
 
-
 /**
- * Handler for getting user responses to an SSH2 server's "interactive"
- * queries during an interactive authentication.
+ * Handler for getting user responses to an SSH2 server's "interactive" queries
+ * during an interactive authentication.
  */
-public interface InteractiveHandler
-{
+public interface InteractiveHandler {
     /**
-     * Handle an interactive authentication request from the server.  The
-     * server provides a title, instructions, and one or more prompts.  After
-     * the user has entered the responses, this method should return them.
-     * It should return as many responses as there were prompts.
-     *
-     * @param dialog instructions and prompts for the user
+     * Handle an interactive authentication request from the server. The server
+     * provides a title, instructions, and one or more prompts. After the user
+     * has entered the responses, this method should return them. It should
+     * return as many responses as there were prompts.
+     * 
+     * @param dialog
+     *            instructions and prompts for the user
      * @return an array of responses from the user
      */
-    public String[] handleInteractiveRequest (InteractiveQuery dialog) throws SSHException;
+    public String[] handleInteractiveRequest(InteractiveQuery dialog)
+            throws SSHException;
 }

@@ -25,36 +25,30 @@
 
 package net.lag.jaramiko.demos;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.util.Arrays;
 
-
 /**
- * This is one the silliest things I've seen.
- * Borrowed from <http://java.sun.com/developer/technicalArticles/Security/pwordmask/index.html>
- *
+ * This is one the silliest things I've seen. Borrowed from
+ * <http://java.sun.com/
+ * developer/technicalArticles/Security/pwordmask/index.html>
+ * 
  * Ask the user for a password, and mask their typing with asterisks displayed
  * at a very high speed.
  */
-public class PasswordInput
-{
-    public static class MaskingThread
-        extends Thread
-    {
+public class PasswordInput {
+    public static class MaskingThread extends Thread {
         private volatile boolean stop;
         private char echochar = ' ';
 
-        public
-        MaskingThread(String prompt)
-        {
-           System.out.print(prompt);
+        public MaskingThread(String prompt) {
+            System.out.print(prompt);
         }
 
-        public void
-        run()
-        {
+        @Override
+        public void run() {
             int priority = Thread.currentThread().getPriority();
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
@@ -66,8 +60,8 @@ public class PasswordInput
                         // attempt masking at this rate
                         Thread.sleep(1);
                     } catch (InterruptedException iex) {
-                       Thread.currentThread().interrupt();
-                       return;
+                        Thread.currentThread().interrupt();
+                        return;
                     }
                 }
             } finally { // restore the original priority
@@ -75,18 +69,13 @@ public class PasswordInput
             }
         }
 
-        public void
-        stopMasking()
-        {
+        public void stopMasking() {
             this.stop = true;
         }
     }
 
-
-    public static final char[]
-    getPassword (InputStream in, String prompt)
-        throws IOException
-    {
+    public static final char[] getPassword(InputStream in, String prompt)
+            throws IOException {
         MaskingThread maskingthread = new MaskingThread(prompt);
         Thread thread = new Thread(maskingthread);
         thread.start();
@@ -113,7 +102,7 @@ public class PasswordInput
                     if (!(in instanceof PushbackInputStream)) {
                         in = new PushbackInputStream(in);
                     }
-                    ((PushbackInputStream)in).unread(c2);
+                    ((PushbackInputStream) in).unread(c2);
                 } else {
                     break loop;
                 }

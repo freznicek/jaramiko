@@ -25,12 +25,10 @@
 
 package net.lag.jaramiko;
 
-
 /**
  * Callback from {@link Packetizer} when it determines that the transport has
  * been idle (no traffic) for the time specified.
  */
-/* package */ interface KeepAliveHandler
-{
-    public void keepAliveEvent ();
+/* package */interface KeepAliveHandler {
+    public void keepAliveEvent();
 }

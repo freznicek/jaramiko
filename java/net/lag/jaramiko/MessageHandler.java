@@ -27,23 +27,24 @@ package net.lag.jaramiko;
 
 import java.io.IOException;
 
-
 /**
- * Handler for specific message types in the SSH2 protocol.  This is used to
+ * Handler for specific message types in the SSH2 protocol. This is used to
  * split up handling into sub-components of similar functionality, instead of
  * having one huge Transport class.
  */
-/* package */ interface MessageHandler
-{
+/* package */interface MessageHandler {
     /**
      * Handle an SSH protocol message and return true if the message was
-     * understood, or false if it wasn't (and wasn't handled).  This is part
-     * of jaramiko's internal implementation.
-     *
-     * @param ptype message type
-     * @param m message
+     * understood, or false if it wasn't (and wasn't handled). This is part of
+     * jaramiko's internal implementation.
+     * 
+     * @param ptype
+     *            message type
+     * @param m
+     *            message
      * @return true if the message was handled; false otherwise
-     * @throws IOException if an exception occurred
+     * @throws IOException
+     *             if an exception occurred
      */
-    public boolean handleMessage (byte ptype, Message m) throws IOException;
+    public boolean handleMessage(byte ptype, Message m) throws IOException;
 }

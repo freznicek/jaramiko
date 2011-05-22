@@ -25,11 +25,12 @@
 
 package net.lag.crai;
 
-
-public interface CraiDigest
-{
+public interface CraiDigest {
     public void reset();
+
     public void update(byte[] data, int off, int len);
+
     public byte[] finish();
+
     public void finish(byte[] out, int off) throws CraiException;
 }

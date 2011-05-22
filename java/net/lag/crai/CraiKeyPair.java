@@ -25,32 +25,23 @@
 
 package net.lag.crai;
 
-
 /**
  * Container class for a key pair, containing exactly one private key and
  * exactly one public key.
  */
-public class CraiKeyPair
-{
-    public
-    CraiKeyPair (CraiPublicKey pub, CraiPrivateKey priv)
-    {
+public class CraiKeyPair {
+    public CraiKeyPair(CraiPublicKey pub, CraiPrivateKey priv) {
         mPublic = pub;
         mPrivate = priv;
     }
 
-    public CraiPublicKey
-    getPublicKey ()
-    {
+    public CraiPublicKey getPublicKey() {
         return mPublic;
     }
 
-    public CraiPrivateKey
-    getPrivateKey ()
-    {
+    public CraiPrivateKey getPrivateKey() {
         return mPrivate;
     }
-
 
     private CraiPublicKey mPublic;
     private CraiPrivateKey mPrivate;

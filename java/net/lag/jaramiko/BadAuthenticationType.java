@@ -27,41 +27,33 @@ package net.lag.jaramiko;
 
 import java.util.Arrays;
 
-
 /**
- * Exception raised when an authentication type (like password) is used, but
- * the server isn't allowing that type.  (It may only allow public-key, for
- * example.)
+ * Exception raised when an authentication type (like password) is used, but the
+ * server isn't allowing that type. (It may only allow public-key, for example.)
  */
-public class BadAuthenticationType
-    extends SSHException
-{
+public class BadAuthenticationType extends SSHException {
     /* package */
-    BadAuthenticationType (String[] types)
-    {
+    BadAuthenticationType(String[] types) {
         super("Bad authentication type.");
         mAllowedTypes = types;
     }
 
     /**
-     * Return the list of authentication types allowed by the server.  Possible
+     * Return the list of authentication types allowed by the server. Possible
      * values are: <code>"none"</code>, <code>"password"</code>, and
      * <code>"publickey"</code>.
-     *
+     * 
      * @return the list of auth types allowed by the server
      */
-    public String[]
-    getAllowedTypes ()
-    {
+    public String[] getAllowedTypes() {
         return mAllowedTypes;
     }
 
-    public String
-    toString ()
-    {
-        return "Bad authentication type (allowed types: " + Arrays.asList(mAllowedTypes) + ")";
+    @Override
+    public String toString() {
+        return "Bad authentication type (allowed types: "
+                + Arrays.asList(mAllowedTypes) + ")";
     }
-
 
     private String[] mAllowedTypes;
 

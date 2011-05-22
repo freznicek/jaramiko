@@ -26,27 +26,24 @@
 package net.lag.jaramiko.ber;
 
 import java.io.FilterInputStream;
-import java.io.InputStream;
 import java.io.IOException;
-
+import java.io.InputStream;
 
 /**
- * An InputStream which can be restricted to allow only a fixed number of
- * bytes to be read before future read operations throw an IOException.
+ * An InputStream which can be restricted to allow only a fixed number of bytes
+ * to be read before future read operations throw an IOException.
  */
-public class LimitInputStream
-    extends FilterInputStream
-{
+public class LimitInputStream extends FilterInputStream {
     /**
      * Create a new limited InputStream.
-     *
-     * @param in the InputStream to wrap
-     * @param limit the maximum number of bytes to allow to be read, or -1 to
-     *     set no limit
+     * 
+     * @param in
+     *            the InputStream to wrap
+     * @param limit
+     *            the maximum number of bytes to allow to be read, or -1 to set
+     *            no limit
      */
-    public
-    LimitInputStream (InputStream in, int limit)
-    {
+    public LimitInputStream(InputStream in, int limit) {
         super(in);
         mLimit = limit;
         mCount = 0;
@@ -55,30 +52,24 @@ public class LimitInputStream
     /**
      * Return the number of bytes which can still be read from this stream
      * before hitting the limit. If no limit was set, -1 is always returned.
-     *
+     * 
      * @return the remaining bytes that can be read, or -1
      */
-    public int
-    getRemaining ()
-    {
+    public int getRemaining() {
         return (mLimit < 0) ? mLimit : mLimit - mCount;
     }
 
     /**
      * Return the total number of bytes that were read from this stream.
-     *
+     * 
      * @return the number of bytes read
      */
-    public int
-    getCount ()
-    {
+    public int getCount() {
         return mCount;
     }
 
-    public int
-    read ()
-        throws IOException
-    {
+    @Override
+    public int read() throws IOException {
         if ((mLimit >= 0) && (mCount + 1 > mLimit)) {
             return -1;
         }
@@ -89,17 +80,13 @@ public class LimitInputStream
         return ret;
     }
 
-    public int
-    read (byte[] b)
-        throws IOException
-    {
+    @Override
+    public int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
-    public int
-    read (byte[] b, int off, int len)
-        throws IOException
-    {
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
         if ((mLimit >= 0) && (mCount + len > mLimit)) {
             len = mLimit - mCount;
             if (len == 0) {
@@ -114,10 +101,8 @@ public class LimitInputStream
         return ret;
     }
 
-    public long
-    skip (long n)
-        throws IOException
-    {
+    @Override
+    public long skip(long n) throws IOException {
         if ((mLimit >= 0) && (mCount + n > mLimit)) {
             n = mLimit - mCount;
             if (n == 0) {
@@ -131,7 +116,6 @@ public class LimitInputStream
         }
         return ret;
     }
-
 
     private int mLimit;
     private int mCount;

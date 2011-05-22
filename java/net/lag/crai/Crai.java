@@ -27,30 +27,41 @@ package net.lag.crai;
 
 import java.math.BigInteger;
 
-
 /**
  * Crypto abstraction interface.
- *
- * <p>Not every platform has JCE, so this interface allows you to wrap your
- * native crypto libraries so that they can be used by jaramiko.
+ * 
+ * <p>
+ * Not every platform has JCE, so this interface allows you to wrap your native
+ * crypto libraries so that they can be used by jaramiko.
  */
-public interface Crai
-{
-    public CraiRandom getPRNG ();
+public interface Crai {
+    public CraiRandom getPRNG();
 
-    public CraiPrivateKey makePrivateRSAKey (BigInteger n, BigInteger d, BigInteger p, BigInteger q);
-    public CraiPrivateKey makePrivateDSAKey (BigInteger x, BigInteger p, BigInteger q, BigInteger g);
-    public CraiPublicKey makePublicRSAKey (BigInteger n, BigInteger e);
-    public CraiPublicKey makePublicDSAKey (BigInteger y, BigInteger p, BigInteger q, BigInteger g);
-    public CraiKeyPair generateRSAKeyPair (int bits);
-    public CraiKeyPair generateDSAKeyPair (int bits);
+    public CraiPrivateKey makePrivateRSAKey(BigInteger n, BigInteger d,
+            BigInteger p, BigInteger q);
 
-    public CraiDigest makeSHA1 ();
-    public CraiDigest makeMD5 ();
-    public CraiDigest makeSHA1HMAC (byte[] key);
-    public CraiDigest makeMD5HMAC (byte[] key);
+    public CraiPrivateKey makePrivateDSAKey(BigInteger x, BigInteger p,
+            BigInteger q, BigInteger g);
 
-    public CraiCipher getCipher (CraiCipherAlgorithm algorithm) throws CraiException;
+    public CraiPublicKey makePublicRSAKey(BigInteger n, BigInteger e);
 
-    public BigInteger modPow (BigInteger b, BigInteger e, BigInteger m);
+    public CraiPublicKey makePublicDSAKey(BigInteger y, BigInteger p,
+            BigInteger q, BigInteger g);
+
+    public CraiKeyPair generateRSAKeyPair(int bits);
+
+    public CraiKeyPair generateDSAKeyPair(int bits);
+
+    public CraiDigest makeSHA1();
+
+    public CraiDigest makeMD5();
+
+    public CraiDigest makeSHA1HMAC(byte[] key);
+
+    public CraiDigest makeMD5HMAC(byte[] key);
+
+    public CraiCipher getCipher(CraiCipherAlgorithm algorithm)
+            throws CraiException;
+
+    public BigInteger modPow(BigInteger b, BigInteger e, BigInteger m);
 }
