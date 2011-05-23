@@ -1,93 +1,176 @@
 <?xml version="1.0" ?>
-<project name="jaramiko" default="jar" basedir=".">
-    <!-- internal folder locations -->
-    <property name="source-folder" location="java" />
-    <property name="build-folder" location="classes" />
-    <property name="docs-folder" location="docs" />
-    <property name="test-folder" location="test" />
-    <property name="test-build-folder" location="test-classes" />
-    <property name="demo-folder" location="demo" />
-    <property name="demo-build-folder" location="demo-classes" />
-    <property name="resource-folder" location="resources" />
+<project name="jaramiko" default="build" basedir=".">
+    <!-- load the version -->
+    <loadfile property="version" srcFile="VERSION">
+        <filterchain>
+            <filterreader
+                classname="org.apache.tools.ant.filters.StripLineBreaks"/>
+        </filterchain>
+    </loadfile>
 
-    <property name="jaramiko-jar" value="jaramiko.jar" />
-    <property name="manifest-file" value="${build-folder}/jaramiko.manifest" />
+    <property name="junit" location="junit3.8.1.jar" />
 
-    <!-- junit (unit tests) -->
-    <property name="junit-jar" location="junit3.8.1.jar" />
-    <path id="test.deps.build">
-        <pathelement location="${junit-jar}" />
-        <pathelement location="${jaramiko-jar}" />
+    <!-- roots -->
+    <property name="build" location="bin" />
+    <property name="dist" location="dist" />
+    <property name="resource" location="resources" />
+
+    <!-- source folder locations -->
+    <property name="src" location="java" />
+    <property name="test" location="test" />
+    <property name="demo" location="demo" />
+
+    <!-- build folder locations -->
+    <property name="build.src" location="${build}/classes" />
+    <property name="build.test" location="${build}/test" />
+    <property name="build.demo" location="${build}/demo" />
+    <property name="build.resource" location="${build.src}/resources" />
+
+    <!-- built resources -->
+    <property name="docs" location="${dist}/docs" />
+    <property name="jar" value="${dist}/${ant.project.name}-${version}.jar" />
+    <property name="manifest"
+        value="${build}/${ant.project.name}.manifest" />
+
+
+    <!-- paths -->
+    <path id="test.build">
+        <pathelement location="${junit}" />
+        <pathelement location="${build.src}" />
     </path>
-    <path id="test.deps.run">
-        <path refid="test.deps.build" />
-        <pathelement location="${test-build-folder}" />
+
+    <path id="test.run">
+        <path refid="test.build" />
+        <pathelement location="${build.test}" />
     </path>
 
-    <path id="demo.deps.build">
-        <pathelement location="${jaramiko-jar}" />
+    <path id="demo.build">
+        <pathelement location="${build.src}" />
     </path>
 
-    <tstamp>
-        <format property="timestamp" pattern="yyyyMMdd-HHmmss" />
-        <format property="today" pattern="d MMM yyyy HH:mm" />
-    </tstamp>
+    <path id="demo.run">
+        <path refid="test.build" />
+        <pathelement location="${build.demo}" />
+    </path>
 
 
+    <!-- initialization -->
     <target name="init">
-        <mkdir dir="${build-folder}" />
-        <mkdir dir="${test-build-folder}" />
-        <mkdir dir="${demo-build-folder}" />
+        <mkdir dir="${build.src}" />
+        <mkdir dir="${build.test}" />
+        <mkdir dir="${build.demo}" />
     </target>
 
-    <target name="compile" depends="init">
-        <depend srcdir="${source-folder}" destdir="${build-folder}" />
-        <javac source="1.5" target="1.5" debug="true" srcdir="${source-folder}" destdir="${build-folder}" />
+
+    <!-- documentation -->
+    <target name="doc" depends="build"
+        description="create javadocs for the jaramiko library">
+
+        <javadoc sourcepath="${src}" destdir="${docs}"
+            packagenames="net.lag.jaramiko.*" />
     </target>
 
-    <target name="compile-tests" depends="jar">
-        <javac debug="true" srcdir="${test-folder}" destdir="${test-build-folder}" classpathref="test.deps.build" />
+
+    <!-- cleanup -->
+    <target name="clean" description="clean built classes">
+        <delete dir="${build}" failonerror="false" />
     </target>
 
-    <target name="jar" depends="compile" description="create jaramiko jar">
-        <manifest file="${manifest-file}">
-            <attribute name="Sealed" value="false" />
-            <attribute name="Build-Date" value="${TODAY}" />
-            <attribute name="Build-Time" value="${TSTAMP}" />
-        </manifest>
-        <copy todir="${build-folder}/resources">
-            <fileset dir="${resource-folder}" />
+
+    <target name="clean-all" depends="clean"
+        description="clean all built resources excluding items packaged for distribution">
+
+        <delete dir="${docs}" failonerror="false" />
+    </target>
+
+
+    <!-- building -->
+    <target name="build" description="build jaramiko library"
+        depends="init">
+
+        <depend srcdir="${src}" destdir="${build.src}" />
+        <javac source="1.5" target="1.5" debug="true" srcdir="${src}"
+            destdir="${build.src}" />
+
+        <copy todir="${build.resource}" includeEmptyDirs="true">
+            <fileset dir="${resource}" />
         </copy>
-        <jar jarfile="${jaramiko-jar}" basedir="${build-folder}" manifest="${manifest-file}" />
     </target>
 
-    <target name="test" depends="compile-tests" description="run unit tests">
-        <java classname="junit.textui.TestRunner" classpathref="test.deps.run">
+
+    <target name="build-test" description="build test cases"  depends="build">
+        <javac source="1.5" target="1.5" debug="true" srcdir="${test}"
+            destdir="${build.test}" classpathref="test.build" />
+    </target>
+
+
+    <target name="build-demo" description="build demo" depends="build">
+        <javac source="1.5" target="1.5" debug="true" srcdir="${demo}"
+            destdir="${build.demo}" classpathref="demo.build" />
+    </target>
+
+
+    <target name="build-all" description="build all java files"
+        depends="build, build-test, build-demo" />
+
+
+    <!-- testing -->
+    <target name="test" depends="build-test" description="run unit tests">
+        <java classname="junit.textui.TestRunner" classpathref="test.run">
             <arg value="net.lag.jaramiko.AllTests" />
         </java>
     </target>
 
-    <target name="testv" depends="compile-tests">
-        <java classname="net.lag.jaramiko.AllTests" classpathref="test.deps.run" />
+
+    <target name="test-verbose" depends="build-test"
+        description="run tests verbosely">
+
+        <java classname="net.lag.jaramiko.AllTests"
+            classpathref="test.run" />
     </target>
 
-    <target name="docs" depends="init">
-        <javadoc sourcepath="${source-folder}" destdir="${docs-folder}" packagenames="net.lag.jaramiko.*" />
+
+    <!-- packaging -->
+    <target name="jar" depends="build" description="create jaramiko jar">
+        <tstamp />
+
+        <manifest file="${manifest}">
+            <attribute name="Sealed" value="false" />
+            <attribute name="Build-Date" value="${TODAY}" />
+            <attribute name="Build-Time" value="${TSTAMP}" />
+            <attribute name="Implementation-Version" value="${version}" />
+        </manifest>
+
+        <mkdir dir="${dist}" />
+        <jar jarfile="${jar}" basedir="${build.src}" manifest="${manifest}" />
     </target>
 
-    <target name="demo" description="build a little demo" depends="jar">
-        <javac source="1.5" target="1.5" debug="true" srcdir="${demo-folder}" destdir="${demo-build-folder}"
-            classpathref="demo.deps.build" />
-        <echo message="Run ./demo.sh to try it out." />
+
+    <target name="zip" description="create a zip archive">
+        <tstamp />
+
+        <mkdir dir="${dist}" />
+        <zip destfile="${dist}/${ant.project.name}-${version}-${DSTAMP}.zip">
+            <!-- folders -->
+            <zipfileset dir="${demo}" prefix="demo" />
+            <zipfileset dir="${resource}" prefix="resources" />
+            <zipfileset dir="${src}" prefix="java" />
+            <zipfileset dir="${test}" prefix="test" />
+
+            <!-- files -->
+            <zipfileset file="LICENSE" />
+            <zipfileset file="README.rst" />
+            <zipfileset file="TODO" />
+            <zipfileset file="VERSION" />
+            <zipfileset file="build.xml" />
+            <zipfileset file="junit3.8.1.jar" />
+        </zip>
     </target>
 
-    <target name="clean" description="clean built targets">
-        <delete dir="${build-folder}" failonerror="false" />
-        <delete dir="${test-build-folder}" failonerror="false" />
-        <delete dir="${demo-build-folder}" failonerror="false" />
-        <delete file="${jaramiko-jar}" failonerror="false" />
-        <delete file="${manifest-file}" failonerror="false" />
-        <delete dir="${docs-folder}" failonerror="false" />
-    </target>
 
+    <!-- demo -->
+    <target name="demo" depends="build-demo" description="runs the demo">
+        <java classname="net.lag.jaramiko.demos.SimpleDemo"
+            classpathref="demo.run" />
+    </target>
 </project>

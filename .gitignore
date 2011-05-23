@@ -1,0 +1,9 @@
+# built
+bin
+dist
+*.class
+# personal files
+*~
+.classpath
+.project
+.settings

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-    <classpathentry kind="src" output="classes/" path="java"/>
-    <classpathentry kind="src" output="demo-classes/" path="demo"/>
-    <classpathentry kind="src" output="test-classes/" path="test"/>
-    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-    <classpathentry kind="lib" path="junit3.8.1.jar"/>
-    <classpathentry kind="output" path="classes"/>
-</classpath>
