@@ -36,12 +36,18 @@ import net.lag.crai.CraiCipher;
 import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A client-side SSH transport, used for initiating SSH over an existing socket.
  * Once a transport has negotiated encryption and authenticated, tunnels (called
  * {@link Channel}s) can be created across the session.
  */
 public class ClientTransport extends BaseTransport {
+    private static final Logger logger = LoggerFactory
+            .getLogger(ClientTransport.class);
+
     // clean interface between Kex and Transport for unit testing
     private class MyKexTransportInterface implements KexTransportInterface {
         public String getLocalVersion() {
@@ -91,10 +97,6 @@ public class ClientTransport extends BaseTransport {
 
         public void kexComplete() throws IOException {
             ClientTransport.this.activateOutbound();
-        }
-
-        public LogSink getLog() {
-            return mLog;
         }
     }
 
@@ -157,8 +159,8 @@ public class ClientTransport extends BaseTransport {
         mActive = true;
         new Thread(new Runnable() {
             public void run() {
-                mLog.debug("starting thread (client mode): "
-                        + Integer.toHexString(this.hashCode()));
+                logger.debug("starting thread (client mode): {}",
+                            Integer.toHexString(this.hashCode()));
                 transportRun();
             }
         }, "jaramiko client feeder").start();
@@ -171,14 +173,18 @@ public class ClientTransport extends BaseTransport {
         if (hostkey != null) {
             PKey skey = getRemoteServerKey();
             if (!skey.equals(hostkey)) {
-                mLog.debug("Bad host key from server");
-                mLog.debug("Expected: " + hostkey.getSSHName() + ": "
-                        + Util.encodeHex(hostkey.getFingerprint()));
-                mLog.debug("Got     : " + skey.getSSHName() + ": "
-                        + Util.encodeHex(skey.getFingerprint()));
+                logger.debug("Bad host key from server!"
+                            + " expected {} ({}) got {} ({})",
+                            new Object[] {
+                                hostkey.getSSHName(),
+                                Util.encodeHex(hostkey.getFingerprint()),
+                                skey.getSSHName(),
+                                Util.encodeHex(skey.getFingerprint())
+                            });
+
                 throw new SSHException("Bad host key from server");
             }
-            mLog.debug("Host key verified (" + skey.getSSHName() + ")");
+            logger.debug("Host key verified ({})", skey.getSSHName());
         }
     }
 
@@ -221,7 +227,7 @@ public class ClientTransport extends BaseTransport {
     public String[] authNone(String username, int timeout_ms)
             throws IOException {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler = new AuthHandler(this, sCrai);
         mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authNone(username, event);
         return waitForAuthResponse(event, timeout_ms);
@@ -304,7 +310,7 @@ public class ClientTransport extends BaseTransport {
     public String[] authPassword(String username, final String password,
             boolean fallback, int timeout_ms) throws IOException {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler = new AuthHandler(this, sCrai);
         mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authPassword(username, password, event);
         try {
@@ -382,7 +388,7 @@ public class ClientTransport extends BaseTransport {
     public String[] authPrivateKey(String username, PKey key, int timeout_ms)
             throws IOException {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler = new AuthHandler(this, sCrai);
         mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authPrivateKey(username, key, event);
         return waitForAuthResponse(event, timeout_ms);
@@ -432,7 +438,7 @@ public class ClientTransport extends BaseTransport {
             InteractiveHandler handler, String[] submethods, int timeout_ms)
             throws IOException {
         Event event = new Event();
-        mAuthHandler = new AuthHandler(this, sCrai, mLog);
+        mAuthHandler = new AuthHandler(this, sCrai);
         mAuthHandler.setBannerListener(mBannerListener);
         mAuthHandler.authInteractive(username, handler, event, submethods);
         return waitForAuthResponse(event, timeout_ms);
@@ -507,7 +513,7 @@ public class ClientTransport extends BaseTransport {
             mChannels[chanid] = c;
             e = new Event();
             mChannelEvents[chanid] = e;
-            c.setTransport(this, mLog);
+            c.setTransport(this);
             c.setWindow(mWindowSize, mMaxPacketSize);
 
             sendUserMessage(m, timeout_ms);
@@ -635,7 +641,7 @@ public class ClientTransport extends BaseTransport {
         String kind = m.getString();
         int chanID = m.getInt();
 
-        mLog.debug("Rejecting '" + kind + "' channel request from server.");
+        logger.debug("Rejecting '{}' channel request from server.", kind);
 
         Message mx = new Message();
         mx.putByte(MessageType.CHANNEL_OPEN_FAILURE);
@@ -669,7 +675,8 @@ public class ClientTransport extends BaseTransport {
     private final void verifyKey(byte[] hostKey, byte[] sig)
             throws SSHException {
         PKey key = PKey.createFromData(hostKey);
-        mLog.debug("Server host key: " + Util.encodeHex(key.getFingerprint()));
+        logger.debug("Server host key: {}",
+                     Util.encodeHex(key.getFingerprint()));
         if (!key.verifySSHSignature(sCrai, mH, new Message(sig))) {
             throw new BadSignatureException(key.getSSHName());
         }

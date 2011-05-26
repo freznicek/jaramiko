@@ -31,12 +31,21 @@ import java.util.List;
 
 import net.lag.crai.Crai;
 
-/* package */class AuthHandler implements MessageHandler {
-    /* package */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class AuthHandler implements MessageHandler {
+    private static final Logger logger = LoggerFactory
+            .getLogger(AuthHandler.class);
+
+    @Deprecated
     AuthHandler(BaseTransport t, Crai crai, LogSink log) {
+        this(t, crai);
+    }
+
+    AuthHandler(BaseTransport t, Crai crai) {
         mTransport = t;
         mCrai = crai;
-        mLog = log;
         mAuthenticated = false;
         mFailCount = 0;
     }
@@ -169,10 +178,10 @@ import net.lag.crai.Crai;
     private void parseServiceAccept(Message m) throws IOException {
         String service = m.getString();
         if (!service.equals("ssh-userauth")) {
-            mLog.debug("Service request '" + service + "' accepted (?)");
+            logger.debug("Service request '{}' accepted (?)", service);
             return;
         }
-        mLog.debug("Userauth is OK");
+        logger.debug("Userauth is OK");
 
         m = new Message();
         m.putByte(MessageType.USERAUTH_REQUEST);
@@ -211,7 +220,7 @@ import net.lag.crai.Crai;
     private void parseBanner(Message m) throws IOException {
         String banner = m.getString();
         m.getString(); // lang
-        mLog.notice("Auth banner: " + banner);
+        logger.info("Auth banner: {}", banner);
         if (mBannerListener != null) {
             mBannerListener.authenticationBannerEvent(banner);
         }
@@ -222,14 +231,14 @@ import net.lag.crai.Crai;
         String[] auths = authList.toArray(new String[authList.size()]);
         boolean partial = m.getBoolean();
         if (partial) {
-            mLog.notice("Authentication continues...");
-            mLog.debug("Methods: " + Util.join(auths, ", "));
+            logger.info("Authentication continues...");
+            logger.debug("Methods: {}", Util.join(auths, ", "));
             mTransport.saveException(new PartialAuthentication(auths));
         } else if (authList.contains(mAuthMethod)) {
-            mLog.notice("Authentication failed.");
+            logger.info("Authentication failed.");
         } else {
-            mLog.notice("Authentication type not permitted.");
-            mLog.debug("Allowed methods: " + Util.join(auths, ", "));
+            logger.info("Authentication type not permitted.");
+            logger.debug("Allowed methods: {}", Util.join(auths, ", "));
             mTransport.saveException(new BadAuthenticationType(auths));
         }
         mAuthenticated = false;
@@ -238,7 +247,7 @@ import net.lag.crai.Crai;
     }
 
     private void parseAuthSuccess(Message m) {
-        mLog.notice("Authentication successful!");
+        logger.info("Authentication successful!");
         mAuthenticated = true;
         mTransport.authTrigger();
         mAuthEvent.set();
@@ -298,11 +307,11 @@ import net.lag.crai.Crai;
             throws IOException {
         Message m = new Message();
         if (result == AuthError.SUCCESS) {
-            mLog.notice("Auth granted (" + method + ")");
+            logger.info("Auth granted ({})", method);
             m.putByte(MessageType.USERAUTH_SUCCESS);
             mAuthenticated = true;
         } else {
-            mLog.notice("Auth rejected (" + method + ")");
+            logger.info("Auth rejected ({})", method);
             m.putByte(MessageType.USERAUTH_FAILURE);
             m.putString(mServer.getAllowedAuths(username));
             if (result == AuthError.PARTIAL_SUCCESS) {
@@ -392,15 +401,15 @@ import net.lag.crai.Crai;
         String username = m.getString();
         String service = m.getString();
         String method = m.getString();
-        mLog.debug("Auth request (type=" + method + ") service=" + service
-                + ", username=" + username);
+        logger.debug("Auth request (type={}) service={} username={}",
+                new Object[] { method, service, username });
 
         if (!service.equals("ssh-connection")) {
             disconnectServiceNotAvailable();
             return;
         }
         if ((mUsername != null) && !mUsername.equals(username)) {
-            mLog.warning("Auth rejected because the client attempted to change username in mid-flight");
+            logger.warn("Auth rejected because the client attempted to change username in mid-flight");
             disconnectNoMoreAuth();
             return;
         }
@@ -418,7 +427,7 @@ import net.lag.crai.Crai;
                  * passwords, but collect the list of valid auth types from the
                  * callback anyway
                  */
-                mLog.debug("Auth request to change passwords (rejected)");
+                logger.debug("Auth request to change passwords (rejected)");
                 m.getString(); // new password
                 result = AuthError.FAILED;
             } else {
@@ -432,7 +441,7 @@ import net.lag.crai.Crai;
             try {
                 key = PKey.createFromMessage(new Message(keyBlob));
             } catch (SSHException x) {
-                mLog.notice("Auth rejected: public key: " + x);
+                logger.info("Auth rejected: public key: {}", x);
                 disconnectNoMoreAuth();
                 return;
             }
@@ -457,7 +466,7 @@ import net.lag.crai.Crai;
                 Message sig = new Message(m.getByteString());
                 byte[] blob = getSessionBlob(key, service, username);
                 if (!key.verifySSHSignature(mCrai, blob, sig)) {
-                    mLog.notice("Auth rejected: invalid signature");
+                    logger.info("Auth rejected: invalid signature");
                     result = AuthError.FAILED;
                 }
             }
@@ -489,7 +498,6 @@ import net.lag.crai.Crai;
 
     private BaseTransport mTransport;
     private Crai mCrai;
-    private LogSink mLog;
     private BannerListener mBannerListener;
     private String mBanner;
     private ServerInterface mServer;

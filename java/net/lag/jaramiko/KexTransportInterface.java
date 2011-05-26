@@ -32,7 +32,7 @@ import java.math.BigInteger;
  * This makes it easier to unit-test the Kex implementations, by letting the
  * Transport interface be easily stubbed out.
  */
-/* package */interface KexTransportInterface {
+interface KexTransportInterface {
     public String getLocalVersion();
 
     public String getRemoteVersion();
@@ -48,8 +48,6 @@ import java.math.BigInteger;
     public void expectPacket(byte ptype1, byte ptype2);
 
     public void sendMessage(Message m) throws IOException;
-
-    public LogSink getLog();
 
     public PKey getServerKey();
 

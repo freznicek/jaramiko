@@ -31,7 +31,12 @@ import java.math.BigInteger;
 import net.lag.crai.Crai;
 import net.lag.crai.CraiDigest;
 
-/* package */class KexGex implements Kex {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class KexGex implements Kex {
+    private static final Logger logger = LoggerFactory.getLogger(KexGex.class);
+
     public KexGex() {
         mModulusPack = BaseTransport.getModulusPack();
     }
@@ -143,9 +148,8 @@ import net.lag.crai.CraiDigest;
             throw new SSHException("Can't do server-side gex; no modulus list");
         }
 
-        mTransport.getLog().debug(
-                "Picking p (" + mMinBits + " <= " + mPreferredBits + " <= "
-                        + mMaxBits + " bits)");
+        logger.debug("Picking p ({} <= {} <= {})",
+                     new Object[] { mMinBits, mPreferredBits, mMaxBits});
         ModulusPack.ModulusPair mod = mModulusPack.get(mCrai, mMinBits,
                 mPreferredBits, mMaxBits);
         mG = BigInteger.valueOf(mod.mGenerator);
@@ -180,7 +184,7 @@ import net.lag.crai.CraiDigest;
             throw new SSHException("Can't do server-side gex; no modulus list");
         }
 
-        mTransport.getLog().debug("Picking p (~ " + mPreferredBits + " bits)");
+        logger.debug("Picking p (~ {} bits)", mPreferredBits);
         ModulusPack.ModulusPair mod = mModulusPack.get(mCrai, mMinBits,
                 mPreferredBits, mMaxBits);
         mG = BigInteger.valueOf(mod.mGenerator);
@@ -258,7 +262,7 @@ import net.lag.crai.CraiDigest;
                     "Server-generated gex p (don't ask) is out of range ("
                             + bitlen + " bits)");
         }
-        mTransport.getLog().debug("Got server p (" + bitlen + " bits)");
+        logger.debug("Got server p ({} bits)", bitlen);
         generateX();
 
         // now compute e = g^x mod p.

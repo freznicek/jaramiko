@@ -37,7 +37,10 @@ package net.lag.jaramiko;
  * implementations are provided: {@link ConsoleLog} dumps logs to the java
  * console, and {@link NullLog} absorbs the logs and prevents them from being
  * written anywhere.
+ *
+ * @deprecated {@link LogSink} has been deprecated in favor of SLF4J
  */
+@Deprecated
 public interface LogSink {
     /**
      * An error has occurred which will most likely cause the SSH session to

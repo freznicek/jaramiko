@@ -25,7 +25,8 @@
 
 package net.lag.jaramiko;
 
-import java.util.Calendar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple {@link LogSink} implementation which dumps jaramiko's log messages to
@@ -36,30 +37,38 @@ import java.util.Calendar;
  * <p>
  * No attempt is made to make the logging efficient or useful. This is only
  * meant for debugging or reference.
+ *
+ * @deprecated {@link LogSink} has been deprecated in favor of SLF4J
  */
+@Deprecated
 public class ConsoleLog implements LogSink {
+    private static final Logger logger = LoggerFactory
+            .getLogger(LogSink.class);
+
     public void error(String text) {
-        System.err.println(getThreadID() + " ERR: " + text);
+        logger.error(text);
     }
 
     public void warning(String text) {
-        System.err.println(getThreadID() + " WRN: " + text);
+        logger.warn(text);
     }
 
     public void notice(String text) {
-        System.err.println(getThreadID() + " NTC: " + text);
+        logger.info(text);
     }
 
     public void debug(String text) {
-        System.err.println(getThreadID() + " DBG: " + text);
+        logger.debug(text);
     }
 
     public void dump(String text, byte[] data, int offset, int length) {
-        String tidstr = getThreadID();
+        StringBuffer dump = new StringBuffer();
         for (int i = 0; i < length; i += 16) {
-            System.err.println(tidstr + " DMP: " + text + ": "
-                    + dumpHex(data, offset + i, length - i));
+            dump.append("\n");
+            dump.append(dumpHex(data, offset + i, length - i));
         }
+
+        logger.info("{} DUMP:{}", text, dump);
     }
 
     private String dumpHex(byte[] data, int offset, int length) {
@@ -89,42 +98,4 @@ public class ConsoleLog implements LogSink {
 
         return hex.toString() + "   " + ascii.toString();
     }
-
-    private String getThreadID() {
-        // don't assume we have SimpleDateFormatter; some embedded devices
-        // don't.
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(System.currentTimeMillis());
-        String timestamp = pad(cal.get(Calendar.HOUR_OF_DAY), 2) + ":"
-                + pad(cal.get(Calendar.MINUTE), 2) + ":"
-                + pad(cal.get(Calendar.SECOND), 2) + "."
-                + pad(cal.get(Calendar.MILLISECOND), 3);
-
-        int tid = sThreadID.get().intValue();
-        String tidstr = "t" + Integer.toString(tid);
-        if (tid < 10) {
-            tidstr = tidstr + "  ";
-        } else if (tid < 100) {
-            tidstr = tidstr + " ";
-        }
-        return timestamp + " " + tidstr;
-    }
-
-    private String pad(int num, int places) {
-        String out = Integer.toString(num);
-        while (out.length() < places) {
-            out = "0" + out;
-        }
-        return out;
-    }
-
-    private static int sNextThreadID = 1;
-    private static ThreadLocal<Integer> sThreadID = new ThreadLocal<Integer>() {
-        @Override
-        protected synchronized Integer initialValue() {
-            synchronized (ConsoleLog.class) {
-                return new Integer(sNextThreadID++);
-            }
-        }
-    };
 }

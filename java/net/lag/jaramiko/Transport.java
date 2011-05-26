@@ -33,15 +33,6 @@ import java.util.List;
  */
 public interface Transport {
     /**
-     * Set the logging mechanism for this Transport. By default, log messages
-     * are sent to a {@link NullLog} object.
-     * 
-     * @param logger
-     *            the new logger to use
-     */
-    public void setLog(LogSink logger);
-
-    /**
      * Set whether packet contents should be logged as they arrive or depart.
      * Normally you only want this on for serious debugging; the log traffic
      * would otherwise be huge.

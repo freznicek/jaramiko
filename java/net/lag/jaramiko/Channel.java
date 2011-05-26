@@ -31,6 +31,9 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /*
  * locking order:  mInStream.mBufferLock, mStderrInStream.mBufferLock, mLock
  *
@@ -54,6 +57,9 @@ import java.util.List;
  * normal network socket behaves, so it shouldn't be too surprising.
  */
 public class Channel {
+    private static final Logger logger = LoggerFactory
+            .getLogger(Channel.class);
+
     /* package */static class Factory implements ChannelFactory {
         public Channel createChannel(String kind, int chanid, List params) {
             return new Channel(chanid, kind, params);
@@ -763,7 +769,7 @@ public class Channel {
                 m.putInt(mRemoteChanID);
                 mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
             } catch (IOException x) {
-                mLog.debug("I/O exception while sending EOF/close");
+                logger.debug("I/O exception while sending EOF/close");
             }
 
             mClosed = true;
@@ -863,7 +869,7 @@ public class Channel {
      * @return true if the request was successful; false if not
      */
     protected boolean handleCustomRequest(String type, Message message) {
-        mLog.debug("Unhandled channel request '" + type + "'");
+        logger.debug("Unhandled channel request '{}", type);
         return false;
     }
 
@@ -891,9 +897,13 @@ public class Channel {
         }
     }
 
-    /* package */void setTransport(BaseTransport t, LogSink log) {
+    @Deprecated
+    void setTransport(BaseTransport t, LogSink log) {
         mTransport = t;
-        mLog = log;
+    }
+
+    void setTransport(BaseTransport t) {
+        mTransport = t;
     }
 
     /* package */void setWindow(int windowSize, int maxPacketSize) {
@@ -901,7 +911,7 @@ public class Channel {
         // mInMaxPacketSize = maxPacketSize;
         mInWindowThreshold = windowSize / 10;
         mInWindowSoFar = 0;
-        mLog.debug("Max packet in: " + maxPacketSize + " bytes");
+        logger.debug("Max packet in: {} bytes", maxPacketSize);
     }
 
     /* package */void setRemoteChannel(int serverChanID, int serverWindowSize,
@@ -913,7 +923,7 @@ public class Channel {
             mOutMaxPacketSize = MIN_PACKET_SIZE;
         }
         mActive = true;
-        mLog.debug("Max packet out: " + serverMaxPacketSize + " bytes");
+        logger.debug("Max packet out: {} bytes", serverMaxPacketSize);
     }
 
     /* package */void setServer(ServerInterface server) {
@@ -963,7 +973,7 @@ public class Channel {
         m.putByte(MessageType.CHANNEL_EOF);
         m.putInt(mRemoteChanID);
         mTransport.sendUserMessage(m, DEFAULT_TIMEOUT);
-        mLog.debug("EOF sent");
+        logger.debug("EOF sent");
     }
 
     /**
@@ -1105,7 +1115,7 @@ public class Channel {
         int code = m.getInt();
         byte[] data = m.getByteString();
         if (code != 1) {
-            mLog.error("Unknown extended_data type " + code + "; discarding");
+            logger.error("Unknown extended_data type {}; discarding", code);
             return true;
         }
 
@@ -1130,7 +1140,7 @@ public class Channel {
                 }
             }
         }
-        mLog.debug("EOF received");
+        logger.debug("EOF received");
         return true;
     }
 
@@ -1213,13 +1223,13 @@ public class Channel {
     }
 
     private boolean handleSuccess(Message m) {
-        mLog.debug("Secsh channel " + mChanID + " request ok");
+        logger.debug("Secsh channel {} request ok", mChanID);
         mEvent.set();
         return true;
     }
 
     private boolean handleFailure(Message m) {
-        mLog.debug("Secsh channel " + mChanID + " request failed.");
+        logger.debug("Secsh channel {} request failed.", mChanID);
         close();
         return true;
     }
@@ -1236,7 +1246,6 @@ public class Channel {
     private Object mLock;
     private Event mEvent;
     private BaseTransport mTransport;
-    private LogSink mLog;
     private ServerInterface mServer;
     private Object mNotifyObject;
 

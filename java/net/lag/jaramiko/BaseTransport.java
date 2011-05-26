@@ -45,11 +45,17 @@ import net.lag.crai.CraiCipherAlgorithm;
 import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Common transport implementation shared by ClientTransport and
  * ServerTransport.
  */
-/* package */abstract class BaseTransport implements Transport {
+abstract class BaseTransport implements Transport {
+    private static final Logger logger = LoggerFactory
+            .getLogger(BaseTransport.class);
+
     /**
      * Create a new SSH session over an existing socket. This only initializes
      * the Transport object; it doesn't begin negotiating the SSH ession yet.
@@ -67,7 +73,6 @@ import net.lag.crai.CraiException;
         mActive = false;
         mInKex = false;
         mClearToSend = new Event();
-        mLog = new NullLog();
 
         mSocket = socket;
         mInStream = mSocket.getInputStream();
@@ -92,11 +97,6 @@ import net.lag.crai.CraiException;
         mMessageHandlers = new HashMap<Byte, MessageHandler>();
         mChannelFactoryMap = new HashMap<String, ChannelFactory>();
         mChannelFactoryMap.put("session", new Channel.Factory());
-    }
-
-    public void setLog(LogSink logger) {
-        mLog = logger;
-        mPacketizer.setLog(logger);
     }
 
     public void setDumpPackets(boolean dump) {
@@ -246,7 +246,7 @@ import net.lag.crai.CraiException;
         if (parameters != null) {
             m.putAll(parameters);
         }
-        mLog.debug("Sending global request '" + requestName + "'");
+        logger.debug("Sending global request '{}'", requestName);
         sendUserMessage(m, timeout_ms);
         if (timeout_ms <= 0) {
             return null;
@@ -365,7 +365,7 @@ import net.lag.crai.CraiException;
     }
 
     private void startInboundCompression() {
-        mLog.debug("Switching on inbound compression ...");
+        logger.debug("Switching on inbound compression ...");
 
         Class<? extends Compressor> compressClass = BaseTransport.sCompressMap
                 .get(mDescription.mRemoteCompression);
@@ -380,7 +380,7 @@ import net.lag.crai.CraiException;
     }
 
     private void startOutboundCompression() {
-        mLog.debug("Switching on outbound compression ...");
+        logger.debug("Switching on outbound compression ...");
 
         Class<? extends Compressor> compressClass = BaseTransport.sCompressMap
                 .get(mDescription.mLocalCompression);
@@ -531,7 +531,7 @@ import net.lag.crai.CraiException;
             if (line.startsWith("SSH-")) {
                 break;
             }
-            mLog.debug("Banner: " + line);
+            logger.debug("Banner: {}", line);
         }
 
         if (!line.startsWith("SSH-")) {
@@ -555,8 +555,7 @@ import net.lag.crai.CraiException;
             throw new SSHException("Incompatible version (" + version
                     + " instead of 2.0)");
         }
-        mLog.notice("Connected (version " + version + ", client " + client
-                + ")");
+        logger.info("Connected (version {}, client {})", version, client);
     }
 
     private void sendKexInit() throws IOException {
@@ -716,8 +715,8 @@ import net.lag.crai.CraiException;
                 }
 
                 if (!parsePacket(ptype, m)) {
-                    mLog.warning("Oops, unhandled packet type "
-                            + MessageType.getDescription(ptype));
+                    logger.warn("Oops, unhandled packet type {}",
+                                MessageType.getDescription(ptype));
                     Message resp = new Message();
                     resp.putByte(MessageType.UNIMPLEMENTED);
                     resp.putInt(m.getSequence());
@@ -725,11 +724,11 @@ import net.lag.crai.CraiException;
                 }
             }
         } catch (SSHException x) {
-            mLog.error("Exception: " + x);
+            logger.error("Exception: ", x);
             logStackTrace(x);
             saveException(x);
         } catch (IOException x) {
-            mLog.error("I/O exception in feeder thread: " + x);
+            logger.error("I/O exception in feeder thread: ", x);
             saveException(x);
         }
 
@@ -765,12 +764,12 @@ import net.lag.crai.CraiException;
         try {
             transportRun0();
         } catch (Throwable t) {
-            mLog.error("Exception from feeder thread! " + t);
+            logger.error("Exception from feeder thread! ", t);
             StringWriter buffer = new StringWriter();
             t.printStackTrace(new PrintWriter(buffer));
-            mLog.debug(buffer.toString());
+            logger.debug(buffer.toString());
         } finally {
-            mLog.debug("Feeder thread terminating.");
+            logger.debug("Feeder thread terminating.");
         }
     }
 
@@ -790,7 +789,7 @@ import net.lag.crai.CraiException;
             if (c != null) {
                 return c.handleMessage(ptype, m);
             } else {
-                mLog.error("Channel request for unknown channel " + chanID);
+                logger.error("Channel request for unknown channel {}", chanID);
                 throw new SSHException("Channel request for unknown channel");
             }
         }
@@ -827,18 +826,18 @@ import net.lag.crai.CraiException;
     private void parseDisconnect(Message m) {
         int code = m.getInt();
         String desc = m.getString();
-        mLog.notice("Disconnect (code " + code + "): " + desc);
+        logger.info("Disconnect (code {}): {}", code, desc);
     }
 
     private void parseDebug(Message m) {
         m.getBoolean(); // always display?
         String text = m.getString();
         // String lang = m.getString();
-        mLog.debug("Debug msg: " + Util.safeString(text));
+        logger.debug("Debug msg: {}", Util.safeString(text));
     }
 
     private void parseNewKeys() throws SSHException {
-        mLog.debug("Switch to new keys...");
+        logger.debug("Switch to new keys...");
         activateInbound();
 
         // can also free a bunch of state here
@@ -873,7 +872,7 @@ import net.lag.crai.CraiException;
     private void parseGlobalRequest(Message m) throws IOException {
         String kind = m.getString();
         boolean wantReply = m.getBoolean();
-        mLog.debug("Received global request '" + kind + "'");
+        logger.debug("Received global request '{}", kind);
 
         List<Object> response = checkGlobalRequest(kind, m);
         if (wantReply) {
@@ -978,7 +977,7 @@ import net.lag.crai.CraiException;
         d.mRemoteCompression = agreedRemoteCompression;
 
         kexInitHook();
-        mLog.debug(d.toString());
+        logger.debug(d.toString());
 
         // save for computing hash later...
         /*
@@ -1005,7 +1004,7 @@ import net.lag.crai.CraiException;
     }
 
     private void parseRequestSuccess(Message m) throws IOException {
-        mLog.debug("Global request successful.");
+        logger.debug("Global request successful.");
         mGlobalResponse = m;
         if (mCompletionEvent != null) {
             mCompletionEvent.set();
@@ -1013,7 +1012,7 @@ import net.lag.crai.CraiException;
     }
 
     private void parseRequestFailure(Message m) throws IOException {
-        mLog.debug("Global request denied.");
+        logger.debug("Global request denied.");
         mGlobalResponse = null;
         if (mCompletionEvent != null) {
             mCompletionEvent.set();
@@ -1029,12 +1028,12 @@ import net.lag.crai.CraiException;
         synchronized (mLock) {
             Channel c = mChannels[chanID];
             if (c == null) {
-                mLog.warning("Success for unrequested channel! [??]");
+                logger.warn("Success for unrequested channel! [??]");
                 return;
             }
             c.setRemoteChannel(serverChanID, serverWindowSize,
                     serverMaxPacketSize);
-            mLog.notice("Secsh channel " + chanID + " opened.");
+            logger.info("Secsh channel {} opened.", chanID);
             if (mChannelEvents[chanID] != null) {
                 mChannelEvents[chanID].set();
                 mChannelEvents[chanID] = null;
@@ -1048,8 +1047,8 @@ import net.lag.crai.CraiException;
         String reasonStr = m.getString();
         m.getString(); // lang
         String reasonText = ChannelError.getDescription(reason);
-        mLog.notice("Secsh channel " + chanID + " open FAILED: " + reasonStr
-                + ": " + reasonText);
+        logger.info("Secsh channel {} open FAILED: {}: {}",
+                    new Object[] { chanID, reasonStr, reasonText });
 
         synchronized (mLock) {
             saveException(new ChannelException(reason));
@@ -1072,8 +1071,8 @@ import net.lag.crai.CraiException;
         ChannelFactory factory = mChannelFactoryMap.get(kind);
         // If we don't know what channel factory to use, use the default Channel
         if (factory == null) {
-            mLog.notice("Cannot find a ChannelFactory for the channel kind '"
-                    + kind + "'; using default Channel");
+            logger.info("Cannot find a ChannelFactory for the channel kind"
+                       + " '{}' using default Channel", kind);
             factory = new Channel.Factory();
         }
         return factory.createChannel(kind, chanid, params);
@@ -1083,8 +1082,8 @@ import net.lag.crai.CraiException;
         ChannelFactory factory = mChannelFactoryMap.get(kind);
         // If we don't know what channel factory to use, use the default Channel
         if (factory == null) {
-            mLog.notice("Cannot find a ChannelFactory for the channel kind '"
-                    + kind + "'; using default Channel");
+            logger.info("Cannot find a ChannelFactory for the channel kind"
+                       + " '{}' using default Channel", kind);
             factory = new Channel.Factory();
         }
         return factory.createChannel(kind, chanid, params);
@@ -1119,7 +1118,7 @@ import net.lag.crai.CraiException;
     private void logStackTrace(Exception x) {
         String[] s = Util.getStackTrace(x);
         for (int i = 0; i < s.length; i++) {
-            mLog.debug(s[i]);
+            logger.debug(s[i]);
         }
     }
 
@@ -1147,7 +1146,8 @@ import net.lag.crai.CraiException;
                     cipher.initEncrypt(new byte[desc.mKeySize],
                             new byte[desc.mBlockSize]);
                 } catch (CraiException x) {
-                    mLog.notice("Turning off unsupported encryption: " + name);
+                    logger.info("Turning off unsupported encryption: {}",
+                                name);
                     if (desc.mKeySize > 16) {
                         giveAdvice = true;
                     }
@@ -1159,7 +1159,7 @@ import net.lag.crai.CraiException;
         }
 
         if (giveAdvice) {
-            mLog.notice("Your java installation lacks support for 256-bit encryption.  "
+            logger.info("Your java installation lacks support for 256-bit encryption.  "
                     + "This is due to a poor choice of defaults in Sun's java.  To fix it, "
                     + "visit: <http://java.sun.com/j2se/1.4.2/download.html> and download "
                     + "the \"unlimited strength\" files at the bottom of the page, under "
@@ -1264,7 +1264,6 @@ import net.lag.crai.CraiException;
     /* package */boolean mActive;
     /* package */Event mCompletionEvent;
     private Event mClearToSend;
-    /* package */LogSink mLog;
     private IOException mSavedException;
     /* package */AuthHandler mAuthHandler;
     private Message mGlobalResponse;

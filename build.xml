@@ -8,11 +8,10 @@
         </filterchain>
     </loadfile>
 
-    <property name="junit" location="junit3.8.1.jar" />
-
     <!-- roots -->
     <property name="build" location="bin" />
     <property name="dist" location="dist" />
+    <property name="lib" location="lib" />
     <property name="resource" location="resources" />
 
     <!-- source folder locations -->
@@ -34,22 +33,22 @@
 
 
     <!-- paths -->
-    <path id="test.build">
-        <pathelement location="${junit}" />
+    <path id="primary.build">
+        <fileset dir="${lib}" includes="*.jar" />
+    </path>
+
+    <path id="secondary.build">
+        <path refid="primary.build" />
         <pathelement location="${build.src}" />
     </path>
 
     <path id="test.run">
-        <path refid="test.build" />
+        <path refid="secondary.build" />
         <pathelement location="${build.test}" />
     </path>
 
-    <path id="demo.build">
-        <pathelement location="${build.src}" />
-    </path>
-
     <path id="demo.run">
-        <path refid="test.build" />
+        <path refid="secondary.build" />
         <pathelement location="${build.demo}" />
     </path>
 
@@ -90,7 +89,7 @@
 
         <depend srcdir="${src}" destdir="${build.src}" />
         <javac source="1.5" target="1.5" debug="true" srcdir="${src}"
-            destdir="${build.src}" />
+            destdir="${build.src}" classpathref="primary.build" />
 
         <copy todir="${build.resource}" includeEmptyDirs="true">
             <fileset dir="${resource}" />
@@ -100,13 +99,13 @@
 
     <target name="build-test" description="build test cases"  depends="build">
         <javac source="1.5" target="1.5" debug="true" srcdir="${test}"
-            destdir="${build.test}" classpathref="test.build" />
+            destdir="${build.test}" classpathref="secondary.build" />
     </target>
 
 
     <target name="build-demo" description="build demo" depends="build">
         <javac source="1.5" target="1.5" debug="true" srcdir="${demo}"
-            destdir="${build.demo}" classpathref="demo.build" />
+            destdir="${build.demo}" classpathref="secondary.build" />
     </target>
 
 

@@ -87,10 +87,6 @@ public class FakeKexTransport implements KexTransportInterface {
         mActivated = true;
     }
 
-    public LogSink getLog() {
-        return new NullLog();
-    }
-
     public Message mMessage;
     public Message mUserMessage;
     public byte mExpect1;

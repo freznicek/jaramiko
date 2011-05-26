@@ -35,18 +35,23 @@ import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
 import net.lag.crai.CraiRandom;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Stream for reading and writing SSH2 {@link Message} objects. Encryption and
  * re-keying are handled at this layer.
  */
-/* package */class Packetizer {
+class Packetizer {
+    private static final Logger logger = LoggerFactory
+            .getLogger(Packetizer.class);
+
     public Packetizer(InputStream in, OutputStream out, CraiRandom random)
             throws IOException {
         mInStream = in;
         mOutStream = out;
         mRandom = random;
         mClosed = false;
-        mLog = new NullLog();
         mDumpPackets = false;
         mInitCount = 0;
         mKeepAliveInterval = 0;
@@ -56,10 +61,6 @@ import net.lag.crai.CraiRandom;
 
         mWriteLock = new Object();
         mReadBuffer = new byte[64];
-    }
-
-    public void setLog(LogSink log) {
-        mLog = log;
     }
 
     public void setDumpPackets(boolean dump) {
@@ -211,16 +212,13 @@ import net.lag.crai.CraiRandom;
             msg.packetize(mRandom, mBlockSizeOut, (mBlockEngineOut != null));
             byte[] packet = msg.toByteArray();
             int length = msg.getPosition();
-            if (origLength != contentLength) {
-                mLog.debug("Write packet <" + desc + ">, length "
-                        + contentLength + " (orig length " + origLength + ")");
-            } else {
-                mLog.debug("Write packet <" + desc + ">, length "
-                        + contentLength);
-            }
-            if (mDumpPackets) {
-                mLog.dump("OUT", packet, 0, length);
-            }
+
+            logger.debug("Write packet '{}', length {} (original length {})",
+                         new Object[] { desc, contentLength, origLength });
+
+            // if (mDumpPackets) {
+            //     mLog.dump("OUT", packet, 0, length);
+            // }
 
             if (mBlockEngineOut != null) {
                 new Message(mMacBufferOut).putInt(mSequenceNumberOut);
@@ -251,8 +249,8 @@ import net.lag.crai.CraiRandom;
             if (((mSentPackets >= mRekeyPackets) || (mSentBytes >= mRekeyBytes))
                     && !needRekey()) {
                 // only ask once for rekeying
-                mLog.debug("Rekeying (hit " + mSentPackets + " packets, "
-                        + mSentBytes + " bytes sent)");
+                logger.debug("Rekeying ({} packets and {} bytes sent)",
+                             mSentPackets, mSentBytes);
                 mReceivedPacketsOverflow = 0;
                 triggerRekey(true);
             }
@@ -274,9 +272,9 @@ import net.lag.crai.CraiRandom;
                 throw new IOException("decode error: " + x);
             }
         }
-        if (mDumpPackets) {
-            mLog.dump("IN", mReadBuffer, 0, mBlockSizeIn);
-        }
+        // if (mDumpPackets) {
+        //     mLog.dump("IN", mReadBuffer, 0, mBlockSizeIn);
+        // }
         int length = new Message(mReadBuffer).getInt();
         int leftover = mBlockSizeIn - 5;
         if ((length + 4) % mBlockSizeIn != 0) {
@@ -309,9 +307,9 @@ import net.lag.crai.CraiRandom;
 
             // dump the packet before we try to verify the mac (helps with
             // debugging)
-            if (mDumpPackets) {
-                mLog.dump("IN", packet, leftover, remainderLen);
-            }
+            // if (mDumpPackets) {
+            //     mLog.dump("IN", packet, leftover, remainderLen);
+            // }
         }
 
         if (mBlockEngineIn != null) {
@@ -343,14 +341,20 @@ import net.lag.crai.CraiRandom;
             byte[] expanded = mCompressIn.uncompress(packet, 0, length
                     - padding - 1);
             msg = new Message(expanded, 0, expanded.length, mSequenceNumberIn);
-            mLog.debug("Read packet <" + msg.getCommandDescription()
-                    + ">, length " + (length - padding - 1) + " (orig length "
-                    + expanded.length + ")");
+
+            logger.debug("Read packet '{}', length {} (original length {})",
+                         new Object[] {
+                             msg.getCommandDescription(),
+                             length - padding - 1,
+                             expanded.length
+                         });
+
         } else {
             msg = new Message(packet, 0, length - padding - 1,
                     mSequenceNumberIn);
-            mLog.debug("Read packet <" + msg.getCommandDescription()
-                    + ">, length " + (length - padding - 1));
+
+            logger.debug("Read packet '{}', length {}",
+                         msg.getCommandDescription(), length - padding - 1);
         }
 
         mSequenceNumberIn++;
@@ -368,8 +372,9 @@ import net.lag.crai.CraiRandom;
         } else if ((mReceivedPackets >= mRekeyPackets)
                 || (mReceivedBytes >= mRekeyBytes)) {
             // only ask once
-            mLog.debug("Rekeying (hit " + mReceivedPackets + " packets, "
-                    + mReceivedBytes + " bytes received)");
+            logger.debug("Rekeying ({} packets and {} bytes received)",
+                         mReceivedPackets, mReceivedBytes);
+
             mReceivedPacketsOverflow = 0;
             triggerRekey(true);
         }
@@ -457,7 +462,6 @@ import net.lag.crai.CraiRandom;
     private InputStream mInStream;
     private OutputStream mOutStream;
     private CraiRandom mRandom;
-    private LogSink mLog;
     private boolean mClosed;
     private boolean mDumpPackets;
     private boolean mNeedRekey;

@@ -39,12 +39,18 @@ import net.lag.crai.CraiCipher;
 import net.lag.crai.CraiDigest;
 import net.lag.crai.CraiException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A server-side SSH transport, used for initiating SSH over an existing socket.
  * Once a transport has negotiated encryption, the client will usually
  * authenticate and then request {@link Channel}s.
  */
 public class ServerTransport extends BaseTransport {
+    private static final Logger logger = LoggerFactory
+            .getLogger(ServerTransport.class);
+
     // clean interface between Kex and Transport for unit testing
     private class MyKexTransportInterface implements KexTransportInterface {
         public String getLocalVersion() {
@@ -95,10 +101,6 @@ public class ServerTransport extends BaseTransport {
         public void kexComplete() throws IOException {
             ServerTransport.this.activateOutbound();
         }
-
-        public LogSink getLog() {
-            return mLog;
-        }
     }
 
     public ServerTransport(Socket socket) throws IOException {
@@ -143,8 +145,8 @@ public class ServerTransport extends BaseTransport {
         mActive = true;
         new Thread(new Runnable() {
             public void run() {
-                mLog.debug("starting thread (server mode): "
-                        + Integer.toHexString(this.hashCode()));
+                logger.debug("starting thread (server mode): {}",
+                            Integer.toHexString(this.hashCode()));
                 transportRun();
             }
         }, "jaramiko server feeder").start();
@@ -354,7 +356,7 @@ public class ServerTransport extends BaseTransport {
     /* package */@Override
     void parseNewKeysHook() {
         if (mAuthHandler == null) {
-            mAuthHandler = new AuthHandler(this, sCrai, mLog);
+            mAuthHandler = new AuthHandler(this, sCrai);
             mAuthHandler.useServerMode(mServer, mBanner);
         }
     }
@@ -412,7 +414,7 @@ public class ServerTransport extends BaseTransport {
 
         reason = mServer.checkChannelRequest(kind, myChanID);
         if (reason != ChannelError.SUCCESS) {
-            mLog.debug("Rejecting '" + kind + "' channel request from client.");
+            logger.debug("Rejecting '{}' channel request from client.", kind);
             reject = true;
         }
 
@@ -434,7 +436,7 @@ public class ServerTransport extends BaseTransport {
         }
 
         synchronized (mLock) {
-            c.setTransport(this, mLog);
+            c.setTransport(this);
             c.setWindow(mWindowSize, mMaxPacketSize);
             c.setRemoteChannel(chanID, initialWindowSize, maxPacketSize);
             c.setServer(mServer);
@@ -448,7 +450,7 @@ public class ServerTransport extends BaseTransport {
         mx.putInt(mMaxPacketSize);
         sendMessage(mx);
 
-        mLog.notice("Secsh channel " + myChanID + " opened.");
+        logger.info("Secsh channel {} opened.", myChanID);
 
         synchronized (mServerAcceptLock) {
             mServerAccepts.add(c);

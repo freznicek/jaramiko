@@ -28,7 +28,9 @@ package net.lag.jaramiko;
 /**
  * Simple {@link LogSink} implementation which throws away all of jaramiko's log
  * messages.
+ * @deprecated {@link LogSink} has been deprecated in favor of SLF4J
  */
+@Deprecated
 public class NullLog implements LogSink {
     public void error(String text) {
         // pass
