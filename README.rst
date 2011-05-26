@@ -80,10 +80,8 @@ There are extensive javadocs, which can be built with::
 A good place to start is the ``Transport`` class, which handles the actual
 SSH connection to a remote host.
 
-There's a small demo included in the ``demo/`` folder, which will connect
-to a server, authenticate, execute a shell command, and display the output.
-It prompts you for the info it needs. You can build and run it with::
+There's a small demo included in the ``demo/`` folder, which will connect to a
+server, authenticate, execute a shell command or sftp a file, and display the
+output. It prompts you for the info it needs. You can build and run it with::
 
     $ ant demo
-
-*Note: the demo application is currently not working, instead there is a "Connection refused" error.*
