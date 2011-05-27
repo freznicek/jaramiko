@@ -104,7 +104,7 @@
 
 
     <target name="build-demo" description="build demo" depends="build">
-        <javac source="1.6" target="1.6" debug="true" srcdir="${demo}"
+        <javac source="1.5" target="1.5" debug="true" srcdir="${demo}"
             destdir="${build.demo}" classpathref="secondary.build" />
     </target>
 

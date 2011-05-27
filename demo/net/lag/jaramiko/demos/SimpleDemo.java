@@ -25,7 +25,6 @@
 
 package net.lag.jaramiko.demos;
 
-import java.io.Console;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +32,7 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Arrays;
@@ -262,14 +262,25 @@ public class SimpleDemo {
             else if (line.trim().length() > 0) username = line;
         } while (username == null);
 
-        Console console = System.console();
-        if (console != null) {
+        Object console = null;
+        Method readPassword = null;
+        try {
+            Method getConsole = System.class.getMethod("console");
+            console = getConsole.invoke(null);
+            readPassword = console.getClass().getMethod("readPassword",
+                                                        String.class,
+                                                        Object[].class);
+        } catch (Exception e) {}
+
+        if (console != null && readPassword != null) {
             char[] pass = null;
 
             try {
-                pass = console.readPassword("Password: ");
-            } catch (IOError e) {
-                giveup();
+                pass = (char[]) readPassword.invoke(console, "Password: ",
+                                                    null);
+            } catch (Exception e) {
+                notice("Problem reading password");
+                System.exit(0);
             }
 
             if (pass == null) giveup();
