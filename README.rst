@@ -7,6 +7,24 @@ jaramiko
 :License: MIT
 :Homepage: http://www.lag.net/jaramiko/
 
+
+NOTICE:
+=======
+
+While starting to organize this repository and look for features which need to
+be implemented I stumbled upon the JSch library: http://www.jcraft.com/jsch/.
+My intentions for this library was to use it for Jython as a drop in
+replacement for paramiko. However, I realized that even if I wrapped JSch or
+implemented methods to make jaramiko a "drop in" replacement for paramiko it
+would never be truly a drop in replacement because I would still need to handle
+the Java-Python differences in a Python wrapper (a smaller one, but it would
+still have to be created and maintained). With this in mind I have decided I
+would *not* contribute to this repository anymore, but instead suggest you use
+the JSch library (It is already being used by Apache Ant and Eclipse amongst
+others). Instead, I will likely be working on trying to make a paramiko branch
+which is compatible with Jython.
+
+
 version 2.0beta (May 23, 2011)
 ==============================
  - forking Robey's code on github
